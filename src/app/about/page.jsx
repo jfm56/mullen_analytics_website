@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function AboutPage() {
   return (
@@ -30,12 +31,12 @@ export default function AboutPage() {
             with clarity, confidence, and purpose.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <a href="/portfolio" className="inline-flex items-center gap-2 px-5 py-3 rounded-md border text-black hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] transition-colors">
+            <Link href="/portfolio" className="inline-flex items-center gap-2 px-5 py-3 rounded-md border hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] transition-colors">
               → View Case Studies
-            </a>
-            <a href="/#contact" className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-[var(--brand-primary)] text-white hover:opacity-90 transition-opacity">
+            </Link>
+            <Link href="/#contact" className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-[var(--brand-primary)] text-white hover:opacity-90 transition-opacity">
               → Schedule a Free Consultation
-            </a>
+            </Link>
           </div>
         </div>
       </div>
