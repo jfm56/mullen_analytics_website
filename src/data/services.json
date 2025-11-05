@@ -1,0 +1,5 @@
+[
+  { "title": "AI Strategy", "description": "Roadmaps and capability building for AI adoption." },
+  { "title": "Data Engineering", "description": "Pipelines, warehousing, and analytics platforms." },
+  { "title": "Machine Learning", "description": "Model development, evaluation, and deployment." }
+]
