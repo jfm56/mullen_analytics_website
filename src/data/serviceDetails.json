@@ -1,0 +1,52 @@
+[
+  {
+    "slug": "ai-strategy-and-advisory",
+    "title": "AI Strategy & Advisory",
+    "description": "AI readiness assessments, executive education, governance frameworks, and scalable adoption roadmaps."
+  },
+  {
+    "slug": "data-and-analytics-strategy",
+    "title": "Data & Analytics Strategy",
+    "description": "Enterprise data strategy, KPI frameworks, data literacy development, and analytics maturity planning."
+  },
+  {
+    "slug": "data-engineering-and-modern-data-infrastructure",
+    "title": "Data Engineering & Modern Data Infrastructure",
+    "description": "Warehouse/lakehouse architecture, ETL/ELT pipelines, cloud modernization, data trust & governance."
+  },
+  {
+    "slug": "business-intelligence-and-decision-intelligence",
+    "title": "Business Intelligence & Decision Intelligence",
+    "description": "Dashboard modernization, automated reporting ecosystems, self-service analytics, and operational insights."
+  },
+  {
+    "slug": "machine-learning-and-predictive-modeling",
+    "title": "Machine Learning & Predictive Modeling",
+    "description": "Forecasting, segmentation, optimization models, MLOps deployment, monitoring, and drift management."
+  },
+  {
+    "slug": "nlp-and-workflow-automation",
+    "title": "NLP & Workflow Automation",
+    "description": "Text analytics, document intelligence, RPA, conversational assistants, and generative response systems."
+  },
+  {
+    "slug": "healthcare-and-life-sciences-analytics",
+    "title": "Healthcare & Life Sciences Analytics",
+    "description": "Clinical KPI dashboards, patient outcome modeling, operational resource planning, and public health analytics."
+  },
+  {
+    "slug": "environmental-and-geospatial-analytics",
+    "title": "Environmental & Geospatial Analytics",
+    "description": "GIS-based risk modeling, land-use visualization, remote sensing analysis, and climate impact scenarios."
+  },
+  {
+    "slug": "product-and-mvp-development",
+    "title": "Product & MVP Development",
+    "description": "Rapid prototyping of analytics-enabled features, lightweight pipelines, and fractional Chief Data/AI Officer support."
+  },
+  {
+    "slug": "training-and-capability-building",
+    "title": "Training & Capability Building",
+    "description": "Custom workshops in SQL, Python, ML, dashboarding, data storytelling, and executive decision intelligence."
+  }
+]

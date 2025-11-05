@@ -1,5 +1,12 @@
 [
-  { "title": "AI Strategy", "description": "Roadmaps and capability building for AI adoption." },
-  { "title": "Data Engineering", "description": "Pipelines, warehousing, and analytics platforms." },
-  { "title": "Machine Learning", "description": "Model development, evaluation, and deployment." }
+  { "title": "AI Strategy & Advisory", "description": "AI readiness, executive education, governance, and adoption roadmaps." },
+  { "title": "Data & Analytics Strategy", "description": "Enterprise data strategy, KPI frameworks, literacy, and maturity planning." },
+  { "title": "Data Engineering & Modern Data Infrastructure", "description": "Warehouse/lakehouse, ETL/ELT pipelines, cloud modernization, data trust." },
+  { "title": "Business Intelligence & Decision Intelligence", "description": "Dashboard modernization, automated reporting, self-service, ops insights." },
+  { "title": "Machine Learning & Predictive Modeling", "description": "Forecasting, segmentation, optimization, MLOps deployment and monitoring." },
+  { "title": "NLP & Workflow Automation", "description": "Text analytics, document intelligence, RPA, assistants, generative systems." },
+  { "title": "Healthcare & Life Sciences Analytics", "description": "Clinical KPIs, outcome modeling, resource planning, public health analytics." },
+  { "title": "Environmental & Geospatial Analytics", "description": "GIS risk modeling, land-use visualization, remote sensing, climate scenarios." },
+  { "title": "Product & MVP Development", "description": "Rapid prototyping, lightweight pipelines, fractional Chief Data/AI Officer." },
+  { "title": "Training & Capability Building", "description": "Workshops in SQL, Python, ML, dashboarding, storytelling, decision intel." }
 ]
