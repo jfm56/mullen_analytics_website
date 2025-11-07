@@ -6,12 +6,6 @@
  import testimonials from "@/data/testimonials.json" assert { type: "json" };
 
 export default function Home() {
-  const toSlug = (s) =>
-    s
-      .toLowerCase()
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
   return (
     <div>
       <HeroSection />
@@ -37,13 +31,13 @@ export default function Home() {
       </section>
       <section id="services" className="max-w-7xl mx-auto px-4 py-16">
         <SectionHeader title="Services" />
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((s, i) => (
             <ServiceCard
               key={i}
               title={s.title}
               description={s.description}
-              href={`/services/${toSlug(s.title)}`}
+              href={`/services/${s.slug}`}
             />
           ))}
         </div>

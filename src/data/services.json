@@ -1,12 +1,12 @@
 [
-  { "title": "AI Strategy & Advisory", "description": "AI readiness, executive education, governance, and adoption roadmaps." },
-  { "title": "Data & Analytics Strategy", "description": "Enterprise data strategy, KPI frameworks, literacy, and maturity planning." },
-  { "title": "Data Engineering & Modern Data Infrastructure", "description": "Warehouse/lakehouse, ETL/ELT pipelines, cloud modernization, data trust." },
-  { "title": "Business Intelligence & Decision Intelligence", "description": "Dashboard modernization, automated reporting, self-service, ops insights." },
-  { "title": "Machine Learning & Predictive Modeling", "description": "Forecasting, segmentation, optimization, MLOps deployment and monitoring." },
-  { "title": "NLP & Workflow Automation", "description": "Text analytics, document intelligence, RPA, assistants, generative systems." },
-  { "title": "Healthcare & Life Sciences Analytics", "description": "Clinical KPIs, outcome modeling, resource planning, public health analytics." },
-  { "title": "Environmental & Geospatial Analytics", "description": "GIS risk modeling, land-use visualization, remote sensing, climate scenarios." },
-  { "title": "Product & MVP Development", "description": "Rapid prototyping, lightweight pipelines, fractional Chief Data/AI Officer." },
-  { "title": "Training & Capability Building", "description": "Workshops in SQL, Python, ML, dashboarding, storytelling, decision intel." }
+  { "slug": "ai-strategy-and-advisory", "title": "AI Strategy & Advisory", "description": "AI readiness, executive education, governance, and adoption roadmaps." },
+  { "slug": "data-and-analytics-strategy", "title": "Data & Analytics Strategy", "description": "Enterprise data strategy, KPI frameworks, literacy, and maturity planning." },
+  { "slug": "data-engineering-and-modern-data-infrastructure", "title": "Data Engineering & Modern Data Infrastructure", "description": "Warehouse/lakehouse, ETL/ELT pipelines, cloud modernization, data trust." },
+  { "slug": "business-intelligence-and-decision-intelligence", "title": "Business Intelligence & Decision Intelligence", "description": "Dashboard modernization, automated reporting, self-service, ops insights." },
+  { "slug": "machine-learning-and-predictive-modeling", "title": "Machine Learning & Predictive Modeling", "description": "Forecasting, segmentation, optimization, MLOps deployment and monitoring." },
+  { "slug": "nlp-and-workflow-automation", "title": "NLP & Workflow Automation", "description": "Text analytics, document intelligence, RPA, assistants, generative systems." },
+  { "slug": "healthcare-and-life-sciences-analytics", "title": "Healthcare & Life Sciences Analytics", "description": "Clinical KPIs, outcome modeling, resource planning, public health analytics." },
+  { "slug": "environmental-and-geospatial-analytics", "title": "Environmental & Geospatial Analytics", "description": "GIS risk modeling, land-use visualization, remote sensing, climate scenarios." },
+  { "slug": "product-and-mvp-development", "title": "Product & MVP Development", "description": "Rapid prototyping, lightweight pipelines, fractional Chief Data/AI Officer." },
+  { "slug": "training-and-capability-building", "title": "Training & Capability Building", "description": "Workshops in SQL, Python, ML, dashboarding, storytelling, decision intel." }
 ]
