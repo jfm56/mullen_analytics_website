@@ -3,7 +3,7 @@
  import ServiceCard from "@/components/ServiceCard";
  import ContactForm from "@/components/ContactForm";
  import services from "@/data/services.json" assert { type: "json" };
- import testimonials from "@/data/testimonials.json" assert { type: "json" };
+ 
 
 export default function Home() {
   return (
@@ -46,33 +46,23 @@ export default function Home() {
         <SectionHeader title="Selected Work" />
         <div className="grid gap-6 md:grid-cols-3">
           <div className="rounded border p-6 hover:shadow-sm transition-shadow">
-            <h3 className="font-semibold">Case Study 1</h3>
-            <p className="text-sm text-black mt-2">We partnered with a client to modernize their analytics platform, streamline data workflows, and improve reporting accuracy.</p>
-            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Reduced manual reporting time and enabled faster strategic decision-making.</p>
+            <h3 className="font-semibold">Case Study 1 — Breast Cancer Diagnosis Decision Tree Model</h3>
+            <p className="text-sm text-black mt-2">We developed a fully interpretable machine learning model to support early breast cancer diagnosis by analyzing tumor characteristics. The model was built from scratch and included explainable visual decision rules to support clinical reasoning.</p>
+            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Enabled clearer diagnostic decision support and improved model transparency, building confidence for clinical review teams.</p>
           </div>
           <div className="rounded border p-6 hover:shadow-sm transition-shadow">
-            <h3 className="font-semibold">Case Study 2</h3>
-            <p className="text-sm text-black mt-2">We developed and deployed predictive models to support resource planning and operational forecasting.</p>
-            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Increased forecast reliability and improved business alignment.</p>
+            <h3 className="font-semibold">Case Study 2 — Weather-Based Precipitation Prediction</h3>
+            <p className="text-sm text-black mt-2">We analyzed historical weather data and transformed precipitation type into predictive variables for logistic regression forecasting. The resulting models predicted the likelihood of rain or snow based on environmental conditions and highlighted the strongest driving factors.</p>
+            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Increased forecast reliability and improved planning for weather-dependent operations, with fully interpretable feature impact insights.</p>
           </div>
           <div className="rounded border p-6 hover:shadow-sm transition-shadow">
-            <h3 className="font-semibold">Case Study 3</h3>
-            <p className="text-sm text-black mt-2">We implemented data governance and quality controls to support scalable analytics growth.</p>
-            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Improved data trust, compliance, and executive confidence.</p>
+            <h3 className="font-semibold">Case Study 3 — Association Rule Mining for Oncology Feature Patterns</h3>
+            <p className="text-sm text-black mt-2">We applied the FP-Growth algorithm to identify co-occurring tumor characteristics associated with malignant cases. While no strong multi-feature patterns emerged—reflecting the complexity of cancer signals—we used the most informative features to train a transparent decision-tree classifier.</p>
+            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Strengthened explainability in model-driven diagnosis and improved understanding of feature interactions for medical decision intelligence.</p>
           </div>
         </div>
       </section>
-      <section id="testimonials" className="max-w-5xl mx-auto px-4 py-16">
-        <SectionHeader title="What Clients Say" />
-        <div className="grid gap-6 md:grid-cols-2">
-          {testimonials.map((t, i) => (
-            <div key={i} className="rounded border p-6 bg-gray-50">
-              <p className="italic">“{t.quote}”</p>
-              <p className="mt-3 text-sm text-black">— {t.author}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Testimonials section removed per request */}
       <section id="contact" className="max-w-3xl mx-auto px-4 py-16 bg-[var(--color-footer-bg)] text-[var(--color-footer-text)]">
         <h2 className="text-3xl md:text-4xl font-extrabold text-[var(--color-footer-text)] text-center mb-8">Tell Us About Your Goals</h2>
         <p className="mb-6 text-[var(--color-footer-text)] text-center">We look forward to learning about your initiatives and exploring how we can support your data and AI strategy.</p>
