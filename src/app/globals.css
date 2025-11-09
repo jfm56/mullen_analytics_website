@@ -53,3 +53,6 @@ small, .text-small { font-size: 14px; }
 
 /* Use brand border color for bordered elements */
 .border { border-color: var(--color-border) !important; }
+
+/* Force white heading in the dark contact section */
+#contact h2 { color: #ffffff !important; }

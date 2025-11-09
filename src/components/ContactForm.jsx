@@ -16,7 +16,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" id="contact">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium">Name</label>
         <input name="name" required className="mt-1 w-full border rounded px-3 py-2" />
