@@ -19,8 +19,14 @@ export async function POST(req) {
     try {
       await transporter.verify();
       await logEvent("smtp_verify_ok", { server: process.env.EMAIL_SERVER, port: process.env.EMAIL_PORT || "587" });
-    } catch {
-      await logEvent("smtp_verify_fail", { server: process.env.EMAIL_SERVER, port: process.env.EMAIL_PORT || "587" });
+    } catch (verr) {
+      await logEvent("smtp_verify_fail", {
+        server: process.env.EMAIL_SERVER,
+        port: process.env.EMAIL_PORT || "587",
+        message: verr?.message,
+        code: verr?.code,
+        response: verr?.response,
+      });
     }
 
     const resolvedGoal = goal || projectFocus || "(not provided)";
@@ -51,14 +57,31 @@ ${message || ""}
       JSON.stringify({ ok: true, success: true }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
-  } catch {
+  } catch (err) {
     try {
       const ua = req.headers.get("user-agent") || "";
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
-      await logEvent("contact_error", { error: true, ip, ua });
+      await logEvent("contact_error", {
+        error: true,
+        ip,
+        ua,
+        message: err?.message,
+        code: err?.code,
+        response: err?.response,
+        command: err?.command,
+      });
     } catch {}
+    const isProd = process.env.NODE_ENV === "production";
+    const payload = {
+      ok: false,
+      success: false,
+      error: isProd ? "Email failed" : (err?.message || "Email failed"),
+      ...(isProd
+        ? {}
+        : { code: err?.code, response: err?.response, command: err?.command }),
+    };
     return new Response(
-      JSON.stringify({ ok: false, success: false, error: "Email failed" }),
+      JSON.stringify(payload),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
