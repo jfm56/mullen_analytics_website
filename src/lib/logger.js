@@ -7,7 +7,6 @@ export async function logEvent(type, payload = {}) {
       type,
       ...payload,
     };
-    // eslint-disable-next-line no-console
     console.log(JSON.stringify(entry));
     return { ok: true };
   } catch {
