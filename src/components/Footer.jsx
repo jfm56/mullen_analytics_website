@@ -14,6 +14,12 @@
             </svg>
             LinkedIn
           </a>
+          <a className={link} href="https://www.facebook.com/profile.php?id=61583215691139" target="_blank" rel="noreferrer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.326 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.79 4.659-4.79 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.765v2.315h3.59l-.467 3.622h-3.123V24h6.125C23.403 24 24 23.403 24 22.674V1.326C24 .597 23.403 0 22.675 0z"/>
+            </svg>
+            Facebook
+          </a>
           <a className={link} href="mailto:hello@mullenanalytics.com">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M12 13.065 0 6V4l12 7 12-7v2z"/><path d="M0 6.5 12 13l12-6.5V20a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2z"/>
