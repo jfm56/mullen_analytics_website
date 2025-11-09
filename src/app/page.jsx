@@ -64,7 +64,7 @@ export default function Home() {
       </section>
       {/* Testimonials section removed per request */}
       <section id="contact" className="max-w-3xl mx-auto px-4 py-16 bg-[var(--color-footer-bg)] text-[var(--color-footer-text)]">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-[var(--color-footer-text)] text-center mb-8">Tell Us About Your Goals</h2>
+        <h2 className="text-3xl md:text-4xl font-extrabold text-white text-center mb-8">Tell Us About Your Goals</h2>
         <p className="mb-6 text-[var(--color-footer-text)] text-center">We look forward to learning about your initiatives and exploring how we can support your data and AI strategy.</p>
         <ContactForm />
       </section>
