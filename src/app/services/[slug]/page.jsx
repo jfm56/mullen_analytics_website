@@ -1,4 +1,5 @@
 import services from "@/data/services.json" assert { type: "json" };
+import details from "@/data/serviceDetails.json" assert { type: "json" };
 import Link from "next/link";
 
 const icons = {
@@ -40,6 +41,7 @@ const icons = {
 export default async function ServicePage({ params }) {
   const { slug } = await params;
   const service = services.find((s) => s.slug === slug);
+  const detail = details.find((d) => d.slug === slug) || {};
   if (!service) return <div className="p-10 text-center text-xl">Service not found</div>;
 
   const Icon = icons[service.slug] ?? icons._default;
@@ -54,62 +56,77 @@ export default async function ServicePage({ params }) {
               {Icon}
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
-            {service.title}
-          </h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-90 leading-relaxed">
-            {service.description}
-          </p>
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">{service.title}</h1>
+          <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-90 leading-relaxed">{service.description}</p>
         </div>
       </section>
 
       {/* CONTENT SECTION */}
       <main className="max-w-4xl mx-auto px-6 py-16 leading-relaxed text-gray-800">
-        {slug === "ai-strategy-and-advisory" ? (
+        {slug === "ai-strategy-and-advisory" && (detail.overview || detail.whyItMatters || detail.howWeWork) ? (
           <>
-            <h2 className="text-2xl font-bold mb-4">Overview</h2>
-            <p className="mb-4">
-              AI Strategy is the blueprint for how your organization will use artificial intelligence to create value. It defines where AI can have real impact, how data and workflows need to evolve, and how to deploy solutions responsibly and at scale. Without strategy, AI efforts become scattered experiments—interesting, but not transformative.
-            </p>
-            <p className="mb-8">
-              We help organizations adopt AI in a practical, measurable, and people-first way. We focus on business outcomes, operational fit, and capability building—so your teams gain tools they can actually use.
-            </p>
+            {detail.overview && (
+              <>
+                <h2 className="text-2xl font-bold mb-4">Overview</h2>
+                <p className="mb-8">{detail.overview}</p>
+              </>
+            )}
 
-            <h3 className="text-xl font-semibold mb-3">Why It Matters</h3>
-            <ul className="list-disc pl-5 space-y-2 mb-10">
-              <li>Prevents wasted investment and fragmented tools</li>
-              <li>Ensures AI solutions integrate with real workflows</li>
-              <li>Aligns leadership, IT, and operations around a shared direction</li>
-              <li>Builds confidence, trust, and responsible use from day one</li>
-            </ul>
+            {Array.isArray(detail.whyItMatters) && detail.whyItMatters.length > 0 && (
+              <>
+                <h3 className="text-xl font-semibold mb-3">Why It Matters</h3>
+                <ul className="list-disc pl-5 space-y-2 mb-10">
+                  {detail.whyItMatters.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {Array.isArray(detail.howWeWork) && detail.howWeWork.length > 0 && (
+              <>
+                <div className="border rounded-lg overflow-hidden mb-6">
+                  <div className="bg-gray-900 text-white text-center text-sm tracking-widest py-2">HOW WE WORK</div>
+                </div>
+                <div className="grid gap-6 md:grid-cols-3">
+                  {detail.howWeWork.map((card, idx) => (
+                    <div key={idx} className="rounded border p-5">
+                      <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
+                        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16"/></svg>
+                      </div>
+                      <h4 className="font-semibold">{card.title}</h4>
+                      <p className="text-sm text-gray-700 mt-2">{card.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        ) : null}
+
+        {slug === "data-and-analytics-strategy" && (detail.whyItMattersIntro || detail.howWeBuild) ? (
+          <>
+            <h2 className="text-2xl font-bold mb-4">Why It Matters</h2>
+            {detail.whyItMattersIntro && <p className="mb-4">{detail.whyItMattersIntro}</p>}
+            {detail.whyItMattersSummary && <p className="mb-8">{detail.whyItMattersSummary}</p>}
 
             <div className="border rounded-lg overflow-hidden mb-6">
-              <div className="bg-gray-900 text-white text-center text-sm tracking-widest py-2">HOW WE WORK</div>
+              <div className="bg-gray-900 text-white text-center text-sm tracking-widest py-2">HOW WE BUILD DATA STRATEGY</div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="rounded border p-5">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12l4-4m-4 4l4 4"/></svg>
-                </div>
-                <h4 className="font-semibold">Identify High-Value Use Cases</h4>
-                <p className="text-sm text-gray-700 mt-2">We begin with business goals, pain points, and workflow needs—not technology.</p>
+            {Array.isArray(detail.howWeBuild) && detail.howWeBuild.length > 0 && (
+              <div className="grid gap-6 md:grid-cols-3">
+                {detail.howWeBuild.map((card, idx) => (
+                  <div key={idx} className="rounded border p-5">
+                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
+                      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16"/></svg>
+                    </div>
+                    <h4 className="font-semibold">{card.title}</h4>
+                    <p className="text-sm text-gray-700 mt-2">{card.text}</p>
+                  </div>
+                ))}
               </div>
-              <div className="rounded border p-5">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h6"/></svg>
-                </div>
-                <h4 className="font-semibold">Assess Data + Platform Readiness</h4>
-                <p className="text-sm text-gray-700 mt-2">We evaluate your data, systems, and existing tools to understand what’s possible now.</p>
-              </div>
-              <div className="rounded border p-5">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-                <h4 className="font-semibold">Deliver a Clear, Actionable Roadmap</h4>
-                <p className="text-sm text-gray-700 mt-2">We provide a phased implementation plan with timelines, ownership, and measurable outcomes.</p>
-              </div>
-            </div>
+            )}
           </>
         ) : null}
 
