@@ -77,17 +77,14 @@ export default function Home() {
           <div className="rounded border p-6 hover:shadow-sm transition-shadow">
             <h3 className="font-semibold">Case Study 1 — Breast Cancer Diagnosis Decision Tree Model</h3>
             <p className="text-sm text-black mt-2">We developed a fully interpretable machine learning model to support early breast cancer diagnosis by analyzing tumor characteristics. The model was built from scratch and included explainable visual decision rules to support clinical reasoning.</p>
-            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Enabled clearer diagnostic decision support and improved model transparency, building confidence for clinical review teams.</p>
           </div>
           <div className="rounded border p-6 hover:shadow-sm transition-shadow">
             <h3 className="font-semibold">Case Study 2 — Weather-Based Precipitation Prediction</h3>
             <p className="text-sm text-black mt-2">We analyzed historical weather data and transformed precipitation type into predictive variables for logistic regression forecasting. The resulting models predicted the likelihood of rain or snow based on environmental conditions and highlighted the strongest driving factors.</p>
-            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Increased forecast reliability and improved planning for weather-dependent operations, with fully interpretable feature impact insights.</p>
           </div>
           <div className="rounded border p-6 hover:shadow-sm transition-shadow">
             <h3 className="font-semibold">Case Study 3 — Association Rule Mining for Oncology Feature Patterns</h3>
             <p className="text-sm text-black mt-2">We applied the FP-Growth algorithm to identify co-occurring tumor characteristics associated with malignant cases. While no strong multi-feature patterns emerged—reflecting the complexity of cancer signals—we used the most informative features to train a transparent decision-tree classifier.</p>
-            <p className="text-sm text-black mt-2"><strong>Impact:</strong> Strengthened explainability in model-driven diagnosis and improved understanding of feature interactions for medical decision intelligence.</p>
           </div>
         </div>
       </section>
