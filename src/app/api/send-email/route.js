@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
-    const { name, email, goal, message, projectFocus } = await req.json();
+    const { name, email, goal, message } = await req.json();
 
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER,
@@ -14,8 +14,6 @@ export async function POST(req) {
       },
     });
 
-    const resolvedGoal = goal || projectFocus || "(not provided)";
-
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: process.env.EMAIL_TO,
@@ -23,7 +21,7 @@ export async function POST(req) {
       text: `
 Name: ${name || ""}
 Email: ${email || ""}
-Goal: ${resolvedGoal}
+Goal: ${goal || "(not provided)"}
 
 Message:
 ${message || ""}
