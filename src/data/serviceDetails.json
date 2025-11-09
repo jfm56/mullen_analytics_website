@@ -32,41 +32,105 @@
   {
     "slug": "data-engineering-and-modern-data-infrastructure",
     "title": "Data Engineering & Modern Data Infrastructure",
-    "description": "Warehouse/lakehouse architecture, ETL/ELT pipelines, cloud modernization, data trust & governance."
+    "description": "Warehouse/lakehouse architecture, ETL/ELT pipelines, cloud modernization, data trust & governance.",
+    "overview": "Modern analytics depends on data that is clean, reliable, and accessible. We design and implement data platforms—warehouses, lakehouses, and pipelines—that support scalable reporting, modeling, and automation. Our approach focuses on building systems that are clear, maintainable, and structured for long-term growth, not quick fixes.",
+    "whyItMattersSummary": "Reliable analytics begins with reliable data. Strong data infrastructure eliminates rework, reduces confusion, and builds trust across teams.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Assess Data Landscape & Workflows", "text": "We map how data is collected, stored, transformed, and used today." },
+      { "title": "Design Modern Architecture & Pipelines", "text": "We architect scalable, secure, and cost-efficient data platforms." },
+      { "title": "Implement, Document & Enable Teams", "text": "We deploy pipelines, automate data flow, and support internal capability." }
+    ]
   },
   {
     "slug": "business-intelligence-and-decision-intelligence",
     "title": "Business Intelligence & Decision Intelligence",
-    "description": "Dashboard modernization, automated reporting ecosystems, self-service analytics, and operational insights."
+    "description": "Dashboard modernization, automated reporting ecosystems, self-service analytics, and operational insights.",
+    "overview": "We help organizations modernize dashboards, streamline reporting workflows, and build analytical environments where teams can explore data confidently. Our focus is on clarity—defining meaningful KPIs, eliminating redundant reports, and creating self-service analytics that empower decision-makers.",
+    "whyItMattersSummary": "Good decisions depend on good information. Clear reporting unlocks speed, alignment, and accountability.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Align KPIs with Business Goals", "text": "We define metrics that reflect real operational priorities." },
+      { "title": "Modernize Dashboards & Reporting Workflows", "text": "We replace manual reports with automated, interactive insights." },
+      { "title": "Enable Self-Service & Data Literacy", "text": "We equip teams to interpret and use insights independently." }
+    ]
   },
   {
     "slug": "machine-learning-and-predictive-modeling",
     "title": "Machine Learning & Predictive Modeling",
-    "description": "Forecasting, segmentation, optimization models, MLOps deployment, monitoring, and drift management."
+    "description": "Forecasting, segmentation, optimization models, MLOps deployment, monitoring, and drift management.",
+    "overview": "We design, train, and operationalize predictive models that support forecasting, classification, optimization, and planning. Our focus is always on interpretability, value, and deployment readiness—ensuring models are usable in real workflows, not just technically impressive.",
+    "whyItMattersSummary": "Machine learning is most effective when integrated into business processes—not kept in a notebook or lab.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Define Use Case & Success Criteria", "text": "We begin with the business decision the model supports." },
+      { "title": "Feature Engineering & Model Development", "text": "We train, validate, and tune transparent, reliable models." },
+      { "title": "Deployment, Monitoring & Enablement", "text": "We integrate models into workflows and ensure ongoing reliability." }
+    ]
   },
   {
     "slug": "nlp-and-workflow-automation",
     "title": "NLP & Workflow Automation",
-    "description": "Text analytics, document intelligence, RPA, conversational assistants, and generative response systems."
+    "description": "Text analytics, document intelligence, RPA, assistants, generative response systems.",
+    "overview": "We use natural language processing and lightweight automation to reduce manual documentation work, accelerate information retrieval, and route tasks efficiently. The goal is not to replace people—but to remove repetitive effort so teams can focus on higher-value work.",
+    "whyItMattersSummary": "Small workflow improvements add up to hours saved every week—reducing burnout and increasing output.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Identify High-Friction Workflows", "text": "We map where time is wasted across documentation and communication." },
+      { "title": "Apply NLP + Automation Tools", "text": "We extract key info, summarize text, and automate routing." },
+      { "title": "Monitor, Iterate, and Train Teams", "text": "We ensure workflows stay aligned to operational needs." }
+    ]
   },
   {
     "slug": "healthcare-and-life-sciences-analytics",
     "title": "Healthcare & Life Sciences Analytics",
-    "description": "Clinical KPI dashboards, patient outcome modeling, operational resource planning, and public health analytics."
+    "description": "Clinical KPI dashboards, patient outcome modeling, operational resource planning, and public health analytics.",
+    "overview": "We help healthcare organizations use data to improve operational efficiency, patient outcomes, and resource planning. Our work supports clinical decision-making, performance improvement, and strategic planning—grounded in domain experience and practical execution.",
+    "whyItMattersSummary": "Healthcare is complex. Clear analytics create insight, alignment, and better care delivery.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Identify Key Clinical & Operational Measures", "text": "We define the metrics that matter for outcomes and performance." },
+      { "title": "Build Clean, Trusted Clinical Data Views", "text": "We unify and prepare data across EHR, EMS, lab, and operational systems." },
+      { "title": "Deliver Dashboards, Risk Models & Planning Tools", "text": "We support decision-making at clinical, operational, and leadership levels." }
+    ]
   },
   {
     "slug": "environmental-and-geospatial-analytics",
     "title": "Environmental & Geospatial Analytics",
-    "description": "GIS-based risk modeling, land-use visualization, remote sensing analysis, and climate impact scenarios."
+    "description": "GIS-based risk modeling, land-use visualization, remote sensing analysis, and climate impact scenarios.",
+    "overview": "We combine GIS, remote sensing, climate data, and predictive modeling to support land-use planning, environmental monitoring, and risk mitigation. This helps organizations visualize spatial patterns and make data-driven environmental decisions.",
+    "whyItMattersSummary": "Good environmental decisions require more than intuition—they require clear, spatially aware insight.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Gather Spatial, Satellite & Environmental Data", "text": "We integrate multi-source geospatial datasets." },
+      { "title": "Model Risk & Spatial Patterns", "text": "We apply spatial analytics and predictive modeling." },
+      { "title": "Visualize Insights on Interactive Maps & Dashboards", "text": "We create tools for planners, emergency services, and environmental teams." }
+    ]
   },
   {
     "slug": "product-and-mvp-development",
     "title": "Product & MVP Development",
-    "description": "Rapid prototyping of analytics-enabled features, lightweight pipelines, and fractional Chief Data/AI Officer support."
+    "description": "Rapid prototyping of analytics-enabled features, lightweight pipelines, and fractional Chief Data/AI Officer support.",
+    "overview": "We help organizations rapidly prototype, test, and validate data-driven products and internal tools. Our goal is to move from idea → working product quickly and cost-effectively, without over-engineering.",
+    "whyItMattersSummary": "Speed to learning is more valuable than perfection. Small, working products beat large, theoretical plans.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Define the Core Problem & User Needs", "text": "We clarify what the product must solve immediately." },
+      { "title": "Build a Lightweight, Functional MVP", "text": "We implement only what delivers value fast." },
+      { "title": "Iterate Based on Feedback & Real Usage", "text": "We refine functionality using real operational insights." }
+    ]
   },
   {
     "slug": "training-and-capability-building",
     "title": "Training & Capability Building",
-    "description": "Custom workshops in SQL, Python, ML, dashboarding, data storytelling, and executive decision intelligence."
+    "description": "Custom workshops in SQL, Python, ML, dashboarding, data storytelling, and executive decision intelligence.",
+    "overview": "We develop data and analytics skills across teams through workshops, coaching, and hands-on learning. We focus on confidence, clarity, and practical problem-solving—not abstract theory.",
+    "whyItMattersSummary": "Tools don’t create value—people do. Empowered teams accelerate progress.",
+    "howTitle": "HOW WE WORK",
+    "howWeWork": [
+      { "title": "Assess Skill Levels & Learning Goals", "text": "We meet teams where they are." },
+      { "title": "Develop Hands-On, Applied Curriculum", "text": "We teach through real examples tied to your operations." },
+      { "title": "Support Retention & Practice", "text": "We reinforce with guidance, playbooks, and follow-up sessions." }
+    ]
   }
 ]
