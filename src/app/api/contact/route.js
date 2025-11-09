@@ -41,7 +41,7 @@ ${message || ""}
       JSON.stringify({ ok: true, success: true }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch {
     try {
       const ua = req.headers.get("user-agent") || "";
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";

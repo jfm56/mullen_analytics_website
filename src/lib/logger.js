@@ -14,7 +14,7 @@ export async function logEvent(type, payload = {}) {
     };
     await fs.promises.appendFile(LOG_FILE, JSON.stringify(entry) + "\n", "utf8");
     return { ok: true };
-  } catch (err) {
+  } catch {
     // Fail silently to avoid breaking user flows
     return { ok: false };
   }
