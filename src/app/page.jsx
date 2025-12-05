@@ -89,6 +89,22 @@ export default function Home() {
         </div>
       </section>
       {/* Testimonials section removed per request */}
+      <section id="schedule" className="max-w-3xl mx-auto px-4 py-16">
+        <SectionHeader title="Schedule your appointment" />
+        <p className="mb-6 text-center text-black">
+          Choose a time that works for you to discuss your data and AI initiatives.
+        </p>
+        <div className="flex justify-center">
+          <a
+            href="https://calendar.app.google/4JuyKX7s75GmJT5u9"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-3 rounded-md bg-[var(--brand-primary)] text-white font-medium shadow-sm transition-transform duration-200 hover:scale-[1.03]"
+          >
+            Schedule your appointment
+          </a>
+        </div>
+      </section>
       <section id="contact" className="max-w-3xl mx-auto px-4 py-16 bg-[var(--color-footer-bg)] text-white">
         <h2 className="text-3xl md:text-4xl font-extrabold text-white text-center mb-8">Tell Us About Your Goals</h2>
         <p className="mb-6 text-white text-center">We look forward to learning about your initiatives and exploring how we can support your data and AI strategy.</p>

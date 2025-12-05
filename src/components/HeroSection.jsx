@@ -40,7 +40,7 @@
         </p>
         <div className="mt-10 flex justify-center gap-4">
           <a
-            href="#contact"
+            href="#schedule"
             className="px-6 py-3 rounded-md bg-[var(--brand-primary)] text-white font-medium shadow-sm transition-transform duration-200 hover:scale-[1.03]"
           >
             Start Your Project
