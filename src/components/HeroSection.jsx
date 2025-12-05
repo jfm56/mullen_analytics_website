@@ -40,7 +40,9 @@
         </p>
         <div className="mt-10 flex justify-center gap-4">
           <a
-            href="#schedule"
+            href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-6 py-3 rounded-md bg-[var(--brand-primary)] text-white font-medium shadow-sm transition-transform duration-200 hover:scale-[1.03]"
           >
             Start Your Project

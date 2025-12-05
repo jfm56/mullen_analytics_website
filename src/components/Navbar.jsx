@@ -44,6 +44,14 @@ export default function Navbar() {
           <Link href="/#portfolio" className={`${linkCls} ${underline}`}>Portfolio</Link>
           <Link href="/blog" className={`${linkCls} ${underline}`}>Blog</Link>
           <Link href="/#contact" className={`${linkCls} ${underline}`}>Contact</Link>
+          <a
+            href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${linkCls} ${underline}`}
+          >
+            Schedule
+          </a>
         </div>
       </div>
       {open && (
@@ -54,6 +62,15 @@ export default function Navbar() {
             <Link href="/#portfolio" className={linkCls} onClick={() => setOpen(false)}>Portfolio</Link>
             <Link href="/blog" className={linkCls} onClick={() => setOpen(false)}>Blog</Link>
             <Link href="/#contact" className={linkCls} onClick={() => setOpen(false)}>Contact</Link>
+            <a
+              href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkCls}
+              onClick={() => setOpen(false)}
+            >
+              Schedule
+            </a>
           </div>
         </div>
       )}
