@@ -1,13 +1,14 @@
  import { Inter, Geist_Mono } from "next/font/google";
- import "./globals.css";
- import Navbar from "@/components/Navbar";
- import Footer from "@/components/Footer";
+import Script from "next/script";
+import "./globals.css";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
- const inter = Inter({
-   variable: "--font-inter",
-   subsets: ["latin"],
-   weight: ["400","500","600","700"],
- });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400","500","600","700"],
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -32,6 +33,20 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${inter.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-17747483900"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'AW-17747483900');
+          `}
+        </Script>
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
