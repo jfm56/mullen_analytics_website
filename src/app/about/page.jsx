@@ -35,7 +35,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                Our work serves public safety agencies, healthcare systems, government organizations, and mission-critical operations where decisions must be accurate, explainable, and defensible. We don't build experimental models or one-off dashboards — we design analytics systems leaders can trust, defend, and operationalize.
+                Our work serves public safety agencies, healthcare systems, government organizations, and mission-critical operations where decisions must be accurate, explainable, and defensible. We don&apos;t build experimental models or one-off dashboards — we design analytics systems leaders can trust, defend, and operationalize.
               </p>
               <p className="text-lg leading-relaxed" style={{ color: '#1F2933' }}>
                 What sets Mullen Analytics apart is the combination of deep technical expertise and real-world operational experience. Every solution is grounded in disciplined methodology, clear assumptions, and an understanding of how decisions are actually made under pressure.
@@ -60,7 +60,7 @@ export default function AboutPage() {
                 <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Our Approach</h2>
               </div>
               <p className="text-lg leading-relaxed mb-8" style={{ color: '#1F2933' }}>
-                We believe analytics should reduce uncertainty — not introduce new risk. That's why our work emphasizes:
+                We believe analytics should reduce uncertainty — not introduce new risk. That&apos;s why our work emphasizes:
               </p>
           <div className="space-y-4">
             <div className="flex items-start">
@@ -142,7 +142,7 @@ export default function AboutPage() {
       <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-xl mb-8" style={{ color: '#1F2933' }}>
-            If you're exploring how analytics or AI can support critical decisions in your organization, we'd welcome the opportunity to talk.
+            If you&apos;re exploring how analytics or AI can support critical decisions in your organization, we&apos;d welcome the opportunity to talk.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <a

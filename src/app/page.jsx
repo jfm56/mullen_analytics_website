@@ -302,7 +302,7 @@ export default function Home() {
       <section className="py-24" style={{ backgroundColor: '#F7F9FC' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-4" style={{ color: '#0B3C5D' }}>
-            Let's talk about what you're solving
+            Let&apos;s talk about what you&apos;re solving
           </h2>
           <p className="text-xl mb-10" style={{ color: '#4B5563', maxWidth: '620px', margin: '0 auto 2.5rem' }}>
             Move from data to defensible decisions.

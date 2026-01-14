@@ -45,7 +45,7 @@ export default function IndustriesPage() {
       <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-xl leading-relaxed" style={{ color: '#1F2933', maxWidth: '640px', margin: '0 auto' }}>
-            We don't just go deep. We go wide — connecting operations, finance, workforce and service delivery so you can find the opportunities others miss.
+            We don&apos;t just go deep. We go wide — connecting operations, finance, workforce and service delivery so you can find the opportunities others miss.
           </p>
         </div>
       </section>
@@ -78,7 +78,7 @@ export default function IndustriesPage() {
                 <img src="/Healthcare%20Operations%20(Hospitals%20:%20Trauma%20:%20Systems).jpg" alt="Healthcare Operations" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Healthcare Operations</h3>
+                <h3 className="text-lg font-semibold mb-3" style={{ color: '#0B3C5D' }}>You don’t need a data lake. You need a plan.</h3>
                 <p className="text-base leading-relaxed mb-4" style={{ color: '#1F2933' }}>
                   Turn patient flow and staffing data into actionable insights.
                 </p>
@@ -156,7 +156,7 @@ export default function IndustriesPage() {
             <div className="rounded-lg border p-6 hover:shadow-lg transition-shadow" style={{ backgroundColor: '#F7F9FC', borderColor: '#E5E7EB' }}>
               <h3 className="text-lg font-semibold mb-3" style={{ color: '#0B3C5D' }}>AI in the real world: moving from pilots to durable systems</h3>
               <p className="text-base leading-relaxed" style={{ color: '#1F2933' }}>
-                A pragmatic approach to governance, monitoring, retraining, and ROI — without the "science project" trap.
+                A pragmatic approach to governance, monitoring, retraining, and ROI — without the &quot;science project&quot; trap.
               </p>
             </div>
 
@@ -275,7 +275,7 @@ export default function IndustriesPage() {
           <div className="text-center mb-12">
             <h2 className="mb-4 text-4xl font-bold" style={{ color: '#0B3C5D' }}>Let us be part of your success story</h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
-              Tell us what you're solving — we'll respond with a clear next step.
+              Tell us what you&apos;re solving — we&apos;ll respond with a clear next step.
             </p>
           </div>
           <div className="max-w-2xl mx-auto">
