@@ -406,7 +406,7 @@ export default function CapabilitiesPage() {
           <h3 className="text-lg font-semibold mb-6" style={{ color: '#0B3C5D' }}>Explore Further</h3>
           <div className="flex flex-wrap gap-6">
             <a href="/portfolio" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Case studies</a>
-            <a href="/services" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Industry applications</a>
+            <a href="/industries" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Industry applications</a>
             <a href="/about" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Technical approach</a>
           </div>
         </div>

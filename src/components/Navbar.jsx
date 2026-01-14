@@ -26,7 +26,7 @@ export default function Navbar() {
     <nav className={`${base} ${bg}`}>
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Mullen Analytics logo" width={36} height={36} priority />
+          <Image src="/nav%20bar%20logo.png" alt="Mullen Analytics logo" width={40} height={40} priority className="object-contain" />
           <span className="font-bold text-lg tracking-tight">Mullen Analytics</span>
         </Link>
         <button
@@ -43,8 +43,7 @@ export default function Navbar() {
           <Link href="/capabilities" className={`${linkCls} ${underline}`}>Capabilities</Link>
           <Link href="/technology" className={`${linkCls} ${underline}`}>Technology</Link>
           <Link href="/industries" className={`${linkCls} ${underline}`}>Industries</Link>
-          <Link href="/#services" className={`${linkCls} ${underline}`}>Services</Link>
-          <Link href="/#portfolio" className={`${linkCls} ${underline}`}>Portfolio</Link>
+          <Link href="/portfolio" className={`${linkCls} ${underline}`}>Case Studies</Link>
           <Link href="/contact" className={`${linkCls} ${underline}`}>Contact</Link>
           <Link href="/portal/login" className={`${linkCls} ${underline}`}>Client Portal</Link>
           <a
@@ -64,8 +63,7 @@ export default function Navbar() {
             <Link href="/capabilities" className={linkCls} onClick={() => setOpen(false)}>Capabilities</Link>
             <Link href="/technology" className={linkCls} onClick={() => setOpen(false)}>Technology</Link>
             <Link href="/industries" className={linkCls} onClick={() => setOpen(false)}>Industries</Link>
-            <Link href="/#services" className={linkCls} onClick={() => setOpen(false)}>Services</Link>
-            <Link href="/#portfolio" className={linkCls} onClick={() => setOpen(false)}>Portfolio</Link>
+            <Link href="/portfolio" className={linkCls} onClick={() => setOpen(false)}>Case Studies</Link>
             <Link href="/contact" className={linkCls} onClick={() => setOpen(false)}>Contact</Link>
             <Link href="/portal/login" className={linkCls} onClick={() => setOpen(false)}>Client Portal</Link>
             <a
