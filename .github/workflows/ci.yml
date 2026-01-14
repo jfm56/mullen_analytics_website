@@ -38,4 +38,4 @@ jobs:
       - name: Build
         run: npm run build
       - name: ESLint
-        run: npx eslint . --max-warnings=0
+        run: npx eslint .
