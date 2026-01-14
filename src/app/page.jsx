@@ -1,114 +1,239 @@
- import HeroSection from "@/components/HeroSection";
- import SectionHeader from "@/components/SectionHeader";
- import ServiceCard from "@/components/ServiceCard";
- import ContactForm from "@/components/ContactForm";
- import services from "@/data/services.json" assert { type: "json" };
- 
+'use client';
 
 export default function Home() {
   return (
     <div>
-      <HeroSection />
-      <section id="about" className="max-w-5xl mx-auto px-4 py-16 bg-[var(--color-card)]">
-        <SectionHeader title="Who We Are" />
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <p className="text-black leading-relaxed">
-            Mullen Analytics & AI Consulting partners with executives and operational leaders to
-            develop data strategies, modernize analytics platforms, and deploy AI responsibly. We
-            combine analytical rigor with practical execution to help organizations make confident,
-            data-driven decisions at scale.
-          </p>
-          <div className="rounded-lg border p-6">
-            <h3 className="font-semibold mb-3">Focus Areas</h3>
-            <ul className="space-y-2 text-sm text-black">
-              <li>• AI strategy and operating frameworks</li>
-              <li>• Data platform and pipeline modernization</li>
-              <li>• Machine learning development and model governance</li>
-              <li>• Decision intelligence, reporting, and business analytics</li>
-            </ul>
+      {/* Hero Section - PwC Style */}
+      <section className="relative h-[75vh] overflow-hidden">
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url(/Hero%20image.webp)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'brightness(0.3)'
+          }}
+        />
+        
+        <div className="relative h-full max-w-7xl mx-auto px-4 flex items-center">
+          <div style={{ maxWidth: '640px' }}>
+            <h1 className="text-5xl md:text-6xl mb-6" style={{ color: '#FFFFFF', fontWeight: 700, lineHeight: 1.15 }}>
+              Analytics and AI for decisions you have to defend
+            </h1>
+            <p className="text-xl mb-6" style={{ color: '#FFFFFF', lineHeight: 1.5 }}>
+              We design forecasting, analytics, and decision systems for high-stakes environments where accountability matters.
+            </p>
+            <p className="text-base mb-10" style={{ color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.6 }}>
+              Trusted by public safety, healthcare, and government teams to turn complex data into confident action.
+            </p>
+            <a
+              href="/capabilities"
+              className="inline-block px-8 py-4 rounded-md border-2 border-white text-white font-semibold transition-all duration-200 hover:bg-white hover:text-[#0B3C5D] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
+            >
+              Explore now
+            </a>
           </div>
         </div>
       </section>
-      {/* How We Help Organizations */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="border rounded-lg overflow-hidden mb-6">
-          <div className="bg-gray-900 text-white text-center text-sm tracking-widest py-2">HOW WE HELP ORGANIZATIONS</div>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded border p-6">
-            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16"/></svg>
+
+      {/* Featured Insights - 3 Cards */}
+      <section className="max-w-7xl mx-auto px-4 py-20">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="group cursor-pointer">
+            <div className="aspect-[4/3] bg-gray-200 rounded-lg mb-4 overflow-hidden">
+              <img src="/AI Forecasting for Workforce Planning.png" alt="AI Forecasting for Workforce Planning" className="w-full h-full object-cover" />
             </div>
-            <h4 className="font-semibold">Strategy & Alignment</h4>
-            <p className="text-sm text-black mt-2">We clarify business priorities and identify where data and AI can drive meaningful outcomes.</p>
+            <h3 className="text-xl font-semibold mb-2 group-hover:text-[#2E6F95] transition-colors" style={{ color: '#0B3C5D' }}>
+              AI Forecasting for Workforce Planning
+            </h3>
+            <p className="text-sm" style={{ color: '#4B5563' }}>
+              How to build forecasting that leadership trusts and operations can act on.
+            </p>
           </div>
-          <div className="rounded border p-6">
-            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h12M4 18h8"/></svg>
+
+          <div className="group cursor-pointer">
+            <div className="aspect-[4/3] bg-gray-200 rounded-lg mb-4 overflow-hidden">
+              <img src="/From Dashboards to Decisions.png" alt="From Dashboards to Decisions" className="w-full h-full object-cover" />
             </div>
-            <h4 className="font-semibold">Data Foundation & Infrastructure</h4>
-            <p className="text-sm text-black mt-2">We ensure data is reliable, accessible, and structured for decision-making and scale.</p>
+            <h3 className="text-xl font-semibold mb-2 group-hover:text-[#2E6F95] transition-colors" style={{ color: '#0B3C5D' }}>
+              From Dashboards to Decisions
+            </h3>
+            <p className="text-sm" style={{ color: '#4B5563' }}>
+              The patterns that turn analytics into repeatable action and measurable outcomes.
+            </p>
           </div>
-          <div className="rounded border p-6">
-            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
+
+          <div className="group cursor-pointer">
+            <div className="aspect-[4/3] bg-gray-200 rounded-lg mb-4 overflow-hidden">
+              <img src="/Operational Analytics That Leadership Trusts.png" alt="Operational Analytics That Leadership Trusts" className="w-full h-full object-cover" />
             </div>
-            <h4 className="font-semibold">Analytics, Intelligence & Automation</h4>
-            <p className="text-sm text-black mt-2">We build reporting, models, and workflows that turn data into decisions and action.</p>
+            <h3 className="text-xl font-semibold mb-2 group-hover:text-[#2E6F95] transition-colors" style={{ color: '#0B3C5D' }}>
+              Operational Analytics That Leadership Trusts
+            </h3>
+            <p className="text-sm" style={{ color: '#4B5563' }}>
+              Building analytics systems that support accountability in regulated environments.
+            </p>
           </div>
         </div>
       </section>
-      <section id="services" className="max-w-7xl mx-auto px-4 py-16">
-        <SectionHeader title="Services" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((s, i) => (
-            <ServiceCard
-              key={i}
-              title={s.title}
-              description={s.description}
-              href={`/services/${s.slug}`}
-            />
-          ))}
-        </div>
-      </section>
-      <section id="portfolio" className="max-w-7xl mx-auto px-4 py-16 bg-[var(--color-card)]">
-        <SectionHeader title="Selected Work" />
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded border p-6 hover:shadow-sm transition-shadow">
-            <h3 className="font-semibold">Case Study 1 — Breast Cancer Diagnosis Decision Tree Model</h3>
-            <p className="text-sm text-black mt-2">We developed a fully interpretable machine learning model to support early breast cancer diagnosis by analyzing tumor characteristics. The model was built from scratch and included explainable visual decision rules to support clinical reasoning.</p>
-          </div>
-          <div className="rounded border p-6 hover:shadow-sm transition-shadow">
-            <h3 className="font-semibold">Case Study 2 — Weather-Based Precipitation Prediction</h3>
-            <p className="text-sm text-black mt-2">We analyzed historical weather data and transformed precipitation type into predictive variables for logistic regression forecasting. The resulting models predicted the likelihood of rain or snow based on environmental conditions and highlighted the strongest driving factors.</p>
-          </div>
-          <div className="rounded border p-6 hover:shadow-sm transition-shadow">
-            <h3 className="font-semibold">Case Study 3 — Association Rule Mining for Oncology Feature Patterns</h3>
-            <p className="text-sm text-black mt-2">We applied the FP-Growth algorithm to identify co-occurring tumor characteristics associated with malignant cases. While no strong multi-feature patterns emerged—reflecting the complexity of cancer signals—we used the most informative features to train a transparent decision-tree classifier.</p>
+
+      {/* Flagship Narrative Section - Two Column */}
+      <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-semibold mb-6 leading-tight" style={{ color: '#0B3C5D' }}>
+                We deliver expertise where it matters most
+              </h2>
+              <p className="text-lg leading-relaxed mb-4" style={{ color: '#1F2933' }}>
+                Organizations operating in high-stakes environments need analytics and AI they can defend. We help public agencies, healthcare systems, and mission-critical operations turn complex data into confident decisions.
+              </p>
+              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
+                Our work is built on operational experience, disciplined methodology, and a commitment to transparency. We don't just deliver models—we deliver systems that endure.
+              </p>
+              <a href="/about" className="text-base font-semibold transition-colors" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>
+                Learn more →
+              </a>
+            </div>
+            <div className="aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden">
+              <img src="/We deliver expertise where it matters most.webp" alt="We deliver expertise where it matters most" className="w-full h-full object-cover" />
+            </div>
           </div>
         </div>
       </section>
-      {/* Testimonials section removed per request */}
-      <section id="schedule" className="max-w-3xl mx-auto px-4 py-16">
-        <SectionHeader title="Schedule your appointment" />
-        <p className="mb-6 text-center text-black">
-          Choose a time that works for you to discuss your data and AI initiatives.
+
+      {/* Case Studies Section */}
+      <section className="max-w-7xl mx-auto px-4 py-20">
+        <h2 className="text-3xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>
+          Selected Work
+        </h2>
+        <p className="text-lg mb-12" style={{ color: '#4B5563' }}>
+          Examples of analytics and AI delivered for operational decision-making.
         </p>
-        <div className="flex justify-center">
+        
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow" style={{ borderColor: '#E5E7EB' }}>
+            <p className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#2E6F95' }}>
+              EMS Operations
+            </p>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#0B3C5D' }}>
+              Demand forecasting and staffing optimization for emergency services
+            </h3>
+            <p className="text-sm mb-4" style={{ color: '#4B5563' }}>
+              Built predictive models and operational dashboards to support resource allocation decisions.
+            </p>
+            <a href="/portfolio" className="text-sm font-semibold transition-colors" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>
+              Learn more →
+            </a>
+          </div>
+
+          <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow" style={{ borderColor: '#E5E7EB' }}>
+            <p className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#2E6F95' }}>
+              Healthcare Analytics
+            </p>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#0B3C5D' }}>
+              Explainable machine learning for medical classification
+            </h3>
+            <p className="text-sm mb-4" style={{ color: '#4B5563' }}>
+              Developed interpretable models designed for transparency and clinical accountability.
+            </p>
+            <a href="/portfolio" className="text-sm font-semibold transition-colors" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>
+              Learn more →
+            </a>
+          </div>
+
+          <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow" style={{ borderColor: '#E5E7EB' }}>
+            <p className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#2E6F95' }}>
+              Systems Engineering
+            </p>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#0B3C5D' }}>
+              Secure backend architecture with role-based access control
+            </h3>
+            <p className="text-sm mb-4" style={{ color: '#4B5563' }}>
+              Delivered production-ready systems with authentication, testing, and security controls.
+            </p>
+            <a href="/portfolio" className="text-sm font-semibold transition-colors" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>
+              Learn more →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Industry Highlights */}
+      <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl font-semibold mb-12" style={{ color: '#0B3C5D' }}>
+            Industries We Serve
+          </h2>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="/industries" className="block p-6 border rounded-lg hover:shadow-md transition-all bg-white" style={{ borderColor: '#E5E7EB' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#0B3C5D' }}>
+                Public Safety
+              </h3>
+              <p className="text-sm" style={{ color: '#4B5563' }}>
+                EMS, fire, and police analytics for demand forecasting and operational performance.
+              </p>
+            </a>
+
+            <a href="/industries" className="block p-6 border rounded-lg hover:shadow-md transition-all bg-white" style={{ borderColor: '#E5E7EB' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#0B3C5D' }}>
+                Healthcare Operations
+              </h3>
+              <p className="text-sm" style={{ color: '#4B5563' }}>
+                Patient flow, staffing, and operational intelligence for hospitals and health systems.
+              </p>
+            </a>
+
+            <a href="/industries" className="block p-6 border rounded-lg hover:shadow-md transition-all bg-white" style={{ borderColor: '#E5E7EB' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#0B3C5D' }}>
+                Government & Procurement
+              </h3>
+              <p className="text-sm" style={{ color: '#4B5563' }}>
+                NJSTART-ready analytics and AI services aligned to public-sector requirements.
+              </p>
+            </a>
+
+            <a href="/industries" className="block p-6 border rounded-lg hover:shadow-md transition-all bg-white" style={{ borderColor: '#E5E7EB' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#0B3C5D' }}>
+                Utilities & Field Operations
+              </h3>
+              <p className="text-sm" style={{ color: '#4B5563' }}>
+                Reliability, scheduling, and resource allocation across crews and assets.
+              </p>
+            </a>
+
+            <a href="/industries" className="block p-6 border rounded-lg hover:shadow-md transition-all bg-white" style={{ borderColor: '#E5E7EB' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#0B3C5D' }}>
+                Enterprise Operations
+              </h3>
+              <p className="text-sm" style={{ color: '#4B5563' }}>
+                Modern metrics, forecasting, and decision systems for finance and supply chain.
+              </p>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: '#0B3C5D' }}>
+            Let's talk about what you're solving
+          </h2>
+          <p className="text-lg mb-10 max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
+            Whether you're exploring an initial analytics initiative or scaling an existing program, we can help you move from data to defensible decisions.
+          </p>
           <a
-            href="https://calendar.app.google/4JuyKX7s75GmJT5u9"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-3 rounded-md bg-[var(--brand-primary)] text-white font-medium shadow-sm transition-transform duration-200 hover:scale-[1.03]"
+            href="/contact"
+            className="inline-block px-10 py-5 rounded-md font-semibold shadow-lg transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={{ backgroundColor: '#0B3C5D', color: '#FFFFFF' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#2E6F95'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#0B3C5D'}
           >
-            Schedule your appointment
+            Start a conversation
           </a>
         </div>
-      </section>
-      <section id="contact" className="max-w-3xl mx-auto px-4 py-16 bg-[var(--color-footer-bg)] text-white">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-white text-center mb-8">Tell Us About Your Goals</h2>
-        <p className="mb-6 text-white text-center">We look forward to learning about your initiatives and exploring how we can support your data and AI strategy.</p>
-        <ContactForm />
       </section>
     </div>
   );

@@ -1,0 +1,406 @@
+export const metadata = {
+  title: "Capabilities | Mullen Analytics & AI Consulting",
+  description: "Enterprise analytics and AI capabilities for public agencies, healthcare organizations, and research-driven institutions.",
+};
+
+export default function CapabilitiesPage() {
+  return (
+    <div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'url(/particle-wave.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900" />
+        
+        <div className="relative max-w-7xl mx-auto px-4 py-32 md:py-40">
+          <div className="max-w-4xl">
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+              Turning Complex Data Into Defensible Decisions
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-200 leading-relaxed mb-6">
+              Mullen Analytics & AI Consulting partners with public agencies, healthcare organizations, and research-driven institutions to design, deploy, and operationalize advanced analytics and artificial intelligence in high-stakes, regulated, and mission-critical environments.
+            </p>
+            <p className="text-lg md:text-xl text-gray-300 leading-relaxed">
+              We specialize in decision-focused analytics—from predictive modeling and machine learning to secure data pipelines and executive dashboards—delivering solutions that support accountability, transparency, and real-world operational outcomes, not just technical performance.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-10">
+              <a
+                href="/contact"
+                className="px-8 py-4 rounded-md bg-white text-gray-900 font-semibold shadow-sm transition-transform duration-200 hover:scale-[1.03] text-center"
+              >
+                Request a capabilities briefing
+              </a>
+              <a
+                href="https://calendar.app.google/4JuyKX7s75GmJT5u9"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 rounded-md border-2 border-white text-white font-semibold transition-colors hover:bg-white hover:text-gray-900 text-center"
+              >
+                Schedule a strategy consultation
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4 py-16 bg-white">
+        <h2 className="text-3xl md:text-4xl font-bold mb-6">Capabilities</h2>
+        <p className="text-lg text-gray-700 leading-relaxed">
+          Our capabilities span strategy, analytics, and technology delivery, purpose-built for organizations operating in complex, regulated, and mission-critical environments.
+        </p>
+      </section>
+
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Decision Intelligence & Analytics Strategy</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            We help leadership teams translate complex data into actionable, defensible decisions aligned with organizational goals, regulatory requirements, and operational realities.
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <h3 className="text-xl font-semibold mb-4">Capabilities</h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Analytics strategy and roadmap development</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Decision framework and KPI design</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Use-case prioritization and feasibility analysis</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Model evaluation, validation, and governance</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Stakeholder alignment and executive advisory</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Public Safety & Emergency Services Analytics</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            Built on direct operational experience, our analytics reflect the realities of emergency response—not theoretical models.
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <h3 className="text-xl font-semibold mb-4">Capabilities</h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>EMS call-volume and demand forecasting</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Staffing, deployment, and coverage optimization</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Response-time and workload analysis</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Surge and seasonal risk modeling</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Executive dashboards for command staff and leadership</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Healthcare & Biomedical Intelligence</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            We deliver analytics designed for accuracy, accountability, and explainability in healthcare and biomedical environments where trust and compliance are critical.
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <h3 className="text-xl font-semibold mb-4">Capabilities</h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Clinical and operational predictive modeling</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Risk stratification and outcome forecasting</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Biomedical data integration and normalization</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Explainable AI for regulated and audited environments</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Decision-support dashboards and reporting</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Biology, Life Sciences & Research Analytics</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            We support research-driven organizations by applying advanced analytics to complex, high-dimensional biological data, bridging the gap between research and production.
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <h3 className="text-xl font-semibold mb-4">Capabilities</h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Predictive modeling of biological systems</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Genomic, molecular, and omics data analysis</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Feature engineering for biological datasets</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Pattern discovery and classification</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Research-to-production analytics pipelines</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Environmental, Ecological & Geospatial Analytics</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            We provide advanced analytics for environmentally sensitive regions, with specialized expertise in ecology, land-use, and wildfire risk modeling.
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <h3 className="text-xl font-semibold mb-4">Capabilities</h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Ecological and environmental data modeling</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Wildfire risk and land-use analysis</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Geospatial analytics and spatial decision support</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Climate and seasonal trend analysis</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Planning and policy support tools</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Analytics Platforms, AI & Technology Delivery</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            Across all domains, we design and deploy secure, scalable, production-ready analytics systems that integrate seamlessly into existing operations.
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <h3 className="text-xl font-semibold mb-4">Capabilities</h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Machine learning and statistical modeling</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Predictive, descriptive, and prescriptive analytics</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Data engineering and pipeline automation</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Interactive dashboards and visualization</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Model monitoring and continuous improvement</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Secure and compliant data handling</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Procurement & Contracting Alignment</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            Mullen Analytics & AI Consulting is experienced in supporting public-sector procurement, RFP-based engagements, and multi-year contracts.
+          </p>
+          <p className="text-lg text-gray-700 leading-relaxed mb-6">
+            Our solutions are designed to align with common public-sector requirements, including:
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Information security and data protection standards</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Explainable and auditable analytics models</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Documentation suitable for oversight and compliance</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Secure handling of sensitive and regulated data</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Scalable solutions that support long-term operations</span>
+              </li>
+            </ul>
+          </div>
+          <p className="text-lg text-gray-700 leading-relaxed mt-6">
+            Engagements can be structured to support pilot programs, phased implementations, or multi-year analytics initiatives, with clear deliverables, defined milestones, and ongoing support options.
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Engagement Models</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            Our work is structured to meet organizations where they are—whether validating a single use case or deploying enterprise-level analytics programs.
+          </p>
+          <p className="text-lg text-gray-700 leading-relaxed mb-6">
+            Typical engagements include:
+          </p>
+          <div className="border-l-4 border-blue-600 pl-6">
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Targeted analytics pilots and feasibility studies</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Production model and dashboard development</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Multi-phase analytics programs</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-3 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600" />
+                <span>Ongoing analytics, model maintenance, and support</span>
+              </li>
+            </ul>
+          </div>
+          <p className="text-lg text-gray-700 leading-relaxed mt-6">
+            Engagements are scoped based on complexity, data maturity, and operational impact, with pricing aligned to the value and risk profile of the work.
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-gray-800 py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">Why Mullen Analytics</h2>
+          <ul className="space-y-4 text-gray-200">
+            <li className="flex items-start">
+              <span className="mr-4 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+              <span className="text-lg"><strong>Deep domain expertise</strong> across public safety, healthcare, biology, and environmental analytics</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-4 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+              <span className="text-lg"><strong>Solutions designed for real operational decisions,</strong> not academic demonstrations</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-4 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+              <span className="text-lg"><strong>Explainable, defensible models</strong> suitable for regulated and public environments</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-4 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+              <span className="text-lg"><strong>Secure, production-ready systems</strong> built to deploy, scale, and endure</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-4 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+              <span className="text-lg"><strong>Direct engagement</strong> with senior leadership, analysts, and operational stakeholders</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="bg-gray-50 py-12">
+        <div className="max-w-5xl mx-auto px-4">
+          <h3 className="text-xl font-semibold mb-6">Explore Further</h3>
+          <div className="flex flex-wrap gap-6 text-blue-600">
+            <a href="/portfolio" className="hover:underline">Case studies</a>
+            <a href="/blog" className="hover:underline">Research and insights</a>
+            <a href="/services" className="hover:underline">Industry applications</a>
+            <a href="/about" className="hover:underline">Technical approach</a>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-20">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Move Forward?</h2>
+          <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
+            Whether you are exploring an initial analytics initiative or scaling an existing program, we can help you move from data to defensible decisions.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <a
+              href="/contact"
+              className="px-8 py-4 rounded-md bg-[var(--brand-primary)] text-white font-semibold shadow-sm transition-transform duration-200 hover:scale-[1.03]"
+            >
+              Request a capabilities briefing
+            </a>
+            <a
+              href="https://calendar.app.google/4JuyKX7s75GmJT5u9"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-4 rounded-md border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold transition-colors hover:bg-[var(--brand-primary)] hover:text-white"
+            >
+              Schedule a strategy consultation
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

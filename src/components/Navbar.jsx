@@ -40,10 +40,13 @@ export default function Navbar() {
         </button>
         <div className="hidden md:flex gap-6">
           <Link href="/about" className={`${linkCls} ${underline}`}>About</Link>
+          <Link href="/capabilities" className={`${linkCls} ${underline}`}>Capabilities</Link>
+          <Link href="/technology" className={`${linkCls} ${underline}`}>Technology</Link>
+          <Link href="/industries" className={`${linkCls} ${underline}`}>Industries</Link>
           <Link href="/#services" className={`${linkCls} ${underline}`}>Services</Link>
           <Link href="/#portfolio" className={`${linkCls} ${underline}`}>Portfolio</Link>
-          <Link href="/blog" className={`${linkCls} ${underline}`}>Blog</Link>
-          <Link href="/#contact" className={`${linkCls} ${underline}`}>Contact</Link>
+          <Link href="/contact" className={`${linkCls} ${underline}`}>Contact</Link>
+          <Link href="/portal/login" className={`${linkCls} ${underline}`}>Client Portal</Link>
           <a
             href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
             target="_blank"
@@ -58,10 +61,13 @@ export default function Navbar() {
         <div className="md:hidden border-t bg-white/95 backdrop-blur">
           <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-3">
             <Link href="/about" className={linkCls} onClick={() => setOpen(false)}>About</Link>
+            <Link href="/capabilities" className={linkCls} onClick={() => setOpen(false)}>Capabilities</Link>
+            <Link href="/technology" className={linkCls} onClick={() => setOpen(false)}>Technology</Link>
+            <Link href="/industries" className={linkCls} onClick={() => setOpen(false)}>Industries</Link>
             <Link href="/#services" className={linkCls} onClick={() => setOpen(false)}>Services</Link>
             <Link href="/#portfolio" className={linkCls} onClick={() => setOpen(false)}>Portfolio</Link>
-            <Link href="/blog" className={linkCls} onClick={() => setOpen(false)}>Blog</Link>
-            <Link href="/#contact" className={linkCls} onClick={() => setOpen(false)}>Contact</Link>
+            <Link href="/contact" className={linkCls} onClick={() => setOpen(false)}>Contact</Link>
+            <Link href="/portal/login" className={linkCls} onClick={() => setOpen(false)}>Client Portal</Link>
             <a
               href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
               target="_blank"

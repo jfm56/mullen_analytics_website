@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF; /* Clean, modern, enterprise-friendly */
-  --heading: #111827; /* Primary text (headings) */
-  --text: #374151; /* Body text */
-  --text-secondary: #4B5563; /* Secondary text (cool gray) */
-  --brand-primary: #2563EB; /* Buttons, links, highlights */
-  --card: #F9FAFB; /* Light background section */
-  --border: #E5E7EB; /* Card/Accent border */
-  --footer-bg: #111827; /* Footer background */
-  --footer-text: #E5E7EB; /* Footer text */
+  --background: #FFFFFF;
+  --heading: #0B3C5D;
+  --text: #1F2933;
+  --text-secondary: #4B5563;
+  --brand-primary: #0B3C5D;
+  --brand-secondary: #2E6F95;
+  --accent: #5FB3A2;
+  --card: #F7F9FC;
+  --border: #E5E7EB;
+  --footer-bg: #0B3C5D;
+  --footer-text: #E5E7EB;
 }
 
 @theme inline {
@@ -18,6 +20,8 @@
   --color-body: var(--text);
   --color-secondary: var(--text-secondary);
   --color-primary: var(--brand-primary);
+  --color-primary-secondary: var(--brand-secondary);
+  --color-accent: var(--accent);
   --color-card: var(--card);
   --color-border: var(--border);
   --color-footer-bg: var(--footer-bg);
@@ -34,21 +38,46 @@
 }
 
 body {
-  background: var(--color-card);
+  background: var(--color-background);
   color: var(--color-body);
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Typography scale */
-h1 { font-size: clamp(46px, 6vw, 54px); font-weight: 700; line-height: 1.15; color: var(--heading); }
-h2 { font-size: clamp(30px, 4vw, 38px); font-weight: 700; line-height: 1.2; color: var(--heading); }
-h3 { font-size: clamp(22px, 3vw, 26px); font-weight: 600; line-height: 1.3; color: var(--heading); }
+/* Typography scale - Enterprise grade */
+h1 { 
+  font-size: clamp(2.5rem, 5vw, 3.5rem); 
+  font-weight: 700; 
+  line-height: 1.1; 
+  color: var(--heading);
+  letter-spacing: -0.02em;
+}
+
+h2 { 
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem); 
+  font-weight: 600; 
+  line-height: 1.2; 
+  color: var(--heading);
+  letter-spacing: -0.01em;
+}
+
+h3 { 
+  font-size: clamp(1.125rem, 2.5vw, 1.375rem); 
+  font-weight: 600; 
+  line-height: 1.3; 
+  color: var(--brand-primary);
+}
+
+p {
+  max-width: 70ch;
+  line-height: 1.7;
+}
+
 small, .text-small { font-size: 14px; }
 
 /* Use brand border color for bordered elements */
@@ -56,3 +85,26 @@ small, .text-small { font-size: 14px; }
 
 /* Force white heading in the dark contact section */
 #contact h2 { color: #ffffff !important; }
+
+/* Enterprise accent bar */
+.accent-bar {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.5rem;
+}
+
+/* Button focus states for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Improved link contrast */
+a {
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--brand-secondary);
+}
