@@ -1,17 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import CookieConsentLib from 'react-cookie-consent';
+import dynamic from 'next/dynamic';
+
+const CookieConsentLib = dynamic(() => import('react-cookie-consent'), {
+  ssr: false,
+});
 
 export default function CookieConsent() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
   return (
     <CookieConsentLib
       location="bottom"
@@ -46,17 +41,15 @@ export default function CookieConsent() {
       }}
       expires={365}
       onAccept={() => {
-        // Enable analytics/tracking here if needed
         console.log('Cookie consent accepted');
       }}
       onDecline={() => {
-        // Disable analytics/tracking here
         console.log('Cookie consent declined');
       }}
     >
       <span style={{ fontSize: '14px', color: '#FFFFFF' }}>
         We use cookies to enhance your browsing experience and analyze site traffic. 
-        By clicking "Accept", you consent to our use of cookies.{' '}
+        By clicking &quot;Accept&quot;, you consent to our use of cookies.{' '}
         <a 
           href="/privacy" 
           style={{ color: '#5FB3A2', textDecoration: 'underline' }}
