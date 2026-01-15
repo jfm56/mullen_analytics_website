@@ -26,7 +26,7 @@ export default function Navbar() {
     <nav className={`${base} ${bg}`}>
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/navbar-logo.png" alt="Mullen Analytics logo" width={40} height={40} priority className="object-contain" />
+          <Image src="/navbar-logo.png" alt="Mullen Analytics logo" width={40} height={40} priority className="object-contain" style={{ height: 'auto' }} />
           <span className="font-bold text-lg tracking-tight">Mullen Analytics</span>
         </Link>
         <button
