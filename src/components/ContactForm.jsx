@@ -1,18 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 export default function ContactForm() {
   const [status, setStatus] = useState('');
+  const recaptchaRef = useRef(null);
 
   async function onSubmit(e) {
     e.preventDefault();
     setStatus('Sending...');
+    
+    const recaptchaToken = recaptchaRef.current?.getValue();
+    if (!recaptchaToken) {
+      setStatus('Please verify you are human.');
+      return;
+    }
+    
     const form = new FormData(e.currentTarget);
     const payload = Object.fromEntries(form.entries());
-    const res = await fetch('/api/contact', { method: 'POST', body: JSON.stringify(payload) });
+    payload.recaptchaToken = recaptchaToken;
+    
+    const res = await fetch('/api/contact', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
     const data = await res.json();
     setStatus(data.ok ? 'Sent! We will be in touch shortly.' : 'Error sending message.');
+    
+    if (data.ok) {
+      recaptchaRef.current?.reset();
+    }
   }
 
   return (
@@ -38,6 +53,12 @@ export default function ContactForm() {
       <div>
         <label className="block text-sm font-medium">Message</label>
         <textarea name="message" rows="4" required className="mt-1 w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <ReCAPTCHA
+          ref={recaptchaRef}
+          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
+        />
       </div>
       <button type="submit" className="px-6 py-3 rounded bg-black text-white">Send</button>
       <div className="text-sm text-gray-600">{status}</div>

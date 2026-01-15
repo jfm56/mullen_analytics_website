@@ -3,7 +3,34 @@ import { logEvent } from "@/lib/logger";
 
 export async function POST(req) {
   try {
-    const { name, email, goal, message, projectFocus } = await req.json();
+    const { name, email, goal, message, projectFocus, recaptchaToken } = await req.json();
+
+    // Verify reCAPTCHA
+    if (!recaptchaToken) {
+      return new Response(
+        JSON.stringify({ ok: false, success: false, error: 'Please verify you are human.' }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+    if (recaptchaSecret) {
+      const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
+      });
+      const recaptchaData = await recaptchaResponse.json();
+      
+      if (!recaptchaData.success) {
+        await logEvent("recaptcha_fail", { score: recaptchaData.score, errors: recaptchaData['error-codes'] });
+        return new Response(
+          JSON.stringify({ ok: false, success: false, error: 'reCAPTCHA verification failed. Please try again.' }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      await logEvent("recaptcha_success", { score: recaptchaData.score });
+    }
 
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER,
