@@ -23,6 +23,8 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [confirmRoleChange, setConfirmRoleChange] = useState(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [adminMessages, setAdminMessages] = useState([]);
   const [loadingAdminMessages, setLoadingAdminMessages] = useState(false);
   const [compose, setCompose] = useState({ userId: '', subject: '', body: '' });
@@ -394,6 +396,28 @@ export default function AdminPage() {
       setConfirmRoleChange(null);
     } catch (e) {
       setError(e.message || 'Failed to update role');
+    }
+  };
+
+  const handleResetPassword = async (userEmail) => {
+    setError('');
+    setResettingPassword(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/portal/reset-password`,
+      });
+
+      if (resetError) {
+        setError(resetError.message || 'Failed to send reset email');
+      } else {
+        setError('');
+        alert(`Password reset email sent to ${userEmail}`);
+      }
+      setResetPasswordUser(null);
+    } catch (e) {
+      setError(e.message || 'Failed to send reset email');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -826,15 +850,13 @@ export default function AdminPage() {
                     >
                       Manage
                     </button>
-                    {p.role !== 'user' && (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmRoleChange({ userId: p.id, newRole: 'user', userName: p.full_name || p.email })}
-                        className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
-                      >
-                        Set role: Client
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setResetPasswordUser({ email: p.email, name: p.full_name || p.email })}
+                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
+                    >
+                      Reset password
+                    </button>
                     {p.role !== 'admin' && (
                       <button
                         type="button"
@@ -939,6 +961,35 @@ export default function AdminPage() {
                 className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
               >
                 Confirm change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetPasswordUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-2">Reset password</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Send a password reset email to <strong>{resetPasswordUser.name}</strong> at <strong>{resetPasswordUser.email}</strong>?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setResetPasswordUser(null)}
+                className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50"
+                disabled={resettingPassword}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleResetPassword(resetPasswordUser.email)}
+                disabled={resettingPassword}
+                className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resettingPassword ? 'Sending...' : 'Send reset email'}
               </button>
             </div>
           </div>
