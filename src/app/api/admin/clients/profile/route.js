@@ -89,6 +89,13 @@ export async function POST(request) {
     // eslint-disable-next-line no-console
     console.log('Updating profile with data:', updateData, 'for clientId:', clientId);
 
+    // If no valid fields to update, return success without database operation
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ 
+        profile: { id: clientId, message: 'No database fields to update (local only)' }
+      });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update(updateData)
