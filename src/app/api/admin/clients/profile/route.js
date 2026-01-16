@@ -82,7 +82,7 @@ export async function POST(request) {
     if (project_name !== undefined) updateData.project_name = project_name ?? null;
     if (project_status !== undefined) updateData.project_status = project_status ?? null;
     if (tableau_url !== undefined) updateData.tableau_url = tableau_url ?? null;
-    if (tableau_type !== undefined) updateData.tableau_type = tableau_type ?? null;
+    // Note: tableau_type column doesn't exist in profiles table, skipping
     if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
     if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
@@ -94,7 +94,7 @@ export async function POST(request) {
       .from('profiles')
       .update(updateData)
       .eq('id', clientId)
-      .select('id, email, role, full_name, company, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb')
+      .select('id, email, role, full_name, company, project_name, project_status, tableau_url, upload_enabled, allowed_file_types, max_upload_mb')
       .single();
 
     if (error) {
