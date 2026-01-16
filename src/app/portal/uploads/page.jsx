@@ -114,7 +114,15 @@ export default function PortalUploadsPage() {
         throw new Error('Failed to upload file to S3');
       }
 
-      // Step 3: Refresh uploads list
+      // Step 3: Send notification email
+      await fetch(`/api/clients/${encodeURIComponent(user.id)}/uploads/${encodeURIComponent(presignJson.uploadId)}/notify`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // Step 4: Refresh uploads list
       await loadUploads(accessToken, user.id);
       setSelectedFile(null);
       setStatus('File uploaded successfully!');

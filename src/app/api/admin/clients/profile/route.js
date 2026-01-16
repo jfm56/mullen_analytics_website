@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { sendEmail } from '@/lib/emailService';
+import { getDocumentRequestEmailTemplate, getProfileUpdateNotificationTemplate } from '@/lib/emailTemplates';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -57,6 +59,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
     }
 
+    // Get current profile state to detect changes
+    const { data: currentProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('upload_enabled, project_status, tableau_url, email, full_name')
+      .eq('id', clientId)
+      .single();
+
     const updateData = {};
     if (project_name !== undefined) updateData.project_name = project_name ?? null;
     if (project_status !== undefined) updateData.project_status = project_status ?? null;
@@ -77,6 +86,55 @@ export async function POST(request) {
       // eslint-disable-next-line no-console
       console.error('Admin update client profile error', error);
       return NextResponse.json({ error: 'Failed to update client profile' }, { status: 500 });
+    }
+
+    // Send email notifications based on changes
+    const portalUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mullenanalytics.com/portal';
+    
+    // Document request email when uploads are newly enabled
+    if (upload_enabled && currentProfile && !currentProfile.upload_enabled) {
+      const emailTemplate = getDocumentRequestEmailTemplate(
+        data.full_name,
+        portalUrl,
+        data.allowed_file_types,
+        data.max_upload_mb
+      );
+      
+      await sendEmail({
+        to: data.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text,
+      });
+
+      // eslint-disable-next-line no-console
+      console.log('Document request email sent to:', data.email);
+    }
+
+    // Profile update notification for other changes
+    let updateType = 'general';
+    if (project_status !== undefined && currentProfile && project_status !== currentProfile.project_status) {
+      updateType = 'project_status';
+    } else if (tableau_url !== undefined && currentProfile && tableau_url !== currentProfile.tableau_url && tableau_url) {
+      updateType = 'tableau_added';
+    }
+
+    if (updateType !== 'general' || (project_status !== undefined || tableau_url !== undefined)) {
+      const emailTemplate = getProfileUpdateNotificationTemplate(
+        data.full_name,
+        updateType,
+        portalUrl
+      );
+      
+      await sendEmail({
+        to: data.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text,
+      });
+
+      // eslint-disable-next-line no-console
+      console.log('Profile update notification sent to:', data.email);
     }
 
     return NextResponse.json({ profile: data });

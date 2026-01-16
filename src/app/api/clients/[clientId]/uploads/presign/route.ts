@@ -8,6 +8,8 @@ import {
   createPresignedUploadPost,
   getContentTypeFromFilename,
 } from '@/lib/aws/s3';
+import { sendEmail } from '@/lib/emailService';
+import { getFileUploadedNotificationTemplate } from '@/lib/emailTemplates';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

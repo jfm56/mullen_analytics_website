@@ -221,7 +221,15 @@ export default function AdminClientDetailPage() {
         throw new Error('Failed to upload file to S3');
       }
 
-      // Step 3: Refresh uploads list
+      // Step 3: Send notification email
+      await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads/${encodeURIComponent(presignJson.uploadId)}/notify`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // Step 4: Refresh uploads list
       await loadUploads(accessToken, clientId);
       setSelectedFile(null);
       

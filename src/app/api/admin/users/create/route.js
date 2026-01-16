@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { sendEmail } from '@/lib/emailService';
+import { getWelcomeEmailTemplate } from '@/lib/emailTemplates';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -57,9 +59,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    // Generate temporary password
+    const tempPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase();
+
     // Create auth user via service role client
     const { data: createdUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email,
+      password: tempPassword,
       email_confirm: false,
       user_metadata: {
         first_name: full_name || null,
@@ -95,6 +101,20 @@ export async function POST(request) {
       console.error('Error inserting profile for new user', profileInsertError);
       return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
     }
+
+    // Send welcome email with temporary password
+    const portalUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mullenanalytics.com/portal/login';
+    const emailTemplate = getWelcomeEmailTemplate(full_name, portalUrl, tempPassword);
+    
+    await sendEmail({
+      to: email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+    });
+
+    // eslint-disable-next-line no-console
+    console.log('Welcome email sent to:', email);
 
     return NextResponse.json({ profile });
   } catch (e) {
