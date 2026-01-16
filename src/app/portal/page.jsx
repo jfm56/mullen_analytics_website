@@ -273,15 +273,15 @@ export default function PortalHomePage() {
                   <div className="text-xs text-gray-500">We review the files you send us and check for issues or missing information.</div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 border border-yellow-100">
+                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900 border border-amber-200">
                     In progress
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
                 <td className="px-4 py-3 text-sm text-gray-700">Week of Jan 27, 2026</td>
                 <td className="px-4 py-3">
-                  <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 bg-blue-600" style={{ width: '40%' }} />
+                  <div className="w-24 bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 bg-blue-500" style={{ width: '40%' }} />
                   </div>
                   <span className="text-xs text-gray-600 mt-1 inline-block">40%</span>
                 </td>
@@ -292,7 +292,7 @@ export default function PortalHomePage() {
                   <div className="text-xs text-gray-500">We design charts and reports based on your goals.</div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 border border-gray-200">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800 border border-slate-300">
                     Planned
                   </span>
                 </td>
@@ -311,7 +311,7 @@ export default function PortalHomePage() {
                   <div className="text-xs text-gray-500">We prepare clear takeaways, next steps, and recommendations.</div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 border border-gray-200">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800 border border-slate-300">
                     Planned
                   </span>
                 </td>
@@ -333,14 +333,14 @@ export default function PortalHomePage() {
             <span className="text-sm font-medium text-gray-700">STATUS MEANING</span>
             <div className="flex flex-wrap gap-6 text-sm text-gray-600">
               <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full bg-yellow-400"></span>
+                <span className="inline-block w-3 h-3 rounded-full bg-amber-500"></span>
                 <div>
                   <div className="font-medium">In progress</div>
                   <div className="text-xs">We are actively working on this.</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full bg-gray-400"></span>
+                <span className="inline-block w-3 h-3 rounded-full bg-slate-500"></span>
                 <div>
                   <div className="font-medium">Planned</div>
                   <div className="text-xs">This step is coming up next.</div>
@@ -364,7 +364,7 @@ export default function PortalHomePage() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">ACTION ITEMS FOR YOU</h2>
         <p className="text-sm text-gray-600 mb-4">These are the next things we may need from you.</p>
         
-        <div className="border rounded-lg bg-blue-50 border-blue-200 overflow-hidden">
+        <div className="border rounded-lg bg-blue-100 border-blue-300 overflow-hidden">
           <div className="p-4">
             <ul className="space-y-3 text-sm text-blue-900">
               <li className="flex items-start gap-3">
