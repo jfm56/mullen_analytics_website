@@ -65,7 +65,7 @@ export async function POST(request) {
     // Get current profile state to detect changes
     const { data: currentProfile, error: fetchError } = await supabaseAdmin
       .from('profiles')
-      .select('upload_enabled, project_status, tableau_url, email, full_name')
+      .select('upload_enabled, email, full_name')
       .eq('id', clientId)
       .single();
 
@@ -79,10 +79,7 @@ export async function POST(request) {
     }
 
     const updateData = {};
-    if (project_name !== undefined) updateData.project_name = project_name ?? null;
-    if (project_status !== undefined) updateData.project_status = project_status ?? null;
-    if (tableau_url !== undefined) updateData.tableau_url = tableau_url ?? null;
-    // Note: tableau_type column doesn't exist in profiles table, skipping
+    // Note: project_name, project_status, tableau_url, tableau_type columns don't exist in profiles table
     if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
     if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
@@ -94,7 +91,7 @@ export async function POST(request) {
       .from('profiles')
       .update(updateData)
       .eq('id', clientId)
-      .select('id, email, role, full_name, company, project_name, project_status, tableau_url, upload_enabled, allowed_file_types, max_upload_mb')
+      .select('id, email, role, full_name, company, upload_enabled, allowed_file_types, max_upload_mb')
       .single();
 
     if (error) {
@@ -129,32 +126,6 @@ export async function POST(request) {
 
       // eslint-disable-next-line no-console
       console.log('Document request email sent to:', data.email);
-    }
-
-    // Profile update notification for other changes
-    let updateType = 'general';
-    if (project_status !== undefined && currentProfile && project_status !== currentProfile.project_status) {
-      updateType = 'project_status';
-    } else if (tableau_url !== undefined && currentProfile && tableau_url !== currentProfile.tableau_url && tableau_url) {
-      updateType = 'tableau_added';
-    }
-
-    if (updateType !== 'general' || (project_status !== undefined || tableau_url !== undefined)) {
-      const emailTemplate = getProfileUpdateNotificationTemplate(
-        data.full_name,
-        updateType,
-        portalUrl
-      );
-      
-      await sendEmail({
-        to: data.email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html,
-        text: emailTemplate.text,
-      });
-
-      // eslint-disable-next-line no-console
-      console.log('Profile update notification sent to:', data.email);
     }
 
     return NextResponse.json({ profile: data });
