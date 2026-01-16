@@ -53,7 +53,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { email, full_name, company, project_name } = body;
+    const { email, full_name, company, project_name, role } = body;
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -86,14 +86,14 @@ export async function POST(request) {
         {
           id: newUser.id,
           email: newUser.email,
-          role: 'user',
+          role: role || 'user',
           full_name: full_name || null,
           company: company || null,
           project_name: project_name || null,
         },
         { onConflict: 'id' }
       )
-      .select('id, email, role, full_name, company, project_name')
+      .select('id, email, role, full_name, company, project_name, created_at')
       .single();
 
     if (profileInsertError) {

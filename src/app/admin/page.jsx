@@ -12,15 +12,17 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [myProfile, setMyProfile] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'clients' | 'messages'
-  const [showNewClientForm, setShowNewClientForm] = useState(false);
-  const [creatingClient, setCreatingClient] = useState(false);
-  const [newClient, setNewClient] = useState({
-    full_name: '',
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'users' | 'messages'
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [invitingUser, setInvitingUser] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
     email: '',
-    company: '',
-    project_name: '',
+    role: 'user',
+    full_name: '',
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [confirmRoleChange, setConfirmRoleChange] = useState(null);
   const [adminMessages, setAdminMessages] = useState([]);
   const [loadingAdminMessages, setLoadingAdminMessages] = useState(false);
   const [compose, setCompose] = useState({ userId: '', subject: '', body: '' });
@@ -331,13 +333,13 @@ export default function AdminPage() {
     }
   };
 
-  const createClient = async () => {
-    if (!newClient.email) {
-      setError('Email is required to create a client.');
+  const inviteUser = async () => {
+    if (!inviteForm.email) {
+      setError('Email is required to invite a user.');
       return;
     }
     setError('');
-    setCreatingClient(true);
+    setInvitingUser(true);
     try {
       const {
         data: { session },
@@ -349,18 +351,49 @@ export default function AdminPage() {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify(newClient),
+        body: JSON.stringify({
+          email: inviteForm.email,
+          full_name: inviteForm.full_name || null,
+          role: inviteForm.role,
+        }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to create client');
+      if (!res.ok) throw new Error(json.error || 'Failed to invite user');
 
       setProfiles((prev) => [...prev, json.profile]);
-      setNewClient({ full_name: '', email: '', company: '', project_name: '' });
-      setShowNewClientForm(false);
+      setInviteForm({ email: '', role: 'user', full_name: '' });
+      setShowInviteModal(false);
     } catch (e) {
-      setError(e.message || 'Failed to create client');
+      setError(e.message || 'Failed to invite user');
     } finally {
-      setCreatingClient(false);
+      setInvitingUser(false);
+    }
+  };
+
+  const confirmAndUpdateRole = async (userId, newRole) => {
+    setError('');
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      const res = await fetch('/api/admin/users/role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update role');
+
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === userId ? { ...p, role: json.profile.role } : p))
+      );
+      setConfirmRoleChange(null);
+    } catch (e) {
+      setError(e.message || 'Failed to update role');
     }
   };
 
@@ -407,14 +440,14 @@ export default function AdminPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('clients')}
+            onClick={() => setActiveTab('users')}
             className={`pb-2 px-1 border-b-2 ${
-              activeTab === 'clients'
+              activeTab === 'users'
                 ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Clients
+            Users & Roles
           </button>
           <button
             type="button"
@@ -705,91 +738,85 @@ export default function AdminPage() {
           )}
         </div>
       )}
-      {activeTab === 'clients' && (
+      {activeTab === 'users' && (
         <>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-sm font-semibold text-gray-700">Clients</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-gray-700">Users & Roles</h2>
         <button
           type="button"
-          onClick={() => setShowNewClientForm((prev) => !prev)}
+          onClick={() => setShowInviteModal(true)}
           className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
         >
-          {showNewClientForm ? 'Cancel' : 'Make new client'}
+          Invite user
         </button>
       </div>
-      {showNewClientForm && (
-        <div className="mb-4 border rounded-lg bg-white p-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Name</label>
-              <input
-                type="text"
-                className="w-full border rounded-md px-2 py-1.5"
-                value={newClient.full_name}
-                onChange={(e) =>
-                  setNewClient((prev) => ({ ...prev, full_name: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Email</label>
-              <input
-                type="email"
-                className="w-full border rounded-md px-2 py-1.5"
-                value={newClient.email}
-                onChange={(e) =>
-                  setNewClient((prev) => ({ ...prev, email: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Company</label>
-              <input
-                type="text"
-                className="w-full border rounded-md px-2 py-1.5"
-                value={newClient.company}
-                onChange={(e) =>
-                  setNewClient((prev) => ({ ...prev, company: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Project</label>
-              <input
-                type="text"
-                className="w-full border rounded-md px-2 py-1.5"
-                value={newClient.project_name}
-                onChange={(e) =>
-                  setNewClient((prev) => ({ ...prev, project_name: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={createClient}
-            disabled={creatingClient}
-            className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {creatingClient ? 'Creating...' : 'Create client'}
-          </button>
+
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            className="w-full border rounded-md px-3 py-2 text-xs"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      )}
+        <div className="w-full sm:w-48">
+          <select
+            className="w-full border rounded-md px-3 py-2 text-xs bg-white"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <option value="all">All roles</option>
+            <option value="admin">Admin</option>
+            <option value="user">Client</option>
+          </select>
+        </div>
+      </div>
+
       <div className="border rounded-lg bg-white overflow-x-auto">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50">
             <tr className="text-left text-[11px] uppercase tracking-wide text-gray-500">
-              <th className="px-4 py-2 font-medium">Actions</th>
               <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">Company</th>
-              <th className="px-4 py-2 font-medium">Project</th>
-              <th className="px-4 py-2 font-medium">Status</th>
               <th className="px-4 py-2 font-medium">Email</th>
+              <th className="px-4 py-2 font-medium">Role</th>
+              <th className="px-4 py-2 font-medium">Created</th>
+              <th className="px-4 py-2 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {profiles.map((p) => (
+            {profiles
+              .filter((p) => {
+                const matchesSearch = searchQuery === '' || 
+                  (p.full_name && p.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                  (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase()));
+                const matchesRole = roleFilter === 'all' || p.role === roleFilter;
+                return matchesSearch && matchesRole;
+              })
+              .map((p) => (
               <tr key={p.id}>
+                <td className="px-4 py-2 text-[12px] text-gray-800">
+                  {p.full_name || '—'}
+                  {!p.full_name && (
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200">
+                      Incomplete profile
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-[12px] text-gray-800">{p.email}</td>
+                <td className="px-4 py-2 text-[12px]">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    p.role === 'admin' 
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : 'bg-blue-50 text-blue-700 border border-blue-200'
+                  }`}>
+                    {p.role === 'admin' ? 'Admin' : 'Client'}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-[12px] text-gray-600">
+                  {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
+                </td>
                 <td className="px-4 py-2 text-[12px] text-gray-700">
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -797,34 +824,126 @@ export default function AdminPage() {
                       onClick={() => router.push(`/admin/clients/${p.id}`)}
                       className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
                     >
-                      View
+                      Manage
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => updateRole(p.id, 'user')}
-                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
-                    >
-                      Make client
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateRole(p.id, 'admin')}
-                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
-                    >
-                      Make admin
-                    </button>
+                    {p.role !== 'user' && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRoleChange({ userId: p.id, newRole: 'user', userName: p.full_name || p.email })}
+                        className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
+                      >
+                        Set role: Client
+                      </button>
+                    )}
+                    {p.role !== 'admin' && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRoleChange({ userId: p.id, newRole: 'admin', userName: p.full_name || p.email })}
+                        className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
+                      >
+                        Set role: Admin
+                      </button>
+                    )}
                   </div>
                 </td>
-                <td className="px-4 py-2 text-[12px] text-gray-800">{p.full_name || ''}</td>
-                <td className="px-4 py-2 text-[12px] text-gray-800">{p.company || ''}</td>
-                <td className="px-4 py-2 text-[12px] text-gray-800">{p.project_name || ''}</td>
-                <td className="px-4 py-2 text-[12px] text-gray-800">{p.project_status || ''}</td>
-                <td className="px-4 py-2 text-[12px] text-gray-800">{p.email}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4">Invite user</h3>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="user@example.com"
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm((prev) => ({ ...prev, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Name (optional)</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="John Doe"
+                  value={inviteForm.full_name}
+                  onChange={(e) => setInviteForm((prev) => ({ ...prev, full_name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                  value={inviteForm.role}
+                  onChange={(e) => setInviteForm((prev) => ({ ...prev, role: e.target.value }))}
+                >
+                  <option value="user">Client</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setInviteForm({ email: '', role: 'user', full_name: '' });
+                }}
+                className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={inviteUser}
+                disabled={invitingUser}
+                className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {invitingUser ? 'Inviting...' : 'Send invite'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmRoleChange && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-2">Confirm role change</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to change <strong>{confirmRoleChange.userName}</strong> to <strong>{confirmRoleChange.newRole === 'admin' ? 'Admin' : 'Client'}</strong>?
+              {confirmRoleChange.newRole === 'admin' && (
+                <span className="block mt-2 text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2 text-xs">
+                  ⚠️ Admin users have full access to all system features.
+                </span>
+              )}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmRoleChange(null)}
+                className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmAndUpdateRole(confirmRoleChange.userId, confirmRoleChange.newRole)}
+                className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
+              >
+                Confirm change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         </>
       )}
     </div>
