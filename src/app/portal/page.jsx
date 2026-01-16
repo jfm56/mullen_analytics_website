@@ -206,46 +206,6 @@ export default function PortalHomePage() {
         </div>
       </section>
 
-      <div className="mb-6 border-b border-gray-200 bg-[var(--brand-primary)]/5 rounded-t-md">
-        <nav className="flex flex-wrap gap-4 text-xs px-4 pt-3 items-center">
-          <Link
-            href="/portal"
-            className="inline-flex items-center rounded-t-md bg-[var(--brand-primary)] text-white px-3 pb-2 border-b-2 border-[var(--brand-primary)]"
-          >
-            Home
-          </Link>
-          <Link
-            href="/portal/uploads"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            Upload data
-          </Link>
-          <Link
-            href="/portal/invoices"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            View &amp; pay invoices
-          </Link>
-          <Link
-            href="/portal/reports"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            Dashboards &amp; deliverables
-          </Link>
-          <Link
-            href="/portal/messages"
-            className="ml-auto inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            <span>Messages</span>
-            {unreadMessages > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] w-4 h-4">
-                {unreadMessages}
-              </span>
-            )}
-          </Link>
-        </nav>
-      </div>
-
       <section className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b">
           <h2 className="text-sm font-semibold">Project Overview</h2>
