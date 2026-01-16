@@ -53,7 +53,20 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { clientId, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb, full_name, company } = body;
+    const { 
+      clientId, 
+      project_name, 
+      project_status, 
+      full_name, 
+      company, 
+      next_check_in, 
+      check_in_notes, 
+      tableau_url, 
+      tableau_type, 
+      upload_enabled, 
+      allowed_file_types, 
+      max_upload_mb 
+    } = body;
 
     // eslint-disable-next-line no-console
     console.log('Request body:', body);
@@ -79,9 +92,15 @@ export async function POST(request) {
     }
 
     const updateData = {};
-    // Note: project_name, project_status, tableau_url, tableau_type columns don't exist in profiles table
+    // All fields now exist in the database after running the SQL migration
+    if (project_name !== undefined) updateData.project_name = project_name;
+    if (project_status !== undefined) updateData.project_status = project_status;
     if (full_name !== undefined) updateData.full_name = full_name;
     if (company !== undefined) updateData.company = company;
+    if (next_check_in !== undefined) updateData.next_check_in = next_check_in;
+    if (check_in_notes !== undefined) updateData.check_in_notes = check_in_notes;
+    if (tableau_url !== undefined) updateData.tableau_url = tableau_url;
+    if (tableau_type !== undefined) updateData.tableau_type = tableau_type;
     if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
     if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
@@ -100,7 +119,7 @@ export async function POST(request) {
       .from('profiles')
       .update(updateData)
       .eq('id', clientId)
-      .select('id, email, role, full_name, company, upload_enabled, allowed_file_types, max_upload_mb')
+      .select('id, email, role, full_name, company, logo_url, upload_enabled, allowed_file_types, max_upload_mb')
       .single();
 
     if (error) {

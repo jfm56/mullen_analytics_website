@@ -40,6 +40,8 @@ export default function AdminClientDetailPage() {
   const [saveError, setSaveError] = useState('');
   const [removingClient, setRemovingClient] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [nextCheckIn, setNextCheckIn] = useState('');
+  const [checkInNotes, setCheckInNotes] = useState('');
 
   const saveProject = async () => {
     if (!clientId) return;
@@ -62,8 +64,7 @@ export default function AdminClientDetailPage() {
         },
         body: JSON.stringify({
           clientId,
-          // Note: project_name and project_status fields don't exist in database yet
-          // These would need to be added to the profiles table
+          // Temporarily local-only until database columns are added
         }),
       });
 
@@ -73,7 +74,6 @@ export default function AdminClientDetailPage() {
       }
 
       const json = await res.json();
-      // Note: These fields don't exist in database yet, storing in local state only
       setClient(prev => ({ ...prev, project_name: projectName, project_status: projectStatus }));
       setSaveMessage('Project saved successfully (local only)');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -163,6 +163,50 @@ export default function AdminClientDetailPage() {
     }
   };
 
+  const saveCheckIn = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        return;
+      }
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          next_check_in: nextCheckIn,
+          check_in_notes: checkInNotes,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save check-in');
+      }
+
+      const json = await res.json();
+      setClient(json.profile);
+      setSaveMessage('Check-in saved successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save check-in');
+      setTimeout(() => setSaveError(''), 5000);
+    }
+  };
+
   const saveAllChanges = async () => {
     if (!clientId) return;
     setError('');
@@ -174,7 +218,8 @@ export default function AdminClientDetailPage() {
       await saveContact();
       // Save upload settings
       await saveUploadSettings();
-      // Save project details (local only)
+      // Save check-in info
+      await saveCheckIn();
       setSaveMessage('All changes saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (e) {
@@ -206,17 +251,16 @@ export default function AdminClientDetailPage() {
         },
         body: JSON.stringify({
           clientId,
-          // Note: tableau_url and tableau_type fields don't exist in database yet
-          // These would need to be added to the profiles table
+          tableau_url: tableauUrl,
+          tableau_type: tableauType,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save Tableau embed');
 
-      // Note: These fields don't exist in database yet, storing in local state only
-      setClient(prev => ({ ...prev, tableau_url: tableauUrl, tableau_type: tableauType }));
-      setTableauUrl(tableauUrl);
-      setTableauType(tableauType);
+      setClient(json.profile);
+      setTableauUrl(json.profile.tableau_url || '');
+      setTableauType(json.profile.tableau_type || 'dashboard');
     } catch (e) {
       setError(e.message || 'Failed to save Tableau embed');
     } finally {
@@ -580,15 +624,10 @@ export default function AdminClientDetailPage() {
           return;
         }
 
-        console.log('Client ID:', clientId);
-        console.log('Profiles response:', json.profiles);
         const match = (json.profiles || []).find((p) => p.id === clientId);
-        console.log('Found client match:', match);
         if (!match) {
-          console.log('Client not found for ID:', clientId);
           setError('Client not found.');
         } else {
-          console.log('Setting client data:', match);
           setClient(match);
           setProjectName(match.project_name || '');
           setProjectStatus(match.project_status || '');
@@ -599,6 +638,8 @@ export default function AdminClientDetailPage() {
           setUploadEnabled(match.upload_enabled || false);
           setAllowedFileTypes(match.allowed_file_types || 'csv,xlsx,json,pdf');
           setMaxUploadMb(match.max_upload_mb === null ? 'unlimited' : match.max_upload_mb || 50);
+          setNextCheckIn(match.next_check_in || '');
+          setCheckInNotes(match.check_in_notes || '');
           await loadTasks(accessToken, clientId);
           await loadUploads(accessToken, clientId);
         }
@@ -645,13 +686,13 @@ export default function AdminClientDetailPage() {
       {/* Toast Notifications */}
       {saveMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md shadow-sm">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {saveMessage}
-          </div>
+        <div className="flex items-center">
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          {saveMessage}
         </div>
+      </div>
       )}
       
       {saveError && (
@@ -665,8 +706,7 @@ export default function AdminClientDetailPage() {
         </div>
       )}
 
-      {/* Admin Header Summary */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+      <div className="bg-white border rounded-lg p-6 shadow-sm mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6 text-sm">
             <div>
@@ -834,6 +874,52 @@ export default function AdminClientDetailPage() {
                   {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Next Check-in Section */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="w-1 h-6 bg-purple-500 rounded"></div>
+          Next Check-in
+        </h2>
+        <div className="border rounded-lg bg-white p-6 shadow-sm">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Next Check-in Date</label>
+              <input
+                type="datetime-local"
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                value={nextCheckIn}
+                onChange={(e) => setNextCheckIn(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">Schedule the next client check-in meeting</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Check-in Notes</label>
+              <textarea
+                className="w-full border rounded-md px-3 py-2 text-sm min-h-[100px]"
+                placeholder="Add notes for the next check-in (topics to discuss, progress updates, etc.)"
+                value={checkInNotes}
+                onChange={(e) => setCheckInNotes(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">Include agenda items, progress updates, or discussion points</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={saveCheckIn}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
+              >
+                Save Check-in
+              </button>
+              {nextCheckIn && (
+                <div className="text-sm text-gray-600">
+                  Scheduled: {new Date(nextCheckIn).toLocaleDateString()} at {new Date(nextCheckIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+              )}
             </div>
           </div>
         </div>
