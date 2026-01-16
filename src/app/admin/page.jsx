@@ -435,12 +435,27 @@ export default function AdminPage() {
     );
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/portal/login');
+  };
+
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">
-      <h1 className="text-2xl font-bold tracking-tight mb-2">Admin Panel</h1>
-      <p className="text-gray-600 text-sm mb-6">
-        Home dashboard for your client work plus tools to manage accounts and roles.
-      </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight mb-2">Admin Panel</h1>
+          <p className="text-gray-600 text-sm">
+            Home dashboard for your client work plus tools to manage accounts and roles.
+          </p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50"
+        >
+          Log out
+        </button>
+      </div>
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
       <div className="mb-4 border-b border-gray-200">
         <nav className="flex gap-4 text-xs">
