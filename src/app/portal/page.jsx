@@ -132,7 +132,7 @@ export default function PortalHomePage() {
                 disabled={resettingPassword}
                 className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-left w-full"
               >
-                {resettingPassword ? 'Sending...' : '[ Reset password ]'}
+                {resettingPassword ? 'Sending...' : 'Reset password'}
               </button>
               <span className="block text-[10px] text-gray-500 mt-1">Change your login password at any time.</span>
             </div>
@@ -140,7 +140,7 @@ export default function PortalHomePage() {
               onClick={handleLogout}
               className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 text-left w-full"
             >
-              [ Log out ]
+              Log out
             </button>
           </div>
         </div>
