@@ -10,6 +10,7 @@ export default function PortalHomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [resetStatus, setResetStatus] = useState('');
   const [resettingPassword, setResettingPassword] = useState(false);
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
@@ -28,7 +29,7 @@ export default function PortalHomePage() {
       // Check role in profiles; admins are redirected to /admin
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, logo_url, full_name, company')
         .eq('id', session.user.id)
         .single();
 
@@ -44,6 +45,7 @@ export default function PortalHomePage() {
       }
 
       setUser(session.user);
+      setProfile(profile);
       setLoading(false);
     };
 
@@ -98,14 +100,23 @@ export default function PortalHomePage() {
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Client Portal</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Welcome, {firstName}. Your secure workspace for analytics delivery, data uploads, and project updates.
-          </p>
-          <p className="text-gray-500 text-xs mt-1">
-            Everything related to your engagement with Mullen Analytics lives here.
-          </p>
+        <div className="flex items-center gap-4">
+          {profile?.logo_url && (
+            <img 
+              src={profile.logo_url} 
+              alt="Company logo" 
+              className="h-12 w-auto max-w-[120px] object-contain"
+            />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Client Portal</h1>
+            <p className="text-gray-600 text-sm mt-1">
+              Welcome, {firstName}. Your secure workspace for analytics delivery, data uploads, and project updates.
+            </p>
+            <p className="text-gray-500 text-xs mt-1">
+              Everything related to your engagement with Mullen Analytics lives here.
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <button

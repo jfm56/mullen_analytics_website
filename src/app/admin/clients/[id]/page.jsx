@@ -30,6 +30,8 @@ export default function AdminClientDetailPage() {
   const [loadingUploads, setLoadingUploads] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const saveProject = async () => {
     if (!clientId) return;
@@ -176,7 +178,6 @@ export default function AdminClientDetailPage() {
     if (!selectedFile || !clientId) return;
     setError('');
     setUploadingFile(true);
-
     try {
       const {
         data: { session },
@@ -188,58 +189,74 @@ export default function AdminClientDetailPage() {
         return;
       }
 
-      // Step 1: Get presigned URL
-      const presignRes = await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads/presign`, {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('clientId', clientId);
+
+      const res = await fetch('/api/clients/upload', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          filename: selectedFile.name,
-          contentType: selectedFile.type,
-          sizeBytes: selectedFile.size,
-        }),
-      });
-
-      const presignJson = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignJson.error || 'Failed to get upload URL');
-
-      // Step 2: Upload to S3
-      const formData = new FormData();
-      Object.entries(presignJson.upload.fields).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      formData.append('file', selectedFile);
-
-      const uploadRes = await fetch(presignJson.upload.url, {
-        method: 'POST',
         body: formData,
       });
 
-      if (!uploadRes.ok) {
-        throw new Error('Failed to upload file to S3');
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Upload failed');
       }
 
-      // Step 3: Send notification email
-      await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads/${encodeURIComponent(presignJson.uploadId)}/notify`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      // Step 4: Refresh uploads list
-      await loadUploads(accessToken, clientId);
       setSelectedFile(null);
-      
-      // Reset file input
       const fileInput = document.getElementById('file-upload-input');
       if (fileInput) fileInput.value = '';
     } catch (e) {
       setError(e.message || 'Failed to upload file');
     } finally {
       setUploadingFile(false);
+    }
+  };
+
+  const handleLogoUpload = async () => {
+    if (!logoFile || !clientId) return;
+    setUploadingLogo(true);
+    setError('');
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setUploadingLogo(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('logoFile', logoFile);
+      formData.append('clientId', clientId);
+
+      const res = await fetch('/api/admin/clients/logo', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Logo upload failed');
+      }
+
+      const json = await res.json();
+      setClient(prev => ({ ...prev, logo_url: json.logoUrl }));
+      setLogoFile(null);
+      const logoInput = document.getElementById('logo-upload-input');
+      if (logoInput) logoInput.value = '';
+    } catch (e) {
+      setError(e.message || 'Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -530,6 +547,40 @@ export default function AdminClientDetailPage() {
           <h2 className="text-sm font-semibold mb-3">Contact</h2>
           <p className="text-[11px] text-gray-600 mb-1">Email</p>
           <p className="text-[13px] text-gray-800 font-medium">{client.email}</p>
+          
+          <div className="mt-4 pt-4 border-t">
+            <h3 className="text-xs font-semibold mb-3">Client Logo</h3>
+            {client.logo_url && (
+              <div className="mb-3">
+                <img 
+                  src={client.logo_url} 
+                  alt="Client logo" 
+                  className="h-16 w-auto max-w-[200px] object-contain border rounded p-2 bg-gray-50"
+                />
+              </div>
+            )}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="block text-[11px] font-medium text-gray-600 mb-1">Upload logo</label>
+                <input
+                  id="logo-upload-input"
+                  type="file"
+                  accept="image/*,.png,.jpg,.jpeg,.gif,.svg"
+                  className="w-full border rounded-md px-2 py-1.5 text-xs"
+                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                />
+                <p className="text-[10px] text-gray-500 mt-1">PNG, JPG, GIF, SVG (max 2MB)</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogoUpload}
+                disabled={!logoFile || uploadingLogo}
+                className="px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {uploadingLogo ? 'Uploading...' : 'Upload'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
