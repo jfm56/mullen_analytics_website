@@ -51,7 +51,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { clientId, project_name, project_status, tableau_url, tableau_type } = body;
+    const { clientId, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb } = body;
 
     if (!clientId) {
       return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
@@ -62,12 +62,15 @@ export async function POST(request) {
     if (project_status !== undefined) updateData.project_status = project_status ?? null;
     if (tableau_url !== undefined) updateData.tableau_url = tableau_url ?? null;
     if (tableau_type !== undefined) updateData.tableau_type = tableau_type ?? null;
+    if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
+    if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
+    if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
 
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update(updateData)
       .eq('id', clientId)
-      .select('id, email, role, full_name, company, project_name, project_status, tableau_url, tableau_type')
+      .select('id, email, role, full_name, company, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb')
       .single();
 
     if (error) {

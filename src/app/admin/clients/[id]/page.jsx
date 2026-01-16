@@ -22,6 +22,14 @@ export default function AdminClientDetailPage() {
   const [tableauUrl, setTableauUrl] = useState('');
   const [tableauType, setTableauType] = useState('dashboard');
   const [savingTableau, setSavingTableau] = useState(false);
+  const [uploadEnabled, setUploadEnabled] = useState(false);
+  const [allowedFileTypes, setAllowedFileTypes] = useState('csv,xlsx,json,pdf');
+  const [maxUploadMb, setMaxUploadMb] = useState(50);
+  const [savingUploadSettings, setSavingUploadSettings] = useState(false);
+  const [uploads, setUploads] = useState([]);
+  const [loadingUploads, setLoadingUploads] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const saveProject = async () => {
     if (!clientId) return;
@@ -100,6 +108,155 @@ export default function AdminClientDetailPage() {
       setError(e.message || 'Failed to save Tableau embed');
     } finally {
       setSavingTableau(false);
+    }
+  };
+
+  const saveUploadSettings = async () => {
+    if (!clientId) return;
+    setError('');
+    setSavingUploadSettings(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setSavingUploadSettings(false);
+        return;
+      }
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          upload_enabled: uploadEnabled,
+          allowed_file_types: allowedFileTypes,
+          max_upload_mb: maxUploadMb,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save upload settings');
+
+      setClient(json.profile);
+      setUploadEnabled(json.profile.upload_enabled || false);
+      setAllowedFileTypes(json.profile.allowed_file_types || 'csv,xlsx,json,pdf');
+      setMaxUploadMb(json.profile.max_upload_mb || 50);
+    } catch (e) {
+      setError(e.message || 'Failed to save upload settings');
+    } finally {
+      setSavingUploadSettings(false);
+    }
+  };
+
+  const loadUploads = async (accessToken, currentClientId) => {
+    try {
+      setLoadingUploads(true);
+      const res = await fetch(`/api/clients/${encodeURIComponent(currentClientId)}/uploads`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load uploads');
+      setUploads(json.uploads || []);
+    } catch (e) {
+      setError(e.message || 'Failed to load uploads');
+    } finally {
+      setLoadingUploads(false);
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFile || !clientId) return;
+    setError('');
+    setUploadingFile(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setUploadingFile(false);
+        return;
+      }
+
+      // Step 1: Get presigned URL
+      const presignRes = await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads/presign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          filename: selectedFile.name,
+          contentType: selectedFile.type,
+          sizeBytes: selectedFile.size,
+        }),
+      });
+
+      const presignJson = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignJson.error || 'Failed to get upload URL');
+
+      // Step 2: Upload to S3
+      const formData = new FormData();
+      Object.entries(presignJson.upload.fields).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+      formData.append('file', selectedFile);
+
+      const uploadRes = await fetch(presignJson.upload.url, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file to S3');
+      }
+
+      // Step 3: Refresh uploads list
+      await loadUploads(accessToken, clientId);
+      setSelectedFile(null);
+      
+      // Reset file input
+      const fileInput = document.getElementById('file-upload-input');
+      if (fileInput) fileInput.value = '';
+    } catch (e) {
+      setError(e.message || 'Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDownload = async (uploadId, filename) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads/${encodeURIComponent(uploadId)}/download`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to get download URL');
+
+      // Open download URL in new tab
+      window.open(json.url, '_blank');
+    } catch (e) {
+      setError(e.message || 'Failed to download file');
     }
   };
 
@@ -270,7 +427,11 @@ export default function AdminClientDetailPage() {
           setProjectStatus(match.project_status || '');
           setTableauUrl(match.tableau_url || '');
           setTableauType(match.tableau_type || 'dashboard');
+          setUploadEnabled(match.upload_enabled || false);
+          setAllowedFileTypes(match.allowed_file_types || 'csv,xlsx,json,pdf');
+          setMaxUploadMb(match.max_upload_mb || 50);
           await loadTasks(accessToken, clientId);
+          await loadUploads(accessToken, clientId);
         }
       } catch (e) {
         setError(e.message || 'Failed to load client.');
@@ -478,11 +639,138 @@ export default function AdminClientDetailPage() {
       </div>
 
       <div className="border rounded-lg bg-white p-4 mb-4 text-xs">
-        <h2 className="text-sm font-semibold mb-2">Documents</h2>
-        <p className="text-[11px] text-gray-600">Uploaded documents for this client will appear here.</p>
+        <h2 className="text-sm font-semibold mb-3">Client Data Uploads</h2>
+        
+        <div className="mb-4 pb-4 border-b">
+          <h3 className="text-xs font-semibold mb-2">Upload Settings</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <div>
+              <label className="flex items-center text-[11px] font-medium text-gray-600 mb-1">
+                <input
+                  type="checkbox"
+                  checked={uploadEnabled}
+                  onChange={(e) => setUploadEnabled(e.target.checked)}
+                  className="mr-2"
+                />
+                Enable uploads
+              </label>
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">Allowed file types</label>
+              <input
+                type="text"
+                className="w-full border rounded-md px-2 py-1.5 text-xs"
+                value={allowedFileTypes}
+                onChange={(e) => setAllowedFileTypes(e.target.value)}
+                placeholder="csv,xlsx,json,pdf"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">Max upload (MB)</label>
+              <input
+                type="number"
+                className="w-full border rounded-md px-2 py-1.5 text-xs"
+                value={maxUploadMb}
+                onChange={(e) => setMaxUploadMb(parseInt(e.target.value) || 50)}
+                min="1"
+                max="500"
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={saveUploadSettings}
+            disabled={savingUploadSettings}
+            className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {savingUploadSettings ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+
+        <div className="mb-4 pb-4 border-b">
+          <h3 className="text-xs font-semibold mb-2">Upload File</h3>
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">Select file</label>
+              <input
+                id="file-upload-input"
+                type="file"
+                className="w-full border rounded-md px-2 py-1.5 text-xs"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                disabled={!uploadEnabled}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleFileUpload}
+              disabled={!selectedFile || uploadingFile || !uploadEnabled}
+              className="px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {uploadingFile ? 'Uploading...' : 'Upload'}
+            </button>
+          </div>
+          {!uploadEnabled && (
+            <p className="text-[10px] text-amber-600 mt-1">Enable uploads first to upload files</p>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-xs font-semibold mb-2">Uploaded Files</h3>
+          {loadingUploads ? (
+            <p className="text-[11px] text-gray-600">Loading uploads...</p>
+          ) : uploads.length === 0 ? (
+            <p className="text-[11px] text-gray-600">No files uploaded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-[11px]">
+                <thead className="bg-gray-50">
+                  <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
+                    <th className="px-2 py-1 font-medium">Filename</th>
+                    <th className="px-2 py-1 font-medium">Size</th>
+                    <th className="px-2 py-1 font-medium">Uploaded</th>
+                    <th className="px-2 py-1 font-medium">Status</th>
+                    <th className="px-2 py-1 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {uploads.map((upload) => (
+                    <tr key={upload.id}>
+                      <td className="px-2 py-1 text-gray-800">{upload.original_filename}</td>
+                      <td className="px-2 py-1 text-gray-600">
+                        {(upload.size_bytes / 1024 / 1024).toFixed(2)} MB
+                      </td>
+                      <td className="px-2 py-1 text-gray-600">
+                        {new Date(upload.uploaded_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-2 py-1">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          upload.status === 'done' ? 'bg-green-50 text-green-700' :
+                          upload.status === 'error' ? 'bg-red-50 text-red-700' :
+                          upload.status === 'processing' ? 'bg-blue-50 text-blue-700' :
+                          'bg-gray-50 text-gray-700'
+                        }`}>
+                          {upload.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(upload.id, upload.original_filename)}
+                          className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
+                        >
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="border rounded-lg bg-white p-4 text-xs mb-4">
+      <div className="border rounded-lg bg-white p-4 mb-4 text-xs">
         <h2 className="text-sm font-semibold mb-2">Invoices</h2>
         <p className="text-[11px] text-gray-600">Stripe invoices for this client will appear here.</p>
       </div>

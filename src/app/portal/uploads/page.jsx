@@ -8,48 +8,149 @@ import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
 export default function PortalUploadsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [file, setFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploads, setUploads] = useState([]);
+  const [loadingUploads, setLoadingUploads] = useState(false);
+  const [uploadSettings, setUploadSettings] = useState(null);
   const unreadMessages = useUnreadMessagesCount();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const init = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
         router.replace('/portal/login');
-      } else {
-        setUser(session.user);
+        return;
+      }
+      
+      setUser(session.user);
+      
+      // Load upload settings and uploads
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('upload_enabled, allowed_file_types, max_upload_mb')
+        .eq('id', session.user.id)
+        .single();
+      
+      setUploadSettings(profile);
+      
+      if (profile?.upload_enabled) {
+        await loadUploads(session.access_token, session.user.id);
       }
     };
 
-    checkSession();
+    init();
   }, [router]);
 
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!file) return;
-    setStatus('');
-    setLoading(true);
+  const loadUploads = async (accessToken, clientId) => {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      const res = await fetch('/api/portal/upload', {
-        method: 'POST',
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        body: formData,
+      setLoadingUploads(true);
+      const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Upload failed');
-      setStatus('File uploaded successfully.');
-    } catch (err) {
-      setStatus(err.message || 'Upload failed.');
+      if (!res.ok) throw new Error(json.error || 'Failed to load uploads');
+      setUploads(json.uploads || []);
+    } catch (e) {
+      setStatus(e.message || 'Failed to load uploads');
     } finally {
-      setLoading(false);
+      setLoadingUploads(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    e.preventDefault();
+    if (!selectedFile || !user) return;
+    setStatus('');
+    setUploadingFile(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setStatus('Missing session. Please sign in again.');
+        setUploadingFile(false);
+        return;
+      }
+
+      // Step 1: Get presigned URL
+      const presignRes = await fetch(`/api/clients/${encodeURIComponent(user.id)}/uploads/presign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          filename: selectedFile.name,
+          contentType: selectedFile.type,
+          sizeBytes: selectedFile.size,
+        }),
+      });
+
+      const presignJson = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignJson.error || 'Failed to get upload URL');
+
+      // Step 2: Upload to S3
+      const formData = new FormData();
+      Object.entries(presignJson.upload.fields).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+      formData.append('file', selectedFile);
+
+      const uploadRes = await fetch(presignJson.upload.url, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file to S3');
+      }
+
+      // Step 3: Refresh uploads list
+      await loadUploads(accessToken, user.id);
+      setSelectedFile(null);
+      setStatus('File uploaded successfully!');
+      
+      // Reset file input
+      const fileInput = document.getElementById('file-upload-input');
+      if (fileInput) fileInput.value = '';
+    } catch (e) {
+      setStatus(e.message || 'Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDownload = async (uploadId, filename) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(`/api/clients/${encodeURIComponent(user.id)}/uploads/${encodeURIComponent(uploadId)}/download`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to get download URL');
+
+      // Open download URL in new tab
+      window.open(json.url, '_blank');
+    } catch (e) {
+      setStatus(e.message || 'Failed to download file');
     }
   };
 
@@ -65,7 +166,7 @@ export default function PortalUploadsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Upload data</h1>
           <p className="text-gray-600 text-sm mt-1">
-            Upload CSVs, exports, or other files for analysis. Files are stored securely in our infrastructure.
+            Upload CSVs, exports, or other files for analysis. Files are stored securely in AWS S3.
           </p>
         </div>
       </div>
@@ -109,21 +210,101 @@ export default function PortalUploadsPage() {
           </a>
         </nav>
       </div>
-      <form onSubmit={handleUpload} className="space-y-4 border rounded-lg p-6 bg-white">
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="text-sm"
-        />
-        <button
-          type="submit"
-          disabled={loading || !file}
-          className="px-4 py-2 text-sm rounded-md bg-[var(--brand-primary)] text-white disabled:opacity-60"
-        >
-          {loading ? 'Uploading...' : 'Upload file'}
-        </button>
-        {status && <p className="text-xs text-gray-700 mt-2">{status}</p>}
-      </form>
+
+      {!uploadSettings?.upload_enabled ? (
+        <div className="border rounded-lg p-6 bg-amber-50 border-amber-200">
+          <p className="text-sm text-amber-800">
+            File uploads are not currently enabled for your account. Please contact us if you need to upload data.
+          </p>
+        </div>
+      ) : (
+        <>
+          <form onSubmit={handleFileUpload} className="space-y-4 border rounded-lg p-6 bg-white mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select file to upload
+              </label>
+              <input
+                id="file-upload-input"
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                className="w-full text-sm border rounded-md px-3 py-2"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Allowed types: {uploadSettings?.allowed_file_types || 'csv,xlsx,json,pdf'} • 
+                Max size: {uploadSettings?.max_upload_mb || 50}MB
+              </p>
+            </div>
+            <button
+              type="submit"
+              disabled={uploadingFile || !selectedFile}
+              className="px-4 py-2 text-sm rounded-md bg-[var(--brand-primary)] text-white disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--brand-primary-dark,#1d3d73)]"
+            >
+              {uploadingFile ? 'Uploading...' : 'Upload file'}
+            </button>
+            {status && (
+              <p className={`text-sm mt-2 ${status.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                {status}
+              </p>
+            )}
+          </form>
+
+          <div className="border rounded-lg bg-white p-6">
+            <h2 className="text-lg font-semibold mb-4">Your Uploaded Files</h2>
+            {loadingUploads ? (
+              <p className="text-sm text-gray-600">Loading uploads...</p>
+            ) : uploads.length === 0 ? (
+              <p className="text-sm text-gray-600">No files uploaded yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+                      <th className="px-4 py-2 font-medium">Filename</th>
+                      <th className="px-4 py-2 font-medium">Size</th>
+                      <th className="px-4 py-2 font-medium">Uploaded</th>
+                      <th className="px-4 py-2 font-medium">Status</th>
+                      <th className="px-4 py-2 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {uploads.map((upload) => (
+                      <tr key={upload.id}>
+                        <td className="px-4 py-3 text-gray-800">{upload.original_filename}</td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {(upload.size_bytes / 1024 / 1024).toFixed(2)} MB
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {new Date(upload.uploaded_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            upload.status === 'done' ? 'bg-green-50 text-green-700' :
+                            upload.status === 'error' ? 'bg-red-50 text-red-700' :
+                            upload.status === 'processing' ? 'bg-blue-50 text-blue-700' :
+                            'bg-gray-50 text-gray-700'
+                          }`}>
+                            {upload.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(upload.id, upload.original_filename)}
+                            className="px-3 py-1 border rounded-md text-xs bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
+                          >
+                            Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
