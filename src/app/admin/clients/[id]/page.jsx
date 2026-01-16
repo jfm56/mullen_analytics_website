@@ -38,6 +38,8 @@ export default function AdminClientDetailPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [removingClient, setRemovingClient] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const saveProject = async () => {
     if (!clientId) return;
@@ -60,8 +62,8 @@ export default function AdminClientDetailPage() {
         },
         body: JSON.stringify({
           clientId,
-          project_name: projectName,
-          project_status: projectStatus,
+          // Note: project_name and project_status fields don't exist in database yet
+          // These would need to be added to the profiles table
         }),
       });
 
@@ -71,8 +73,9 @@ export default function AdminClientDetailPage() {
       }
 
       const json = await res.json();
+      // Note: These fields don't exist in database yet, storing in local state only
       setClient(prev => ({ ...prev, project_name: projectName, project_status: projectStatus }));
-      setSaveMessage('Project saved successfully');
+      setSaveMessage('Project saved successfully (local only)');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (e) {
       setSaveError(e.message || 'Failed to save project');
@@ -125,6 +128,41 @@ export default function AdminClientDetailPage() {
     }
   };
 
+  const removeClient = async () => {
+    if (!clientId) return;
+    setRemovingClient(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
+      const res = await fetch(`/api/admin/clients/delete?id=${encodeURIComponent(clientId)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to remove client');
+      }
+
+      setSaveMessage('Client removed successfully');
+      setTimeout(() => {
+        router.push('/admin');
+      }, 2000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to remove client');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setRemovingClient(false);
+      setShowRemoveConfirm(false);
+    }
+  };
+
   const saveTableau = async () => {
     if (!clientId) return;
     setError('');
@@ -148,16 +186,17 @@ export default function AdminClientDetailPage() {
         },
         body: JSON.stringify({
           clientId,
-          tableau_url: tableauUrl,
-          tableau_type: tableauType,
+          // Note: tableau_url and tableau_type fields don't exist in database yet
+          // These would need to be added to the profiles table
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save Tableau embed');
 
-      setClient(json.profile);
-      setTableauUrl(json.profile.tableau_url || '');
-      setTableauType(json.profile.tableau_type || 'dashboard');
+      // Note: These fields don't exist in database yet, storing in local state only
+      setClient(prev => ({ ...prev, tableau_url: tableauUrl, tableau_type: tableauType }));
+      setTableauUrl(tableauUrl);
+      setTableauType(tableauType);
     } catch (e) {
       setError(e.message || 'Failed to save Tableau embed');
     } finally {
@@ -622,13 +661,22 @@ export default function AdminClientDetailPage() {
               <span className="ml-2 font-medium text-green-600">Yes</span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push('/admin')}
-            className="text-xs text-[var(--brand-primary)] hover:underline"
-          >
-            ← Back to admin
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowRemoveConfirm(true)}
+              className="text-xs text-red-600 hover:text-red-800 border border-red-300 px-3 py-1.5 rounded-md hover:bg-red-50"
+            >
+              Remove Client
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/admin')}
+              className="text-xs text-[var(--brand-primary)] hover:underline"
+            >
+              ← Back to admin
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1144,6 +1192,60 @@ export default function AdminClientDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Remove Client Confirmation Modal */}
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Remove Client</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-700 mb-4">
+                Are you sure you want to remove <strong>{client.full_name || client.email}</strong>?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-sm text-red-800 font-medium mb-2">This will permanently delete:</p>
+                <ul className="text-xs text-red-700 space-y-1">
+                  <li>• Client profile and contact information</li>
+                  <li>• All uploaded files and data</li>
+                  <li>• Tasks and project history</li>
+                  <li>• Dashboard configurations</li>
+                  <li>• Client portal access</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRemoveConfirm(false)}
+                disabled={removingClient}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={removeClient}
+                disabled={removingClient}
+                className="flex-1 px-4 py-2 border border-red-300 rounded-md text-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {removingClient ? 'Removing...' : 'Remove Client'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

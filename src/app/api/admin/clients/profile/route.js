@@ -53,7 +53,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { clientId, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb } = body;
+    const { clientId, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb, full_name, company } = body;
 
     // eslint-disable-next-line no-console
     console.log('Request body:', body);
@@ -80,6 +80,8 @@ export async function POST(request) {
 
     const updateData = {};
     // Note: project_name, project_status, tableau_url, tableau_type columns don't exist in profiles table
+    if (full_name !== undefined) updateData.full_name = full_name;
+    if (company !== undefined) updateData.company = company;
     if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
     if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
