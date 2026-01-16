@@ -13,6 +13,11 @@ export default function PortalHomePage() {
   const [profile, setProfile] = useState(null);
   const [resetStatus, setResetStatus] = useState('');
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [editingContact, setEditingContact] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [company, setCompany] = useState('');
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
   const unreadMessages = useUnreadMessagesCount();
 
@@ -46,6 +51,8 @@ export default function PortalHomePage() {
 
       setUser(session.user);
       setProfile(profile);
+      setFullName(profile?.full_name || '');
+      setCompany(profile?.company || '');
       setLoading(false);
     };
 
@@ -78,12 +85,39 @@ export default function PortalHomePage() {
       if (error) {
         setResetStatus(`error:${error.message}`);
       } else {
-        setResetStatus('success:Password reset email sent! Check your inbox.');
+        setResetStatus('success:Password reset link sent! Check your email.');
       }
-    } catch (e) {
-      setResetStatus(`error:${e.message || 'Failed to send reset email'}`);
+    } catch (err) {
+      setResetStatus('error:Something went wrong. Please try again.');
     } finally {
       setResettingPassword(false);
+    }
+  };
+
+  const saveContact = async () => {
+    setContactMessage('');
+    setSavingContact(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          company: company,
+        })
+        .eq('id', user?.id);
+
+      if (error) {
+        setContactMessage(`error:${error.message}`);
+      } else {
+        setProfile(prev => ({ ...prev, full_name: fullName, company: company }));
+        setContactMessage('success:Contact information updated successfully!');
+        setEditingContact(false);
+        setTimeout(() => setContactMessage(''), 3000);
+      }
+    } catch (err) {
+      setContactMessage('error:Something went wrong. Please try again.');
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -144,6 +178,96 @@ export default function PortalHomePage() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Contact Information Section */}
+      <div className="border rounded-lg bg-white p-6 mb-8 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Contact Information</h2>
+          <button
+            onClick={() => {
+              setEditingContact(!editingContact);
+              setContactMessage('');
+            }}
+            className="text-sm text-[var(--brand-primary)] hover:underline"
+          >
+            {editingContact ? 'Cancel' : 'Edit'}
+          </button>
+        </div>
+        
+        {contactMessage && (
+          <div className={`mb-4 p-3 rounded-md text-sm ${
+            contactMessage.startsWith('success:') 
+              ? 'bg-green-50 text-green-800 border border-green-200' 
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+            {contactMessage.replace(/^(success|error):/, '')}
+          </div>
+        )}
+
+        {editingContact ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <input
+                type="text"
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+              <input
+                type="text"
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                placeholder="Enter your company name"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={saveContact}
+                disabled={savingContact}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {savingContact ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingContact(false);
+                  setFullName(profile?.full_name || '');
+                  setCompany(profile?.company || '');
+                  setContactMessage('');
+                }}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Full Name</p>
+              <p className="text-sm text-gray-900 font-medium">
+                {profile?.full_name || 'Not set'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Company</p>
+              <p className="text-sm text-gray-900 font-medium">
+                {profile?.company || 'Not set'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Email</p>
+              <p className="text-sm text-gray-900 font-medium">{user?.email}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {resetStatus && (

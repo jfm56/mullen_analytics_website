@@ -16,6 +16,9 @@ export default function AdminClientDetailPage() {
   const [projectName, setProjectName] = useState('');
   const [projectStatus, setProjectStatus] = useState('');
   const [savingProject, setSavingProject] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [company, setCompany] = useState('');
+  const [savingContact, setSavingContact] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
@@ -72,10 +75,53 @@ export default function AdminClientDetailPage() {
       setSaveMessage('Project saved successfully');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (e) {
-      setSaveError(e.message);
+      setSaveError(e.message || 'Failed to save project');
       setTimeout(() => setSaveError(''), 5000);
     } finally {
       setSavingProject(false);
+    }
+  };
+
+  const saveContact = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    setSavingContact(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          full_name: fullName,
+          company: company,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save contact information');
+      }
+
+      const json = await res.json();
+      setClient(prev => ({ ...prev, full_name: fullName, company: company }));
+      setSaveMessage('Contact information saved successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save contact information');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -482,6 +528,8 @@ export default function AdminClientDetailPage() {
           setClient(match);
           setProjectName(match.project_name || '');
           setProjectStatus(match.project_status || '');
+          setFullName(match.full_name || '');
+          setCompany(match.company || '');
           setTableauUrl(match.tableau_url || '');
           setTableauType(match.tableau_type || 'dashboard');
           setUploadEnabled(match.upload_enabled || false);
@@ -630,23 +678,46 @@ export default function AdminClientDetailPage() {
           </div>
           <div className="border rounded-lg bg-white p-6 shadow-sm">
             <h3 className="text-base font-semibold mb-4">Contact Information</h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Email</p>
-                <p className="text-sm text-gray-900 font-medium">{client.email}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50"
+                  value={client?.email || ''}
+                  disabled
+                  title="Email cannot be changed"
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Company</p>
-                <p className="text-sm text-gray-900 font-medium">
-                  {client.company || 'Company not set'}
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="Enter company name"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Full Name</p>
-                <p className="text-sm text-gray-900 font-medium">
-                  {client.full_name || 'Not set'}
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="Enter full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
               </div>
+              <button
+                type="button"
+                onClick={saveContact}
+                disabled={savingContact}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {savingContact ? 'Saving...' : 'Save contact info'}
+              </button>
             </div>
           </div>
         </div>
