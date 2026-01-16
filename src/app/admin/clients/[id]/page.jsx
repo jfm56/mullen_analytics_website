@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import TableauEmbed from '@/components/TableauEmbed';
 
 export default function AdminClientDetailPage() {
   const router = useRouter();
@@ -23,8 +24,9 @@ export default function AdminClientDetailPage() {
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', assigned_to: 'Mullen Analytics', status: 'Not started', due_date: '', notes: '' });
-  const [tableauUrl, setTableauUrl] = useState('');
-  const [tableauType, setTableauType] = useState('dashboard');
+  const [tableauEmbedHtml, setTableauEmbedHtml] = useState('');
+  const [tableauEmbedType, setTableauEmbedType] = useState('dashboard');
+  const [tableauOpenUrl, setTableauOpenUrl] = useState('');
   const [savingTableau, setSavingTableau] = useState(false);
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [allowedFileTypes, setAllowedFileTypes] = useState('csv,xlsx,json,pdf');
@@ -233,15 +235,24 @@ export default function AdminClientDetailPage() {
     if (!clientId) return;
     setError('');
     setSavingTableau(true);
+
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
-      if (!accessToken) {
-        setError('Missing session. Please sign in again.');
-        setSavingTableau(false);
-        return;
+      if (!accessToken) throw new Error('No access token');
+
+      // Parse open URL from embed HTML
+      let openUrl = '';
+      if (tableauEmbedHtml) {
+        // Try to extract URL from various Tableau embed patterns
+        const urlMatch = tableauEmbedHtml.match(/src='([^']+)'/) || 
+                        tableauEmbedHtml.match(/src="([^"]+)"/) ||
+                        tableauEmbedHtml.match(/https:\/\/[^'\s\)]+/);
+        if (urlMatch) {
+          openUrl = urlMatch[1];
+        }
       }
 
       const res = await fetch('/api/admin/clients/profile', {
@@ -252,16 +263,18 @@ export default function AdminClientDetailPage() {
         },
         body: JSON.stringify({
           clientId,
-          tableau_url: tableauUrl,
-          tableau_type: tableauType,
+          tableau_embed_html: tableauEmbedHtml,
+          tableau_embed_type: tableauEmbedType,
+          tableau_open_url: openUrl,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save Tableau embed');
 
       setClient(json.profile);
-      setTableauUrl(json.profile.tableau_url || '');
-      setTableauType(json.profile.tableau_type || 'dashboard');
+      setTableauEmbedHtml(json.profile.tableau_embed_html || '');
+      setTableauEmbedType(json.profile.tableau_embed_type || 'dashboard');
+      setTableauOpenUrl(json.profile.tableau_open_url || '');
     } catch (e) {
       setError(e.message || 'Failed to save Tableau embed');
     } finally {
@@ -642,8 +655,9 @@ export default function AdminClientDetailPage() {
           setProjectStatus(match.project_status || '');
           setFullName(match.full_name || '');
           setCompany(match.company || '');
-          setTableauUrl(match.tableau_url || ''); // Note: Will be empty until DB field added
-          setTableauType(match.tableau_type || 'dashboard'); // Note: Will be default until DB field added
+          setTableauEmbedHtml(match.tableau_embed_html || '');
+          setTableauEmbedType(match.tableau_embed_type || 'dashboard');
+          setTableauOpenUrl(match.tableau_open_url || '');
           setUploadEnabled(match.upload_enabled || false);
           setAllowedFileTypes(match.allowed_file_types || 'csv,xlsx,json,pdf');
           setMaxUploadMb(match.max_upload_mb === null ? 'unlimited' : match.max_upload_mb || 50);
@@ -1280,8 +1294,8 @@ export default function AdminClientDetailPage() {
           <label className="block text-[11px] font-medium text-gray-600 mb-1">Embed Type</label>
           <select
             className="w-full border rounded-md px-2 py-1.5 text-xs bg-white"
-            value={tableauType}
-            onChange={(e) => setTableauType(e.target.value)}
+            value={tableauEmbedType}
+            onChange={(e) => setTableauEmbedType(e.target.value)}
           >
             <option value="dashboard">Dashboard</option>
             <option value="story">Story</option>
@@ -1290,14 +1304,33 @@ export default function AdminClientDetailPage() {
         <div className="mb-3">
           <label className="block text-[11px] font-medium text-gray-600 mb-1">Tableau Embed Code</label>
           <textarea
-            className="w-full border rounded-md px-2 py-1.5 text-xs min-h-[80px]"
-            value={tableauUrl}
-            onChange={(e) => setTableauUrl(e.target.value)}
-            placeholder='<script type="module" src="https://us-east-1.online.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"></script><tableau-viz id="tableau-viz" src="https://us-east-1.online.tableau.com/t/your-site/views/your-dashboard" width="1000" height="840"></tableau-viz>'
+            className="w-full border rounded-md px-2 py-1.5 text-xs font-mono"
+            rows={6}
+            placeholder="Paste the full Tableau embed code here..."
+            value={tableauEmbedHtml}
+            onChange={(e) => {
+              setTableauEmbedHtml(e.target.value);
+              // Auto-parse open URL as user types
+              if (e.target.value) {
+                const urlMatch = e.target.value.match(/src='([^']+)'/) || 
+                                e.target.value.match(/src="([^"]+)"/) ||
+                                e.target.value.match(/https:\/\/[^'\s\)]+/);
+                if (urlMatch) {
+                  setTableauOpenUrl(urlMatch[1]);
+                }
+              }
+            }}
           />
-          <p className="text-[10px] text-gray-500 mt-1">
-            Paste the full HTML embed code from Tableau (Share → Embed Code)
+          <p className="text-xs text-gray-500 mt-1">
+            Get this from Tableau: Share → Embed Code → Copy HTML
           </p>
+          {tableauEmbedHtml && (
+            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+              <p className="text-xs text-green-800">
+                ✅ <strong>Live preview active</strong> - See below for how it will appear to clients
+              </p>
+            </div>
+          )}
         </div>
         <button
           type="button"
@@ -1308,33 +1341,28 @@ export default function AdminClientDetailPage() {
           {savingTableau ? 'Saving...' : 'Save Tableau Embed'}
         </button>
 
-        {client.tableau_url && (
+        {tableauEmbedHtml && (
           <div className="border-t pt-4">
-            <h3 className="text-xs font-semibold mb-2">Preview</h3>
+            <h3 className="text-xs font-semibold mb-2">Dashboard Preview</h3>
             <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
               <p className="text-xs text-blue-800">
-                <strong>Using HTML Embed Code:</strong> Paste the full Tableau embed code (script tags) below.
+                <strong>Live Preview:</strong> This is how your dashboard will appear to the client.
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                Get this from Tableau: Share → Embed Code → Copy the full HTML
+                Make sure it loads correctly before saving.
               </p>
             </div>
-            <div className="w-full" style={{ height: '600px' }}>
-              {client.tableau_url.includes('<script') ? (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: client.tableau_url }}
-                  style={{ width: '100%', height: '100%' }}
+            <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+              <div className="px-3 py-2 border-b bg-gray-50">
+                <h4 className="text-xs font-medium text-gray-700">Client View Preview</h4>
+              </div>
+              <div className="p-2" style={{ height: '600px' }}>
+                <TableauEmbed 
+                  embedHtml={tableauEmbedHtml}
+                  embedType={tableauEmbedType}
+                  openUrl={tableauOpenUrl}
                 />
-              ) : (
-                <iframe
-                  src={client.tableau_url}
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  allowFullScreen
-                  title={`Tableau ${client.tableau_type || 'dashboard'}`}
-                />
-              )}
+              </div>
             </div>
           </div>
         )}

@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
+import TableauEmbed from '@/components/TableauEmbed';
+
 
 export default function PortalReportsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [reports, setReports] = useState([]);
-  const [tableauUrl, setTableauUrl] = useState('');
-  const [tableauType, setTableauType] = useState('dashboard');
+  const [tableauEmbedHtml, setTableauEmbedHtml] = useState('');
+  const [tableauEmbedType, setTableauEmbedType] = useState('dashboard');
+  const [tableauOpenUrl, setTableauOpenUrl] = useState('');
   const unreadMessages = useUnreadMessagesCount();
 
   useEffect(() => {
@@ -27,13 +30,16 @@ export default function PortalReportsPage() {
       // Fetch user profile including Tableau data
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, company, tableau_url, tableau_type')
+        .select('full_name, company, tableau_embed_html, tableau_embed_type, tableau_open_url')
         .eq('id', session.user.id)
         .single();
       
       if (profile) {
-        setTableauUrl(profile.tableau_url || '');
-        setTableauType(profile.tableau_type || 'dashboard');
+        console.log('Portal profile:', profile);
+        console.log('Tableau embed from DB:', profile.tableau_embed_html);
+        setTableauEmbedHtml(profile.tableau_embed_html || '');
+        setTableauEmbedType(profile.tableau_embed_type || 'dashboard');
+        setTableauOpenUrl(profile.tableau_open_url || '');
       }
       
       try {
@@ -106,30 +112,14 @@ export default function PortalReportsPage() {
         </nav>
       </div>
 
-      {tableauUrl && (
-        <div className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="text-sm font-semibold">Your Tableau {tableauType === 'story' ? 'Story' : 'Dashboard'}</h2>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Interactive analytics dashboard for your project
-            </p>
-          </div>
-          <div className="p-4">
-            <div className="w-full" style={{ height: '800px' }}>
-              <iframe
-                src={tableauUrl}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                allowFullScreen
-                title={`Tableau ${tableauType}`}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Tableau Embed */}
+      <TableauEmbed 
+        embedHtml={tableauEmbedHtml}
+        embedType={tableauEmbedType}
+        openUrl={tableauOpenUrl}
+      />
 
-      {reports.length === 0 && !tableauUrl ? (
+      {reports.length === 0 && !tableauEmbedHtml ? (
         <p className="text-sm text-gray-600">No reports or dashboards available yet.</p>
       ) : reports.length > 0 ? (
         <div>

@@ -61,8 +61,9 @@ export async function POST(request) {
       company, 
       next_check_in, 
       check_in_notes, 
-      tableau_url, 
-      tableau_type, 
+      tableau_embed_html, 
+      tableau_embed_type, 
+      tableau_open_url,
       upload_enabled, 
       allowed_file_types, 
       max_upload_mb 
@@ -99,8 +100,9 @@ export async function POST(request) {
     if (company !== undefined) updateData.company = company;
     if (next_check_in !== undefined) updateData.next_check_in = next_check_in;
     if (check_in_notes !== undefined) updateData.check_in_notes = check_in_notes;
-    if (tableau_url !== undefined) updateData.tableau_url = tableau_url;
-    if (tableau_type !== undefined) updateData.tableau_type = tableau_type;
+    if (tableau_embed_html !== undefined) updateData.tableau_embed_html = tableau_embed_html;
+    if (tableau_embed_type !== undefined) updateData.tableau_embed_type = tableau_embed_type;
+    if (tableau_open_url !== undefined) updateData.tableau_open_url = tableau_open_url;
     if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
     if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
@@ -119,7 +121,7 @@ export async function POST(request) {
       .from('profiles')
       .update(updateData)
       .eq('id', clientId)
-      .select('id, email, role, full_name, company, logo_url, upload_enabled, allowed_file_types, max_upload_mb')
+      .select('id, email, role, full_name, company, logo_url, tableau_embed_html, tableau_embed_type, tableau_open_url, upload_enabled, allowed_file_types, max_upload_mb')
       .single();
 
     if (error) {
