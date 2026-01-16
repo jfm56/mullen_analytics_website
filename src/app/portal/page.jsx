@@ -260,18 +260,13 @@ export default function PortalHomePage() {
               <thead className="bg-gray-50">
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="px-4 py-3 font-medium">Task</th>
-                  <th className="px-4 py-3 font-medium">What we are working on</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Current state of this step</th>
                   <th className="px-4 py-3 font-medium">Owner</th>
-                  <th className="px-4 py-3 font-medium">Who is responsible</th>
                   <th className="px-4 py-3 font-medium">Target date</th>
-                  <th className="px-4 py-3 font-medium">When we expect this step to be finished</th>
                   <th className="px-4 py-3 font-medium">Progress</th>
-                  <th className="px-4 py-3 font-medium">How far along this step is</th>
                 </tr>
               </thead>
-            <tbody className="divide-y">
+              <tbody className="divide-y">
               <tr>
                 <td className="px-4 py-3">
                   <div className="font-medium text-sm">Data review and preparation</div>
