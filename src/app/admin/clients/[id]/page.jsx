@@ -190,7 +190,7 @@ export default function AdminClientDetailPage() {
           clientId,
           upload_enabled: uploadEnabled,
           allowed_file_types: allowedFileTypes,
-          max_upload_mb: maxUploadMb,
+          max_upload_mb: maxUploadMb === 'unlimited' ? null : maxUploadMb,
         }),
       });
       const json = await res.json();
@@ -199,7 +199,7 @@ export default function AdminClientDetailPage() {
       setClient(json.profile);
       setUploadEnabled(json.profile.upload_enabled || false);
       setAllowedFileTypes(json.profile.allowed_file_types || 'csv,xlsx,json,pdf');
-      setMaxUploadMb(json.profile.max_upload_mb || 50);
+      setMaxUploadMb(json.profile.max_upload_mb === null ? 'unlimited' : json.profile.max_upload_mb || 50);
     } catch (e) {
       setError(e.message || 'Failed to save upload settings');
     } finally {
@@ -534,7 +534,7 @@ export default function AdminClientDetailPage() {
           setTableauType(match.tableau_type || 'dashboard');
           setUploadEnabled(match.upload_enabled || false);
           setAllowedFileTypes(match.allowed_file_types || 'csv,xlsx,json,pdf');
-          setMaxUploadMb(match.max_upload_mb || 50);
+          setMaxUploadMb(match.max_upload_mb === null ? 'unlimited' : match.max_upload_mb || 50);
           await loadTasks(accessToken, clientId);
           await loadUploads(accessToken, clientId);
         }
@@ -917,6 +917,9 @@ export default function AdminClientDetailPage() {
         
         <div className="mb-4 pb-4 border-b">
           <h3 className="text-xs font-semibold mb-2">Upload Settings</h3>
+          <p className="text-xs text-gray-500 mb-3">
+            These settings control what the client can upload. "No limit" allows files of any size.
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>
               <label className="flex items-center text-[11px] font-medium text-gray-600 mb-1">
@@ -941,14 +944,19 @@ export default function AdminClientDetailPage() {
             </div>
             <div>
               <label className="block text-[11px] font-medium text-gray-600 mb-1">Max upload (MB)</label>
-              <input
-                type="number"
+              <select
                 className="w-full border rounded-md px-2 py-1.5 text-xs"
                 value={maxUploadMb}
-                onChange={(e) => setMaxUploadMb(parseInt(e.target.value) || 50)}
-                min="1"
-                max="500"
-              />
+                onChange={(e) => setMaxUploadMb(e.target.value === 'unlimited' ? 'unlimited' : parseInt(e.target.value))}
+              >
+                <option value="unlimited">No limit</option>
+                <option value="10">10 MB</option>
+                <option value="25">25 MB</option>
+                <option value="50">50 MB</option>
+                <option value="100">100 MB</option>
+                <option value="250">250 MB</option>
+                <option value="500">500 MB</option>
+              </select>
             </div>
           </div>
           <button
