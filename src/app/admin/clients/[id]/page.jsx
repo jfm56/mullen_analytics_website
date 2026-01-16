@@ -163,6 +163,26 @@ export default function AdminClientDetailPage() {
     }
   };
 
+  const saveAllChanges = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    
+    try {
+      // Save contact info
+      await saveContact();
+      // Save upload settings
+      await saveUploadSettings();
+      // Save project details (local only)
+      setSaveMessage('All changes saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save some changes');
+      setTimeout(() => setSaveError(''), 5000);
+    }
+  };
+
   const saveTableau = async () => {
     if (!clientId) return;
     setError('');
@@ -560,17 +580,22 @@ export default function AdminClientDetailPage() {
           return;
         }
 
+        console.log('Client ID:', clientId);
+        console.log('Profiles response:', json.profiles);
         const match = (json.profiles || []).find((p) => p.id === clientId);
+        console.log('Found client match:', match);
         if (!match) {
+          console.log('Client not found for ID:', clientId);
           setError('Client not found.');
         } else {
+          console.log('Setting client data:', match);
           setClient(match);
           setProjectName(match.project_name || '');
           setProjectStatus(match.project_status || '');
           setFullName(match.full_name || '');
           setCompany(match.company || '');
-          setTableauUrl(match.tableau_url || '');
-          setTableauType(match.tableau_type || 'dashboard');
+          setTableauUrl(match.tableau_url || ''); // Note: Will be empty until DB field added
+          setTableauType(match.tableau_type || 'dashboard'); // Note: Will be default until DB field added
           setUploadEnabled(match.upload_enabled || false);
           setAllowedFileTypes(match.allowed_file_types || 'csv,xlsx,json,pdf');
           setMaxUploadMb(match.max_upload_mb === null ? 'unlimited' : match.max_upload_mb || 50);
@@ -662,6 +687,13 @@ export default function AdminClientDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={saveAllChanges}
+              className="text-xs bg-[var(--brand-primary)] text-white px-4 py-1.5 rounded-md hover:bg-[var(--brand-primary-dark,#1d3d73)]"
+            >
+              Save All Changes
+            </button>
             <button
               type="button"
               onClick={() => setShowRemoveConfirm(true)}
