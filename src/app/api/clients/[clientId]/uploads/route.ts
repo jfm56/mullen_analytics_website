@@ -18,14 +18,14 @@ function getUserClient(accessToken: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: Promise<{ clientId: string }> }
 ) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
-    const clientId = params.clientId;
+    const { clientId } = await params;
 
     // Authenticate user
     const authHeader = request.headers.get('authorization') || '';
