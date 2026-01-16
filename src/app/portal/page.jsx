@@ -99,41 +99,46 @@ export default function PortalHomePage() {
 
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">
-      <div className="border rounded-lg bg-white p-4 mb-8 shadow-sm">
-        <div className="flex items-center justify-between">
+      <div className="border rounded-lg bg-white p-6 mb-8 shadow-sm">
+        <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
             {profile?.logo_url && (
               <img 
                 src={profile.logo_url} 
                 alt="Company logo" 
-                className="h-16 w-auto max-w-[200px] object-contain"
+                className="h-20 w-auto max-w-[250px] object-contain"
               />
             )}
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                {profile?.company || 'Client'} Portal
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                CLIENT PORTAL
               </h1>
-              <p className="text-gray-600 text-sm mt-1">
-                Welcome, {firstName}. Your secure workspace for analytics delivery.
+              <p className="text-gray-700 text-base mt-2">
+                Welcome, {firstName}
               </p>
-              <p className="text-gray-500 text-xs mt-1">
-                Last updated: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              <p className="text-gray-600 text-sm mt-1 max-w-2xl">
+                This is your private workspace for your project with Mullen Analytics.
+                You can share files, see progress, review results, and communicate with our team here.
+              </p>
+              <p className="text-gray-500 text-xs mt-3">
+                Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <button
               onClick={handleResetPassword}
               disabled={resettingPassword}
-              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-left"
             >
-              {resettingPassword ? 'Sending...' : 'Reset password'}
+              {resettingPassword ? 'Sending...' : '[ Reset password ]'}
+              <span className="block text-[10px] text-gray-500 mt-1">Change your login password at any time.</span>
             </button>
             <button
               onClick={handleLogout}
-              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50"
+              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 text-left"
             >
-              Log out
+              [ Log out ]
             </button>
           </div>
         </div>
@@ -149,30 +154,32 @@ export default function PortalHomePage() {
         </div>
       )}
 
-      <section className="mb-8 border rounded-lg bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-sm font-semibold">Next Check-in</h2>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Week of Jan 27, 2026
-            </p>
+      <div className="border-t border-gray-300 my-8"></div>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">NEXT CHECK-IN</h2>
+        <div className="bg-gray-50 border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Next scheduled check-in:</p>
+              <p className="text-sm text-gray-700 mt-1">Week of Jan 27, 2026</p>
+            </div>
+            <Link
+              href="/portal/messages"
+              className="text-sm text-[var(--brand-primary)] hover:underline font-medium"
+            >
+              [ Schedule or message us → ]
+            </Link>
           </div>
-          <Link
-            href="/portal/messages"
-            className="text-xs text-[var(--brand-primary)] hover:underline"
-          >
-            Schedule check-in →
-          </Link>
+          <p className="text-xs text-gray-600 mt-3">
+            Use this link to schedule a call or send us a message.
+          </p>
         </div>
       </section>
 
-      <section className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b">
-          <h2 className="text-sm font-semibold">Quick Actions</h2>
-          <p className="text-xs text-gray-600 mt-0.5">
-            Common tasks to manage your engagement.
-          </p>
-        </div>
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">QUICK ACTIONS</h2>
+        <p className="text-sm text-gray-600 mb-4">Common things you may want to do.</p>
         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
             href="/portal/uploads"
@@ -185,7 +192,7 @@ export default function PortalHomePage() {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-900">Upload new data</div>
-              <div className="text-xs text-gray-500">Share files securely</div>
+              <div className="text-xs text-gray-500">Safely share files or spreadsheets with us.</div>
             </div>
           </Link>
           <Link
@@ -199,7 +206,7 @@ export default function PortalHomePage() {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-900">View dashboards & reports</div>
-              <div className="text-xs text-gray-500">Access your analytics</div>
+              <div className="text-xs text-gray-500">See your charts, reports, and results.</div>
             </div>
           </Link>
           <Link
@@ -213,7 +220,7 @@ export default function PortalHomePage() {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-900">Message the team</div>
-              <div className="text-xs text-gray-500">Questions, updates, support</div>
+              <div className="text-xs text-gray-500">Ask questions or share feedback securely.</div>
             </div>
             {unreadMessages > 0 && (
               <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] w-4 h-4">
@@ -232,156 +239,189 @@ export default function PortalHomePage() {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-900">View invoices</div>
-              <div className="text-xs text-gray-500">Billing and payments</div>
+              <div className="text-xs text-gray-500">See billing details and past invoices.</div>
             </div>
           </Link>
         </div>
       </section>
 
-      <section className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b">
-          <h2 className="text-sm font-semibold">Project Overview</h2>
-          <p className="text-xs text-gray-600 mt-1">
-            Below is the current status of your engagement. Updates are posted as milestones are reached.
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-[11px] uppercase tracking-wide text-gray-500">
-                <th className="px-4 py-2 font-medium">Task</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">Owner</th>
-                <th className="px-4 py-2 font-medium">Target date</th>
-                <th className="px-4 py-2 font-medium">Progress</th>
-              </tr>
-            </thead>
+      <div className="border-t border-gray-300 my-8"></div>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">PROJECT STATUS</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Below is a simple overview of where your project stands.
+          We update this as work is completed.
+        </p>
+        
+        <div className="border rounded-lg bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+                  <th className="px-4 py-3 font-medium">Task</th>
+                  <th className="px-4 py-3 font-medium">What we are working on</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Current state of this step</th>
+                  <th className="px-4 py-3 font-medium">Owner</th>
+                  <th className="px-4 py-3 font-medium">Who is responsible</th>
+                  <th className="px-4 py-3 font-medium">Target date</th>
+                  <th className="px-4 py-3 font-medium">When we expect this step to be finished</th>
+                  <th className="px-4 py-3 font-medium">Progress</th>
+                  <th className="px-4 py-3 font-medium">How far along this step is</th>
+                </tr>
+              </thead>
             <tbody className="divide-y">
               <tr>
-                <td className="px-4 py-2">
-                  <div className="font-medium text-[13px]">Data intake & quality checks</div>
-                  <div className="text-[11px] text-gray-500">Initial data upload, validation, and profiling.</div>
+                <td className="px-4 py-3">
+                  <div className="font-medium text-sm">Data review and preparation</div>
+                  <div className="text-xs text-gray-500">We review the files you send us and check for issues or missing information.</div>
                 </td>
-                <td className="px-4 py-2">
-                  <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-0.5 text-[11px] font-medium text-yellow-800 border border-yellow-100">
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 border border-yellow-100">
                     In progress
                   </span>
                 </td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">Target: Week of 01/27</td>
-                <td className="px-4 py-2">
-                  <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 bg-[var(--brand-primary)]" style={{ width: '40%' }} />
+                <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
+                <td className="px-4 py-3 text-sm text-gray-700">Week of Jan 27, 2026</td>
+                <td className="px-4 py-3">
+                  <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 bg-blue-600" style={{ width: '40%' }} />
                   </div>
-                  <span className="text-[11px] text-gray-600 mt-1 inline-block">40%</span>
+                  <span className="text-xs text-gray-600 mt-1 inline-block">40%</span>
                 </td>
               </tr>
               <tr>
-                <td className="px-4 py-2">
-                  <div className="font-medium text-[13px]">Dashboard & reporting design</div>
-                  <div className="text-[11px] text-gray-500">Define KPIs, layout, and key decision workflows.</div>
+                <td className="px-4 py-3">
+                  <div className="font-medium text-sm">Dashboard and report setup</div>
+                  <div className="text-xs text-gray-500">We design charts and reports based on your goals.</div>
                 </td>
-                <td className="px-4 py-2">
-                  <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-700 border border-gray-200">
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 border border-gray-200">
                     Planned
                   </span>
                 </td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">Pending data</td>
-                <td className="px-4 py-2">
-                  <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
+                <td className="px-4 py-3 text-sm text-gray-700">Waiting on data</td>
+                <td className="px-4 py-3">
+                  <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
                     <div className="h-2 bg-gray-300" style={{ width: '0%' }} />
                   </div>
-                  <span className="text-[11px] text-gray-600 mt-1 inline-block">0%</span>
+                  <span className="text-xs text-gray-600 mt-1 inline-block">0%</span>
                 </td>
               </tr>
               <tr>
-                <td className="px-4 py-2">
-                  <div className="font-medium text-[13px]">Executive readout & recommendations</div>
-                  <div className="text-[11px] text-gray-500">Synthesis of findings, slides, and next steps.</div>
+                <td className="px-4 py-3">
+                  <div className="font-medium text-sm">Summary and recommendations</div>
+                  <div className="text-xs text-gray-500">We prepare clear takeaways, next steps, and recommendations.</div>
                 </td>
-                <td className="px-4 py-2">
-                  <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-700 border border-gray-200">
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 border border-gray-200">
                     Planned
                   </span>
                 </td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">Target: Week of 02/10</td>
-                <td className="px-4 py-2">
-                  <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
+                <td className="px-4 py-3 text-sm text-gray-700">Week of Feb 10, 2026</td>
+                <td className="px-4 py-3">
+                  <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
                     <div className="h-2 bg-gray-300" style={{ width: '0%' }} />
                   </div>
-                  <span className="text-[11px] text-gray-600 mt-1 inline-block">0%</span>
+                  <span className="text-xs text-gray-600 mt-1 inline-block">0%</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-2 bg-gray-50 border-t">
+        <div className="px-4 py-3 bg-gray-50 border-t">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-gray-700">Status Legend</span>
-            <div className="flex flex-wrap gap-4 text-[11px] text-gray-600">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2 h-2 rounded-full bg-yellow-400"></span>
-                <span>In progress</span>
+            <span className="text-sm font-medium text-gray-700">STATUS MEANING</span>
+            <div className="flex flex-wrap gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full bg-yellow-400"></span>
+                <div>
+                  <div className="font-medium">In progress</div>
+                  <div className="text-xs">We are actively working on this.</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2 h-2 rounded-full bg-gray-400"></span>
-                <span>Planned</span>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full bg-gray-400"></span>
+                <div>
+                  <div className="font-medium">Planned</div>
+                  <div className="text-xs">This step is coming up next.</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                <span>Complete</span>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+                <div>
+                  <div className="font-medium">Complete</div>
+                  <div className="text-xs">This step is finished.</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mb-8 border rounded-lg bg-blue-50 border-blue-200 overflow-hidden">
-        <div className="px-4 py-3 border-b border-blue-200 bg-blue-100">
-          <h2 className="text-sm font-semibold text-blue-900">What we need from you</h2>
-        </div>
-        <div className="p-4">
-          <ul className="space-y-3 text-sm text-blue-900">
-            <li className="flex items-start gap-3">
-              <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
-              <div className="flex-1">
-                <Link href="/portal/uploads" className="text-blue-900 hover:text-blue-700 underline">
-                  Upload CSV data
-                </Link>
-                <span className="text-blue-700"> - Updated call volume data needed</span>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
-              <div className="flex-1">
-                <Link href="/portal/reports" className="text-blue-900 hover:text-blue-700 underline">
-                  Review draft dashboard
-                </Link>
-                <span className="text-blue-700"> - Available soon</span>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
-              <div className="flex-1">
-                <Link href="/portal/messages" className="text-blue-900 hover:text-blue-700 underline">
-                  Approve KPI definitions
-                </Link>
-                <span className="text-blue-700"> - Message the team with feedback</span>
-              </div>
-            </li>
-          </ul>
+      <div className="border-t border-gray-300 my-8"></div>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">ACTION ITEMS FOR YOU</h2>
+        <p className="text-sm text-gray-600 mb-4">These are the next things we may need from you.</p>
+        
+        <div className="border rounded-lg bg-blue-50 border-blue-200 overflow-hidden">
+          <div className="p-4">
+            <ul className="space-y-3 text-sm text-blue-900">
+              <li className="flex items-start gap-3">
+                <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
+                <div className="flex-1">
+                  <Link href="/portal/uploads" className="text-blue-900 hover:text-blue-700 underline font-medium">
+                    Upload data file
+                  </Link>
+                  <span className="text-blue-700 block">Please upload your updated spreadsheet or file.</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
+                <div className="flex-1">
+                  <Link href="/portal/reports" className="text-blue-900 hover:text-blue-700 underline font-medium">
+                    Review dashboard draft
+                  </Link>
+                  <span className="text-blue-700 block">We will notify you when this is ready.</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
+                <div className="flex-1">
+                  <Link href="/portal/messages" className="text-blue-900 hover:text-blue-700 underline font-medium">
+                    Approve key metrics
+                  </Link>
+                  <span className="text-blue-700 block">Send us a message with your approval or feedback.</span>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
       </section>
 
-      <div className="mt-12 pt-6 border-t border-gray-200">
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <span>All data is encrypted in transit and access-controlled. Only authorized users can view your information.</span>
+      <div className="border-t border-gray-300 my-8"></div>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">SECURITY NOTICE</h2>
+        <div className="border rounded-lg bg-gray-50 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <div>
+              <p className="text-sm text-gray-700 font-medium mb-1">Your information is protected.</p>
+              <p className="text-sm text-gray-600">All data is securely transferred and only accessible to authorized users.</p>
+            </div>
+          </div>
         </div>
+      </section>
+
+      <div className="text-center text-xs text-gray-500 mt-12">
+        © 2026 Mullen Analytics & AI Consulting
       </div>
     </div>
   );
