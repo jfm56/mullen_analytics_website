@@ -267,7 +267,7 @@ export default function PortalHomePage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-              <tr>
+                <tr>
                 <td className="px-4 py-3">
                   <div className="font-medium text-sm">Data review and preparation</div>
                   <div className="text-xs text-gray-500">We review the files you send us and check for issues or missing information.</div>
