@@ -1150,7 +1150,7 @@ export default function AdminClientDetailPage() {
         <div className="mb-4 pb-4 border-b">
           <h3 className="text-xs font-semibold mb-2">Upload Settings</h3>
           <p className="text-xs text-gray-500 mb-3">
-            These settings control what the client can upload. "No limit" allows files of any size.
+            These settings control what the client can upload. &quot;No limit&quot; allows files of any size.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>

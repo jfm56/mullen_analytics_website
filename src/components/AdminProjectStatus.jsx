@@ -216,7 +216,7 @@ export default function AdminProjectStatus({ clientId }) {
 
       {items.length === 0 ? (
         <div className="text-center py-8 text-gray-500 text-sm">
-          No project steps added yet. Click "Add Project Step" to get started.
+          No project steps added yet. Click &quot;Add Project Step&quot; to get started.
         </div>
       ) : (
         <div className="space-y-4">
