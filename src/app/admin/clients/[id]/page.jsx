@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import TableauEmbed from '@/components/TableauEmbed';
+import AdminProjectStatus from '@/components/AdminProjectStatus';
 
 export default function AdminClientDetailPage() {
   const router = useRouter();
@@ -1367,6 +1368,9 @@ export default function AdminClientDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Project Status Section */}
+      <AdminProjectStatus clientId={clientId} />
 
       {/* Remove Client Confirmation Modal */}
       {showRemoveConfirm && (

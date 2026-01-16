@@ -1,9 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function DELETE(request) {
   try {
+    if (!supabaseAdmin) {
+      return Response.json({ error: 'Supabase admin client not configured' }, { status: 500 });
+    }
+
     // Get the client ID from query parameters
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('id');
@@ -21,13 +23,13 @@ export async function DELETE(request) {
     const accessToken = authHeader.substring(7);
 
     // Verify the access token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
     if (authError || !user) {
       return Response.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
 
     // Check if user is admin
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -38,7 +40,7 @@ export async function DELETE(request) {
     }
 
     // Delete client directly (simple version)
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('profiles')
       .delete()
       .eq('id', clientId);

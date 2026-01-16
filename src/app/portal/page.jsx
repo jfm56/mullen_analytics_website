@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
+import ClientProjectStatus from '@/components/ClientProjectStatus';
 
 export default function PortalHomePage() {
   const router = useRouter();
@@ -132,29 +133,29 @@ export default function PortalHomePage() {
   const firstName = user.user_metadata?.first_name || user.email;
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-4">
-      <div className="border rounded-lg bg-white p-6 mb-8 shadow-sm">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center gap-4">
+    <div className="max-w-5xl mx-auto py-16 px-4">
+      <div className="border rounded-lg bg-white p-8 mb-8 shadow-sm">
+        <div className="flex items-start justify-between mb-8">
+          <div className="flex items-center gap-6">
             {profile?.logo_url && (
               <img 
                 src={profile.logo_url} 
                 alt="Company logo" 
-                className="h-20 w-auto max-w-[250px] object-contain"
+                className="h-24 w-auto max-w-[280px] object-contain filter contrast-110"
               />
             )}
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              <h1 className="text-4xl font-black tracking-tight text-gray-900">
                 CLIENT PORTAL
               </h1>
-              <p className="text-gray-700 text-base mt-2">
+              <p className="text-gray-800 text-lg font-medium mt-3">
                 Welcome, {firstName}
               </p>
-              <p className="text-gray-600 text-sm mt-1 max-w-2xl">
+              <p className="text-gray-700 text-base mt-2 max-w-2xl leading-relaxed">
                 This is your private workspace for your project with Mullen Analytics.
                 You can share files, see progress, review results, and communicate with our team here.
               </p>
-              <p className="text-gray-500 text-xs mt-3">
+              <p className="text-gray-600 text-sm mt-4 font-medium">
                 Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
@@ -373,116 +374,7 @@ export default function PortalHomePage() {
 
       <div className="border-t border-gray-300 my-8"></div>
 
-      <section className="mb-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">PROJECT STATUS</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Below is a simple overview of where your project stands.
-          We update this as work is completed.
-        </p>
-        
-        <div className="border rounded-lg bg-white overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                  <th className="px-4 py-3 font-medium">Task</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Owner</th>
-                  <th className="px-4 py-3 font-medium">Target date</th>
-                  <th className="px-4 py-3 font-medium">Progress</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                <tr>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-sm">Data review and preparation</div>
-                  <div className="text-xs text-gray-500">We review the files you send us and check for issues or missing information.</div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900 border border-amber-200">
-                    In progress
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-3 text-sm text-gray-700">Week of Jan 27, 2026</td>
-                <td className="px-4 py-3">
-                  <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div className="h-3 bg-blue-500 rounded-full" style={{ width: '40%' }} />
-                  </div>
-                  <span className="text-xs text-gray-600 mt-1 inline-block font-medium">40%</span>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-sm">Dashboard and report setup</div>
-                  <div className="text-xs text-gray-500">We design charts and reports based on your goals.</div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800 border border-slate-300">
-                    Planned
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-3 text-sm text-gray-700">Waiting on data</td>
-                <td className="px-4 py-3">
-                  <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div className="h-3 bg-gray-400 rounded-full" style={{ width: '0%' }} />
-                  </div>
-                  <span className="text-xs text-gray-600 mt-1 inline-block font-medium">0%</span>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-sm">Summary and recommendations</div>
-                  <div className="text-xs text-gray-500">We prepare clear takeaways, next steps, and recommendations.</div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800 border border-slate-300">
-                    Planned
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-3 text-sm text-gray-700">Week of Feb 10, 2026</td>
-                <td className="px-4 py-3">
-                  <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div className="h-3 bg-gray-400 rounded-full" style={{ width: '0%' }} />
-                  </div>
-                  <span className="text-xs text-gray-600 mt-1 inline-block font-medium">0%</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        </div>
-        <div className="px-4 py-3 bg-gray-50 border-t">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">STATUS MEANING</span>
-            <div className="flex flex-wrap gap-6 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full bg-amber-500"></span>
-                <div>
-                  <div className="font-medium">In progress</div>
-                  <div className="text-xs">We are actively working on this.</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full bg-slate-500"></span>
-                <div>
-                  <div className="font-medium">Planned</div>
-                  <div className="text-xs">This step is coming up next.</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
-                <div>
-                  <div className="font-medium">Complete</div>
-                  <div className="text-xs">This step is finished.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ClientProjectStatus company={profile?.company} />
 
       <div className="border-t border-gray-300 my-8"></div>
 
