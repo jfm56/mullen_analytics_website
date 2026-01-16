@@ -1155,16 +1155,15 @@ export default function AdminClientDetailPage() {
           </select>
         </div>
         <div className="mb-3">
-          <label className="block text-[11px] font-medium text-gray-600 mb-1">Tableau Embed URL</label>
-          <input
-            type="text"
-            className="w-full border rounded-md px-2 py-1.5 text-xs"
+          <label className="block text-[11px] font-medium text-gray-600 mb-1">Tableau Embed Code</label>
+          <textarea
+            className="w-full border rounded-md px-2 py-1.5 text-xs min-h-[80px]"
             value={tableauUrl}
             onChange={(e) => setTableauUrl(e.target.value)}
-            placeholder="https://public.tableau.com/views/..."
+            placeholder='<script type="module" src="https://us-east-1.online.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"></script><tableau-viz id="tableau-viz" src="https://us-east-1.online.tableau.com/t/your-site/views/your-dashboard" width="1000" height="840"></tableau-viz>'
           />
           <p className="text-[10px] text-gray-500 mt-1">
-            Paste the full Tableau Public or Tableau Server embed URL
+            Paste the full HTML embed code from Tableau (Share → Embed Code)
           </p>
         </div>
         <button
@@ -1179,15 +1178,30 @@ export default function AdminClientDetailPage() {
         {client.tableau_url && (
           <div className="border-t pt-4">
             <h3 className="text-xs font-semibold mb-2">Preview</h3>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+              <p className="text-xs text-blue-800">
+                <strong>Using HTML Embed Code:</strong> Paste the full Tableau embed code (script tags) below.
+              </p>
+              <p className="text-xs text-blue-700 mt-1">
+                Get this from Tableau: Share → Embed Code → Copy the full HTML
+              </p>
+            </div>
             <div className="w-full" style={{ height: '600px' }}>
-              <iframe
-                src={client.tableau_url}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                allowFullScreen
-                title={`Tableau ${client.tableau_type || 'dashboard'}`}
-              />
+              {client.tableau_url.includes('<script') ? (
+                <div 
+                  dangerouslySetInnerHTML={{ __html: client.tableau_url }}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              ) : (
+                <iframe
+                  src={client.tableau_url}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allowFullScreen
+                  title={`Tableau ${client.tableau_type || 'dashboard'}`}
+                />
+              )}
             </div>
           </div>
         )}
