@@ -75,6 +75,9 @@ export async function POST(request) {
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
     if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
 
+    // eslint-disable-next-line no-console
+    console.log('Updating profile with data:', updateData, 'for clientId:', clientId);
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update(updateData)
@@ -84,8 +87,13 @@ export async function POST(request) {
 
     if (error) {
       // eslint-disable-next-line no-console
-      console.error('Admin update client profile error', error);
-      return NextResponse.json({ error: 'Failed to update client profile' }, { status: 500 });
+      console.error('Admin update client profile error:', error);
+      // eslint-disable-next-line no-console
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return NextResponse.json({ 
+        error: 'Failed to update client profile', 
+        details: error.message || error.hint || 'Unknown error' 
+      }, { status: 500 });
     }
 
     // Send email notifications based on changes
