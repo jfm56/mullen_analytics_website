@@ -574,42 +574,50 @@ export default function AdminClientDetailPage() {
   const completedTasks = sortedTasks.filter(t => t.status === 'Done');
 
   useEffect(() => {
+    // Add global error handler for unhandled promise rejections
+    const handleUnhandledRejection = (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      setError('An unexpected error occurred. Please refresh the page.');
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
     const init = async () => {
       setLoading(true);
       setError('');
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.replace('/portal/login');
-        return;
-      }
-
-      // Verify current user is admin
-      const { data: callerProfile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileErr || !callerProfile || callerProfile.role !== 'admin') {
-        setAllowed(false);
-        setLoading(false);
-        return;
-      }
-
-      setAllowed(true);
-
-      const accessToken = session?.access_token;
-      if (!accessToken || !clientId) {
-        setError('Missing client information.');
-        setLoading(false);
-        return;
-      }
-
       try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          router.replace('/portal/login');
+          return;
+        }
+
+        // Verify current user is admin
+        const { data: callerProfile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileErr || !callerProfile || callerProfile.role !== 'admin') {
+          setAllowed(false);
+          setLoading(false);
+          return;
+        }
+
+        setAllowed(true);
+
+        const accessToken = session?.access_token;
+        if (!accessToken || !clientId) {
+          setError('Missing client information.');
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch('/api/admin/users/list', {
           method: 'GET',
           headers: {
@@ -644,6 +652,7 @@ export default function AdminClientDetailPage() {
           await loadUploads(accessToken, clientId);
         }
       } catch (e) {
+        console.error('Init error:', e);
         setError(e.message || 'Failed to load client.');
       } finally {
         setLoading(false);
@@ -653,6 +662,11 @@ export default function AdminClientDetailPage() {
     if (clientId) {
       void init();
     }
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
   }, [clientId, router]);
 
   if (loading) {
