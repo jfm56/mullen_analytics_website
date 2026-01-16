@@ -24,17 +24,17 @@ export default function PortalReportsPage() {
       }
       setUser(session.user);
       
-      // Note: tableau_url and tableau_type fields don't exist in profiles table yet
-      // These would need to be added to the database for Tableau embed functionality
+      // Fetch user profile including Tableau data
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, company')
+        .select('full_name, company, tableau_url, tableau_type')
         .eq('id', session.user.id)
         .single();
       
-      // For now, set empty values until database fields are added
-      setTableauUrl('');
-      setTableauType('dashboard');
+      if (profile) {
+        setTableauUrl(profile.tableau_url || '');
+        setTableauType(profile.tableau_type || 'dashboard');
+      }
       
       try {
         const res = await fetch('/api/portal/reports');

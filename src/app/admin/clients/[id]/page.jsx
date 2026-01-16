@@ -64,7 +64,8 @@ export default function AdminClientDetailPage() {
         },
         body: JSON.stringify({
           clientId,
-          // Temporarily local-only until database columns are added
+          project_name: projectName,
+          project_status: projectStatus,
         }),
       });
 
@@ -74,8 +75,8 @@ export default function AdminClientDetailPage() {
       }
 
       const json = await res.json();
-      setClient(prev => ({ ...prev, project_name: projectName, project_status: projectStatus }));
-      setSaveMessage('Project saved successfully (local only)');
+      setClient(json.profile);
+      setSaveMessage('Project saved successfully');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (e) {
       setSaveError(e.message || 'Failed to save project');
