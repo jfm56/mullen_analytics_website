@@ -32,21 +32,21 @@ export default function AdminClientDetailPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   const saveProject = async () => {
     if (!clientId) return;
     setError('');
+    setSaveMessage('');
+    setSaveError('');
     setSavingProject(true);
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
-      if (!accessToken) {
-        setError('Missing session. Please sign in again.');
-        setSavingProject(false);
-        return;
-      }
+      if (!accessToken) throw new Error('No access token');
 
       const res = await fetch('/api/admin/clients/profile', {
         method: 'POST',
@@ -60,14 +60,19 @@ export default function AdminClientDetailPage() {
           project_status: projectStatus,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to save project');
 
-      setClient(json.profile);
-      setProjectName(json.profile.project_name || '');
-      setProjectStatus(json.profile.project_status || '');
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save project');
+      }
+
+      const json = await res.json();
+      setClient(prev => ({ ...prev, project_name: projectName, project_status: projectStatus }));
+      setSaveMessage('Project saved successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
     } catch (e) {
-      setError(e.message || 'Failed to save project');
+      setSaveError(e.message);
+      setTimeout(() => setSaveError(''), 5000);
     } finally {
       setSavingProject(false);
     }
@@ -497,92 +502,234 @@ export default function AdminClientDetailPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-4">
-      <button
-        type="button"
-        onClick={() => router.push('/admin')}
-        className="mb-4 text-xs text-[var(--brand-primary)] hover:underline"
-      >
-         Back to admin
-      </button>
-      <h1 className="text-2xl font-bold tracking-tight mb-2">
-        {client.full_name || client.email}
-      </h1>
-      <p className="text-gray-600 text-sm mb-6">
-        Company: {client.company || 'N/A'}
-      </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-xs">
-        <div className="border rounded-lg bg-white p-4">
-          <h2 className="text-sm font-semibold mb-3">Project</h2>
-          <div className="mb-3">
-            <label className="block text-[11px] font-medium text-gray-600 mb-1">Project name</label>
-            <input
-              type="text"
-              className="w-full border rounded-md px-2 py-1.5 text-xs"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-            />
+    <div className="max-w-6xl mx-auto py-8 px-4">
+      {/* Toast Notifications */}
+      {saveMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md shadow-sm">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            {saveMessage}
           </div>
-          <div className="mb-3">
-            <label className="block text-[11px] font-medium text-gray-600 mb-1">Status</label>
-            <input
-              type="text"
-              className="w-full border rounded-md px-2 py-1.5 text-xs"
-              placeholder="e.g. Discovery, In progress, On hold"
-              value={projectStatus}
-              onChange={(e) => setProjectStatus(e.target.value)}
-            />
+        </div>
+      )}
+      
+      {saveError && (
+        <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md shadow-sm">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {saveError}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Header Summary */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6 text-sm">
+            <div>
+              <span className="text-gray-500">Client:</span>
+              <span className="ml-2 font-medium">{client.full_name || client.email}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Company:</span>
+              <span className="ml-2 font-medium">{client.company || 'Company not set'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Active project:</span>
+              <span className="ml-2 font-medium text-green-600">Yes</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Uploads enabled:</span>
+              <span className="ml-2 font-medium text-green-600">Yes</span>
+            </div>
           </div>
           <button
             type="button"
-            onClick={saveProject}
-            disabled={savingProject}
-            className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={() => router.push('/admin')}
+            className="text-xs text-[var(--brand-primary)] hover:underline"
           >
-            {savingProject ? 'Saving...' : 'Save project'}
+            ← Back to admin
           </button>
         </div>
-        <div className="border rounded-lg bg-white p-4">
-          <h2 className="text-sm font-semibold mb-3">Contact</h2>
-          <p className="text-[11px] text-gray-600 mb-1">Email</p>
-          <p className="text-[13px] text-gray-800 font-medium">{client.email}</p>
-          
-          <div className="mt-4 pt-4 border-t">
-            <h3 className="text-xs font-semibold mb-3">Client Logo</h3>
-            {client.logo_url && (
-              <div className="mb-3">
-                <img 
-                  src={client.logo_url} 
-                  alt="Client logo" 
-                  className="h-16 w-auto max-w-[200px] object-contain border rounded p-2 bg-gray-50"
+      </div>
+
+      {/* Client Overview Section */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="w-1 h-6 bg-blue-500 rounded"></div>
+          Client Overview
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="border rounded-lg bg-white p-6 shadow-sm">
+            <h3 className="text-base font-semibold mb-4">Project Details</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Project name</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="EMS Staffing Forecast – Phase 1"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
                 />
               </div>
-            )}
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Upload logo</label>
-                <input
-                  id="logo-upload-input"
-                  type="file"
-                  accept="image/*,.png,.jpg,.jpeg,.gif,.svg"
-                  className="w-full border rounded-md px-2 py-1.5 text-xs"
-                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                />
-                <p className="text-[10px] text-gray-500 mt-1">PNG, JPG, GIF, SVG (max 2MB)</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={projectStatus}
+                  onChange={(e) => setProjectStatus(e.target.value)}
+                >
+                  <option value="">Select status...</option>
+                  <option value="Planned">Planned</option>
+                  <option value="In progress">In progress</option>
+                  <option value="On hold">On hold</option>
+                  <option value="Complete">Complete</option>
+                </select>
               </div>
               <button
                 type="button"
-                onClick={handleLogoUpload}
-                disabled={!logoFile || uploadingLogo}
-                className="px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={saveProject}
+                disabled={savingProject}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {uploadingLogo ? 'Uploading...' : 'Upload'}
+                {savingProject ? 'Saving...' : 'Save project'}
               </button>
             </div>
           </div>
+          <div className="border rounded-lg bg-white p-6 shadow-sm">
+            <h3 className="text-base font-semibold mb-4">Contact Information</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Email</p>
+                <p className="text-sm text-gray-900 font-medium">{client.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Company</p>
+                <p className="text-sm text-gray-900 font-medium">
+                  {client.company || 'Company not set'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Full Name</p>
+                <p className="text-sm text-gray-900 font-medium">
+                  {client.full_name || 'Not set'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Tasks Section */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="w-1 h-6 bg-green-500 rounded"></div>
+          Tasks
+        </h2>
+        <div className="border rounded-lg bg-white p-6 shadow-sm">
+          <div className="mb-6">
+            <h3 className="text-base font-semibold mb-4">Add New Task</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Task title</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="Enter task title"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value }))}
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Assigned to</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={newTask.assigned_to}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, assigned_to: e.target.value }))}
+                >
+                  <option value="Mullen Analytics">Mullen Analytics</option>
+                  <option value="Client">Client</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <textarea
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                rows={3}
+                placeholder="Task description..."
+                value={newTask.description}
+                onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={addTask}
+              disabled={!newTask.title.trim() || addingTask}
+              className="mt-4 inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {addingTask ? 'Adding...' : 'Add Task'}
+            </button>
+          </div>
+          
+          {tasks.length > 0 && (
+            <div className="border-t pt-6">
+              <h3 className="text-base font-semibold mb-4">Existing Tasks</h3>
+              <div className="space-y-3">
+                {tasks.map((task) => (
+                  <div key={task.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-medium text-sm">{task.title}</h4>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            task.priority === 'High' ? 'bg-red-100 text-red-800' :
+                            task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        {task.description && (
+                          <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>Assigned to: {task.assigned_to}</span>
+                          <span>Status: {task.status}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteTask(task.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       <div className="border rounded-lg bg-white p-4 mb-4 text-xs">
         <h2 className="text-sm font-semibold mb-3">Tasks</h2>
