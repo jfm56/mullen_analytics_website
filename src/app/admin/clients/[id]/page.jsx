@@ -719,6 +719,42 @@ export default function AdminClientDetailPage() {
                 {savingContact ? 'Saving...' : 'Save contact info'}
               </button>
             </div>
+            
+            {/* Logo Upload Section */}
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="text-base font-semibold mb-4">Client Logo</h4>
+              {client?.logo_url && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">Current logo:</p>
+                  <img 
+                    src={client.logo_url} 
+                    alt="Client logo" 
+                    className="h-20 w-auto max-w-[200px] object-contain border rounded p-2 bg-gray-50"
+                  />
+                </div>
+              )}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload new logo</label>
+                  <input
+                    id="logo-upload-input"
+                    type="file"
+                    accept="image/*,.png,.jpg,.jpeg,.gif,.svg"
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, SVG (max 2MB)</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogoUpload}
+                  disabled={!logoFile || uploadingLogo}
+                  className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
