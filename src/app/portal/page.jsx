@@ -125,18 +125,20 @@ export default function PortalHomePage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={handleResetPassword}
-              disabled={resettingPassword}
-              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-left"
-            >
-              {resettingPassword ? 'Sending...' : '[ Reset password ]'}
+          <div className="flex flex-col gap-3">
+            <div>
+              <button
+                onClick={handleResetPassword}
+                disabled={resettingPassword}
+                className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-left w-full"
+              >
+                {resettingPassword ? 'Sending...' : '[ Reset password ]'}
+              </button>
               <span className="block text-[10px] text-gray-500 mt-1">Change your login password at any time.</span>
-            </button>
+            </div>
             <button
               onClick={handleLogout}
-              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 text-left"
+              className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 text-left w-full"
             >
               [ Log out ]
             </button>
@@ -205,7 +207,7 @@ export default function PortalHomePage() {
               </svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-900">View dashboards & reports</div>
+              <div className="text-sm font-medium text-gray-900">View reports & dashboards</div>
               <div className="text-xs text-gray-500">See your charts, reports, and results.</div>
             </div>
           </Link>
@@ -280,10 +282,10 @@ export default function PortalHomePage() {
                 <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
                 <td className="px-4 py-3 text-sm text-gray-700">Week of Jan 27, 2026</td>
                 <td className="px-4 py-3">
-                  <div className="w-24 bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 bg-blue-500" style={{ width: '40%' }} />
+                  <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="h-3 bg-blue-500 rounded-full" style={{ width: '40%' }} />
                   </div>
-                  <span className="text-xs text-gray-600 mt-1 inline-block">40%</span>
+                  <span className="text-xs text-gray-600 mt-1 inline-block font-medium">40%</span>
                 </td>
               </tr>
               <tr>
@@ -299,10 +301,10 @@ export default function PortalHomePage() {
                 <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
                 <td className="px-4 py-3 text-sm text-gray-700">Waiting on data</td>
                 <td className="px-4 py-3">
-                  <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 bg-gray-300" style={{ width: '0%' }} />
+                  <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="h-3 bg-gray-400 rounded-full" style={{ width: '0%' }} />
                   </div>
-                  <span className="text-xs text-gray-600 mt-1 inline-block">0%</span>
+                  <span className="text-xs text-gray-600 mt-1 inline-block font-medium">0%</span>
                 </td>
               </tr>
               <tr>
@@ -318,10 +320,10 @@ export default function PortalHomePage() {
                 <td className="px-4 py-3 text-sm text-gray-700">Mullen Analytics</td>
                 <td className="px-4 py-3 text-sm text-gray-700">Week of Feb 10, 2026</td>
                 <td className="px-4 py-3">
-                  <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 bg-gray-300" style={{ width: '0%' }} />
+                  <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="h-3 bg-gray-400 rounded-full" style={{ width: '0%' }} />
                   </div>
-                  <span className="text-xs text-gray-600 mt-1 inline-block">0%</span>
+                  <span className="text-xs text-gray-600 mt-1 inline-block font-medium">0%</span>
                 </td>
               </tr>
             </tbody>
@@ -389,7 +391,7 @@ export default function PortalHomePage() {
                 <input type="checkbox" className="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
                 <div className="flex-1">
                   <Link href="/portal/messages" className="text-blue-900 hover:text-blue-700 underline font-medium">
-                    Approve key metrics
+                    Approve key numbers
                   </Link>
                   <span className="text-blue-700 block">Send us a message with your approval or feedback.</span>
                 </div>
