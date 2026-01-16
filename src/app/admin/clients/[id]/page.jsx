@@ -19,6 +19,9 @@ export default function AdminClientDetailPage() {
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', status: 'Not started', due_date: '', notes: '' });
+  const [tableauUrl, setTableauUrl] = useState('');
+  const [tableauType, setTableauType] = useState('dashboard');
+  const [savingTableau, setSavingTableau] = useState(false);
 
   const saveProject = async () => {
     if (!clientId) return;
@@ -57,6 +60,46 @@ export default function AdminClientDetailPage() {
       setError(e.message || 'Failed to save project');
     } finally {
       setSavingProject(false);
+    }
+  };
+
+  const saveTableau = async () => {
+    if (!clientId) return;
+    setError('');
+    setSavingTableau(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setSavingTableau(false);
+        return;
+      }
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          tableau_url: tableauUrl,
+          tableau_type: tableauType,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save Tableau embed');
+
+      setClient(json.profile);
+      setTableauUrl(json.profile.tableau_url || '');
+      setTableauType(json.profile.tableau_type || 'dashboard');
+    } catch (e) {
+      setError(e.message || 'Failed to save Tableau embed');
+    } finally {
+      setSavingTableau(false);
     }
   };
 
@@ -225,6 +268,8 @@ export default function AdminClientDetailPage() {
           setClient(match);
           setProjectName(match.project_name || '');
           setProjectStatus(match.project_status || '');
+          setTableauUrl(match.tableau_url || '');
+          setTableauType(match.tableau_type || 'dashboard');
           await loadTasks(accessToken, clientId);
         }
       } catch (e) {
@@ -437,9 +482,61 @@ export default function AdminClientDetailPage() {
         <p className="text-[11px] text-gray-600">Uploaded documents for this client will appear here.</p>
       </div>
 
-      <div className="border rounded-lg bg-white p-4 text-xs">
+      <div className="border rounded-lg bg-white p-4 text-xs mb-4">
         <h2 className="text-sm font-semibold mb-2">Invoices</h2>
         <p className="text-[11px] text-gray-600">Stripe invoices for this client will appear here.</p>
+      </div>
+
+      <div className="border rounded-lg bg-white p-4 text-xs">
+        <h2 className="text-sm font-semibold mb-3">Tableau Dashboard / Story</h2>
+        <div className="mb-3">
+          <label className="block text-[11px] font-medium text-gray-600 mb-1">Embed Type</label>
+          <select
+            className="w-full border rounded-md px-2 py-1.5 text-xs bg-white"
+            value={tableauType}
+            onChange={(e) => setTableauType(e.target.value)}
+          >
+            <option value="dashboard">Dashboard</option>
+            <option value="story">Story</option>
+          </select>
+        </div>
+        <div className="mb-3">
+          <label className="block text-[11px] font-medium text-gray-600 mb-1">Tableau Embed URL</label>
+          <input
+            type="text"
+            className="w-full border rounded-md px-2 py-1.5 text-xs"
+            value={tableauUrl}
+            onChange={(e) => setTableauUrl(e.target.value)}
+            placeholder="https://public.tableau.com/views/..."
+          />
+          <p className="text-[10px] text-gray-500 mt-1">
+            Paste the full Tableau Public or Tableau Server embed URL
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={saveTableau}
+          disabled={savingTableau}
+          className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed mb-4"
+        >
+          {savingTableau ? 'Saving...' : 'Save Tableau Embed'}
+        </button>
+
+        {client.tableau_url && (
+          <div className="border-t pt-4">
+            <h3 className="text-xs font-semibold mb-2">Preview</h3>
+            <div className="w-full" style={{ height: '600px' }}>
+              <iframe
+                src={client.tableau_url}
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                allowFullScreen
+                title={`Tableau ${client.tableau_type || 'dashboard'}`}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

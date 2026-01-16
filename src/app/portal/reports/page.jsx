@@ -9,6 +9,8 @@ export default function PortalReportsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [reports, setReports] = useState([]);
+  const [tableauUrl, setTableauUrl] = useState('');
+  const [tableauType, setTableauType] = useState('dashboard');
   const unreadMessages = useUnreadMessagesCount();
 
   useEffect(() => {
@@ -21,6 +23,19 @@ export default function PortalReportsPage() {
         return;
       }
       setUser(session.user);
+      
+      // Fetch user profile to get Tableau URL
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tableau_url, tableau_type')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        setTableauUrl(profile.tableau_url || '');
+        setTableauType(profile.tableau_type || 'dashboard');
+      }
+      
       try {
         const res = await fetch('/api/portal/reports');
         const data = await res.json();
@@ -90,24 +105,51 @@ export default function PortalReportsPage() {
           </a>
         </nav>
       </div>
-      {reports.length === 0 ? (
-        <p className="text-sm text-gray-600">No reports available yet.</p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {reports.map((r) => (
-            <a
-              key={r.id}
-              href={r.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border rounded-lg p-4 bg-white hover:shadow-sm text-sm"
-            >
-              <div className="font-semibold mb-1">{r.title}</div>
-              {r.description && <div className="text-xs text-gray-600">{r.description}</div>}
-            </a>
-          ))}
+
+      {tableauUrl && (
+        <div className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b">
+            <h2 className="text-sm font-semibold">Your Tableau {tableauType === 'story' ? 'Story' : 'Dashboard'}</h2>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Interactive analytics dashboard for your project
+            </p>
+          </div>
+          <div className="p-4">
+            <div className="w-full" style={{ height: '800px' }}>
+              <iframe
+                src={tableauUrl}
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                allowFullScreen
+                title={`Tableau ${tableauType}`}
+              />
+            </div>
+          </div>
         </div>
       )}
+
+      {reports.length === 0 && !tableauUrl ? (
+        <p className="text-sm text-gray-600">No reports or dashboards available yet.</p>
+      ) : reports.length > 0 ? (
+        <div>
+          <h2 className="text-sm font-semibold mb-4">Additional Reports</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {reports.map((r) => (
+              <a
+                key={r.id}
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border rounded-lg p-4 bg-white hover:shadow-sm text-sm"
+              >
+                <div className="font-semibold mb-1">{r.title}</div>
+                {r.description && <div className="text-xs text-gray-600">{r.description}</div>}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

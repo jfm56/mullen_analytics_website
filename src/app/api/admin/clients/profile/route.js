@@ -51,20 +51,23 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { clientId, project_name, project_status } = body;
+    const { clientId, project_name, project_status, tableau_url, tableau_type } = body;
 
     if (!clientId) {
       return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
     }
 
+    const updateData = {};
+    if (project_name !== undefined) updateData.project_name = project_name ?? null;
+    if (project_status !== undefined) updateData.project_status = project_status ?? null;
+    if (tableau_url !== undefined) updateData.tableau_url = tableau_url ?? null;
+    if (tableau_type !== undefined) updateData.tableau_type = tableau_type ?? null;
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .update({
-        project_name: project_name ?? null,
-        project_status: project_status ?? null,
-      })
+      .update(updateData)
       .eq('id', clientId)
-      .select('id, email, role, full_name, company, project_name, project_status')
+      .select('id, email, role, full_name, company, project_name, project_status, tableau_url, tableau_type')
       .single();
 
     if (error) {
