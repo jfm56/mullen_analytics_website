@@ -55,16 +55,28 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const { clientId, project_name, project_status, tableau_url, tableau_type, upload_enabled, allowed_file_types, max_upload_mb } = body;
 
+    // eslint-disable-next-line no-console
+    console.log('Request body:', body);
+
     if (!clientId) {
       return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
     }
 
     // Get current profile state to detect changes
-    const { data: currentProfile } = await supabaseAdmin
+    const { data: currentProfile, error: fetchError } = await supabaseAdmin
       .from('profiles')
       .select('upload_enabled, project_status, tableau_url, email, full_name')
       .eq('id', clientId)
       .single();
+
+    if (fetchError) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching current profile:', fetchError);
+      return NextResponse.json({ 
+        error: 'Profile not found', 
+        details: fetchError.message 
+      }, { status: 404 });
+    }
 
     const updateData = {};
     if (project_name !== undefined) updateData.project_name = project_name ?? null;
