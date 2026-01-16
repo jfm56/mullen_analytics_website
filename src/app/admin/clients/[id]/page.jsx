@@ -18,7 +18,8 @@ export default function AdminClientDetailPage() {
   const [savingProject, setSavingProject] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', status: 'Not started', due_date: '', notes: '' });
+  const [addingTask, setAddingTask] = useState(false);
+  const [newTask, setNewTask] = useState({ title: '', assigned_to: 'Mullen Analytics', status: 'Not started', due_date: '', notes: '' });
   const [tableauUrl, setTableauUrl] = useState('');
   const [tableauType, setTableauType] = useState('dashboard');
   const [savingTableau, setSavingTableau] = useState(false);
@@ -315,6 +316,7 @@ export default function AdminClientDetailPage() {
       return;
     }
     setError('');
+    setAddingTask(true);
     try {
       const {
         data: { session },
@@ -334,6 +336,7 @@ export default function AdminClientDetailPage() {
         body: JSON.stringify({
           clientId,
           title: newTask.title,
+          assigned_to: newTask.assigned_to,
           status: newTask.status,
           due_date: newTask.due_date || null,
           notes: newTask.notes || null,
@@ -343,9 +346,14 @@ export default function AdminClientDetailPage() {
       if (!res.ok) throw new Error(json.error || 'Failed to create task');
 
       setTasks((prev) => [...prev, json.task]);
-      setNewTask({ title: '', status: 'Not started', due_date: '', notes: '' });
+      setNewTask({ title: '', assigned_to: 'Mullen Analytics', status: 'Not started', due_date: '', notes: '' });
+      setSaveMessage('Task added successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
     } catch (e) {
-      setError(e.message || 'Failed to create task');
+      setSaveError(e.message || 'Failed to create task');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setAddingTask(false);
     }
   };
 
@@ -396,6 +404,25 @@ export default function AdminClientDetailPage() {
       setError(e.message || 'Failed to delete task');
     }
   };
+
+  // Sort tasks: incomplete first, then by due date
+  const sortedTasks = [...tasks].sort((a, b) => {
+    // Done tasks go to the end
+    if (a.status === 'Done' && b.status !== 'Done') return 1;
+    if (a.status !== 'Done' && b.status === 'Done') return -1;
+    
+    // Sort by due date (null dates go to end)
+    if (!a.due_date && b.due_date) return 1;
+    if (a.due_date && !b.due_date) return -1;
+    if (a.due_date && b.due_date) {
+      return new Date(a.due_date) - new Date(b.due_date);
+    }
+    
+    return 0;
+  });
+
+  const activeTasks = sortedTasks.filter(t => t.status !== 'Done');
+  const completedTasks = sortedTasks.filter(t => t.status === 'Done');
 
   useEffect(() => {
     const init = async () => {
@@ -631,10 +658,123 @@ export default function AdminClientDetailPage() {
           <div className="w-1 h-6 bg-green-500 rounded"></div>
           Tasks
         </h2>
-        <div className="border rounded-lg bg-white p-6 shadow-sm">
-          <div className="mb-6">
+        <div className="border rounded-lg bg-white shadow-sm">
+          {/* Helper Text */}
+          <div className="px-6 py-4 bg-gray-50 border-b">
+            <p className="text-sm text-gray-600">
+              Tasks are simple action items for either our team or the client.
+            </p>
+          </div>
+
+          {/* Active Tasks */}
+          <div className="p-6">
+            <h3 className="text-base font-semibold mb-4">Active Tasks</h3>
+            {activeTasks.length > 0 ? (
+              <div className="space-y-3">
+                {activeTasks.map((task) => (
+                  <div key={task.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-medium text-sm">{task.title}</h4>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            task.status === 'Not started' ? 'bg-gray-100 text-gray-800' :
+                            task.status === 'In progress' ? 'bg-blue-100 text-blue-800' :
+                            task.status === 'Waiting on client' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {task.status}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            task.assigned_to === 'Client' ? 'bg-purple-100 text-purple-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {task.assigned_to}
+                          </span>
+                          {task.due_date && (
+                            <span className="text-xs text-gray-500">
+                              Due: {new Date(task.due_date).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        {task.notes && (
+                          <p className="text-sm text-gray-600 mb-2">{task.notes}</p>
+                        )}
+                        {task.assigned_to === 'Client' && task.status !== 'Done' && (
+                          <p className="text-xs text-purple-600 mt-2">
+                            ✓ Visible to client in portal
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="text-xs border rounded px-2 py-1"
+                          value={task.status}
+                          onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                        >
+                          <option value="Not started">Not started</option>
+                          <option value="In progress">In progress</option>
+                          <option value="Waiting on client">Waiting on client</option>
+                          <option value="Done">Done</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">No active tasks</p>
+            )}
+          </div>
+
+          {/* Completed Tasks */}
+          {completedTasks.length > 0 && (
+            <div className="px-6 py-4 border-t">
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                  Completed Tasks ({completedTasks.length})
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {completedTasks.map((task) => (
+                    <div key={task.id} className="border rounded p-3 bg-gray-50 opacity-75">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-sm line-through text-gray-600">{task.title}</h4>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-gray-500">{task.assigned_to}</span>
+                            {task.due_date && (
+                              <span className="text-xs text-gray-500">
+                                Due: {new Date(task.due_date).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </div>
+          )}
+
+          {/* Add Task Form */}
+          <div className="px-6 py-4 border-t bg-gray-50">
             <h3 className="text-base font-semibold mb-4">Add New Task</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Task title</label>
                 <input
@@ -644,18 +784,6 @@ export default function AdminClientDetailPage() {
                   value={newTask.title}
                   onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                <select
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  value={newTask.priority}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value }))}
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assigned to</label>
@@ -668,181 +796,50 @@ export default function AdminClientDetailPage() {
                   <option value="Client">Client</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={newTask.status}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, status: e.target.value }))}
+                >
+                  <option value="Not started">Not started</option>
+                  <option value="In progress">In progress</option>
+                  <option value="Waiting on client">Waiting on client</option>
+                  <option value="Done">Done</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Due date (optional)</label>
+                <input
+                  type="date"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={newTask.due_date}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, due_date: e.target.value }))}
+                />
+              </div>
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
               <textarea
                 className="w-full border rounded-md px-3 py-2 text-sm"
-                rows={3}
-                placeholder="Task description..."
-                value={newTask.description}
-                onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+                rows={2}
+                placeholder="Additional notes..."
+                value={newTask.notes}
+                onChange={(e) => setNewTask(prev => ({ ...prev, notes: e.target.value }))}
               />
             </div>
             <button
               type="button"
-              onClick={addTask}
+              onClick={createTask}
               disabled={!newTask.title.trim() || addingTask}
               className="mt-4 inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {addingTask ? 'Adding...' : 'Add Task'}
             </button>
           </div>
-          
-          {tasks.length > 0 && (
-            <div className="border-t pt-6">
-              <h3 className="text-base font-semibold mb-4">Existing Tasks</h3>
-              <div className="space-y-3">
-                {tasks.map((task) => (
-                  <div key={task.id} className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-medium text-sm">{task.title}</h4>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            task.priority === 'High' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {task.priority}
-                          </span>
-                        </div>
-                        {task.description && (
-                          <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>Assigned to: {task.assigned_to}</span>
-                          <span>Status: {task.status}</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => deleteTask(task.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </section>
-
-      <div className="border rounded-lg bg-white p-4 mb-4 text-xs">
-        <h2 className="text-sm font-semibold mb-3">Tasks</h2>
-
-        <div className="mb-4 grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
-          <div>
-            <label className="block text-[11px] font-medium text-gray-600 mb-1">Task title</label>
-            <input
-              type="text"
-              className="w-full border rounded-md px-2 py-1.5 text-xs"
-              value={newTask.title}
-              onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g. Kickoff call, Data pull, Dashboard build"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Status</label>
-              <select
-                className="w-full border rounded-md px-2 py-1.5 text-xs bg-white"
-                value={newTask.status}
-                onChange={(e) => setNewTask((prev) => ({ ...prev, status: e.target.value }))}
-              >
-                <option value="Not started">Not started</option>
-                <option value="In progress">In progress</option>
-                <option value="On hold">On hold</option>
-                <option value="Done">Done</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Due date</label>
-              <input
-                type="date"
-                className="w-full border rounded-md px-2 py-1.5 text-xs"
-                value={newTask.due_date}
-                onChange={(e) => setNewTask((prev) => ({ ...prev, due_date: e.target.value }))}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-3">
-          <label className="block text-[11px] font-medium text-gray-600 mb-1">Notes</label>
-          <textarea
-            className="w-full border rounded-md px-2 py-1.5 text-xs min-h-[60px]"
-            value={newTask.notes}
-            onChange={(e) => setNewTask((prev) => ({ ...prev, notes: e.target.value }))}
-            placeholder="Optional context: links, owners, sub-tasks, etc."
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={createTask}
-          className="mb-4 inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
-        >
-          Add task
-        </button>
-
-        <div className="border-t pt-3 mt-1">
-          {loadingTasks ? (
-            <p className="text-[11px] text-gray-600">Loading tasks...</p>
-          ) : tasks.length === 0 ? (
-            <p className="text-[11px] text-gray-600">No tasks yet. Add the first task for this client.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-[11px]">
-                <thead className="bg-gray-50">
-                  <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
-                    <th className="px-2 py-1 font-medium">Title</th>
-                    <th className="px-2 py-1 font-medium">Status</th>
-                    <th className="px-2 py-1 font-medium">Due</th>
-                    <th className="px-2 py-1 font-medium">Notes</th>
-                    <th className="px-2 py-1 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {tasks.map((t) => (
-                    <tr key={t.id}>
-                      <td className="px-2 py-1 text-gray-800">{t.title}</td>
-                      <td className="px-2 py-1 text-gray-800">{t.status}</td>
-                      <td className="px-2 py-1 text-gray-800">{t.due_date ? new Date(t.due_date).toLocaleDateString() : '-'}</td>
-                      <td className="px-2 py-1 text-gray-600 max-w-xs truncate" title={t.notes || ''}>
-                        {t.notes || ''}
-                      </td>
-                      <td className="px-2 py-1 text-gray-800">
-                        <div className="flex flex-wrap gap-2">
-                          {t.status !== 'Done' && (
-                            <button
-                              type="button"
-                              onClick={() => updateTaskStatus(t.id, 'Done')}
-                              className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
-                            >
-                              Mark done
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => deleteTask(t.id)}
-                            className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-red-50 text-red-600 border-red-300"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
 
       <div className="border rounded-lg bg-white p-4 mb-4 text-xs">
         <h2 className="text-sm font-semibold mb-3">Client Data Uploads</h2>
