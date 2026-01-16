@@ -101,7 +101,10 @@ export default function PortalHomePage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Client Portal</h1>
           <p className="text-gray-600 text-sm mt-1">
-            Welcome, {firstName}. Track progress, upload data, and access billing and deliverables.
+            Welcome, {firstName}. Your secure workspace for analytics delivery, data uploads, and project updates.
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            Everything related to your engagement with Mullen Analytics lives here.
           </p>
         </div>
         <div className="flex gap-2">
@@ -130,6 +133,78 @@ export default function PortalHomePage() {
           {resetStatus.split(':')[1]}
         </div>
       )}
+
+      <section className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b">
+          <h2 className="text-sm font-semibold">Quick Actions</h2>
+          <p className="text-xs text-gray-600 mt-0.5">
+            Common tasks to manage your engagement.
+          </p>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link
+            href="/portal/uploads"
+            className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">Upload new data</div>
+              <div className="text-xs text-gray-500">Share files securely</div>
+            </div>
+          </Link>
+          <Link
+            href="/portal/reports"
+            className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex-shrink-0 w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">View dashboards & reports</div>
+              <div className="text-xs text-gray-500">Access your analytics</div>
+            </div>
+          </Link>
+          <Link
+            href="/portal/messages"
+            className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors relative"
+          >
+            <div className="flex-shrink-0 w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">Message your analytics team</div>
+              <div className="text-xs text-gray-500">Ask questions, receive updates</div>
+            </div>
+            {unreadMessages > 0 && (
+              <span className="absolute top-2 right-2 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] w-5 h-5 font-medium">
+                {unreadMessages}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/portal/invoices"
+            className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex-shrink-0 w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">View invoices</div>
+              <div className="text-xs text-gray-500">Billing and payments</div>
+            </div>
+          </Link>
+        </div>
+      </section>
 
       <div className="mb-6 border-b border-gray-200 bg-[var(--brand-primary)]/5 rounded-t-md">
         <nav className="flex flex-wrap gap-4 text-xs px-4 pt-3 items-center">
@@ -172,13 +247,11 @@ export default function PortalHomePage() {
       </div>
 
       <section className="mb-8 border rounded-lg bg-white shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Project overview</h2>
-            <p className="text-xs text-gray-600 mt-0.5">
-              High-level view of current tasks and status for your active engagement.
-            </p>
-          </div>
+        <div className="px-4 py-3 border-b">
+          <h2 className="text-sm font-semibold">Project Overview</h2>
+          <p className="text-xs text-gray-600 mt-1">
+            Below is the current status of your engagement. Updates are posted as milestones are reached.
+          </p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
@@ -203,12 +276,12 @@ export default function PortalHomePage() {
                   </span>
                 </td>
                 <td className="px-4 py-2 text-[12px] text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">TBD</td>
+                <td className="px-4 py-2 text-[12px] text-gray-700">Target: Week of 01/27</td>
                 <td className="px-4 py-2">
-                  <div className="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="h-1.5 bg-[var(--brand-primary)]" style={{ width: '40%' }} />
+                  <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 bg-[var(--brand-primary)]" style={{ width: '40%' }} />
                   </div>
-                  <span className="text-[11px] text-gray-600 mt-1 inline-block">40%</span>
+                  <span className="text-[11px] text-gray-600 mt-1 inline-block">40% complete</span>
                 </td>
               </tr>
               <tr>
@@ -222,12 +295,12 @@ export default function PortalHomePage() {
                   </span>
                 </td>
                 <td className="px-4 py-2 text-[12px] text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">TBD</td>
+                <td className="px-4 py-2 text-[12px] text-gray-700">Pending data</td>
                 <td className="px-4 py-2">
-                  <div className="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="h-1.5 bg-gray-300" style={{ width: '0%' }} />
+                  <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 bg-gray-300" style={{ width: '0%' }} />
                   </div>
-                  <span className="text-[11px] text-gray-600 mt-1 inline-block">0%</span>
+                  <span className="text-[11px] text-gray-600 mt-1 inline-block">Not started</span>
                 </td>
               </tr>
               <tr>
@@ -237,22 +310,75 @@ export default function PortalHomePage() {
                 </td>
                 <td className="px-4 py-2">
                   <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-700 border border-gray-200">
-                    Not started
+                    Planned
                   </span>
                 </td>
                 <td className="px-4 py-2 text-[12px] text-gray-700">Mullen Analytics</td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">TBD</td>
+                <td className="px-4 py-2 text-[12px] text-gray-700">Target: Week of 02/10</td>
                 <td className="px-4 py-2">
-                  <div className="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="h-1.5 bg-gray-300" style={{ width: '0%' }} />
+                  <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 bg-gray-300" style={{ width: '0%' }} />
                   </div>
-                  <span className="text-[11px] text-gray-600 mt-1 inline-block">0%</span>
+                  <span className="text-[11px] text-gray-600 mt-1 inline-block">Not started</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        <div className="px-4 py-2 bg-gray-50 border-t">
+          <div className="flex flex-wrap gap-4 text-[11px] text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-yellow-400"></span>
+              <span>In progress</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-gray-400"></span>
+              <span>Planned</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-400"></span>
+              <span>Complete</span>
+            </div>
+          </div>
+        </div>
       </section>
+
+      <section className="mb-8 border rounded-lg bg-blue-50 border-blue-200 overflow-hidden">
+        <div className="px-4 py-3 border-b border-blue-200 bg-blue-100">
+          <h2 className="text-sm font-semibold text-blue-900">What we need from you</h2>
+        </div>
+        <div className="p-4">
+          <ul className="space-y-2 text-sm text-blue-900">
+            <li className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Upload updated call volume data (CSV format)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Review draft dashboard (available soon)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Approve KPI definitions</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div className="mt-12 pt-6 border-t border-gray-200">
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>All data is encrypted in transit and access-controlled. Only authorized users can view your information.</span>
+        </div>
+      </div>
     </div>
   );
 }
