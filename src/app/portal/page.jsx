@@ -10,6 +10,8 @@ export default function PortalHomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [resetStatus, setResetStatus] = useState('');
+  const [resettingPassword, setResettingPassword] = useState(false);
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
   const unreadMessages = useUnreadMessagesCount();
 
@@ -53,6 +55,36 @@ export default function PortalHomePage() {
     router.push('/portal/login');
   };
 
+  const handleResetPassword = async () => {
+    setResetStatus('');
+    setResettingPassword(true);
+    try {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+
+      if (!currentUser?.email) {
+        setResetStatus('error:Unable to get your email address');
+        setResettingPassword(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, {
+        redirectTo: `${window.location.origin}/portal/reset-password`,
+      });
+
+      if (error) {
+        setResetStatus(`error:${error.message}`);
+      } else {
+        setResetStatus('success:Password reset email sent! Check your inbox.');
+      }
+    } catch (e) {
+      setResetStatus(`error:${e.message || 'Failed to send reset email'}`);
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">Checking your session...</div>
@@ -72,13 +104,32 @@ export default function PortalHomePage() {
             Welcome, {firstName}. Track progress, upload data, and access billing and deliverables.
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="self-start text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50"
-        >
-          Log out
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleResetPassword}
+            disabled={resettingPassword}
+            className="self-start text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resettingPassword ? 'Sending...' : 'Reset my password'}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="self-start text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50"
+          >
+            Log out
+          </button>
+        </div>
       </div>
+
+      {resetStatus && (
+        <div className={`mb-4 p-3 rounded-md text-sm ${
+          resetStatus.startsWith('success:') 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {resetStatus.split(':')[1]}
+        </div>
+      )}
 
       <div className="mb-6 border-b border-gray-200 bg-[var(--brand-primary)]/5 rounded-t-md">
         <nav className="flex flex-wrap gap-4 text-xs px-4 pt-3 items-center">
