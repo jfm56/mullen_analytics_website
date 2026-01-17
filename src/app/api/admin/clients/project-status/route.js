@@ -59,10 +59,10 @@ export async function GET(request) {
       serviceRoleKey
     );
 
-    // Get client info for company name
+    // Get client info for company name and check-in details
     const { data: clientData, error: clientError } = await supabaseAdmin
       .from('profiles')
-      .select('company')
+      .select('company, next_check_in, check_in_notes')
       .eq('id', clientId)
       .single();
 
@@ -72,6 +72,11 @@ export async function GET(request) {
       .eq('client_id', clientId)
       .order('sort_order', { ascending: true });
 
+    console.log('Project status API - clientId:', clientId);
+    console.log('Project status API - clientData:', clientData);
+    console.log('Project status API - data:', data);
+    console.log('Project status API - error:', error);
+
     if (error) {
       console.error('Error fetching project status items:', error);
       return Response.json({ error: 'Failed to fetch items' }, { status: 500 });
@@ -79,7 +84,9 @@ export async function GET(request) {
 
     return Response.json({ 
       items: data || [], 
-      company: clientData?.company || '' 
+      company: clientData?.company || '',
+      next_check_in: clientData?.next_check_in,
+      check_in_notes: clientData?.check_in_notes
     });
   } catch (e) {
     console.error('Project status GET error:', e);
@@ -153,6 +160,9 @@ export async function POST(request) {
       })
       .select()
       .single();
+
+    console.log('Project status POST - inserted data:', data);
+    console.log('Project status POST - error:', error);
 
     if (error) {
       console.error('Error creating project status item:', error);

@@ -13,30 +13,80 @@ export default function PortalInvoicesPage() {
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
   const unreadMessages = useUnreadMessagesCount();
 
-  useEffect(() => {
-    const init = async () => {
+  const loadInvoices = async () => {
+    try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      
       if (!session) {
         router.replace('/portal/login');
         return;
       }
-      setUser(session.user);
-      try {
-        const res = await fetch('/api/portal/invoices');
-        const data = await res.json();
-        setInvoices(data.invoices || []);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    init();
+      setUser(session.user);
+
+      const res = await fetch('/api/portal/invoices', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        }
+      });
+      const data = await res.json();
+      setInvoices(data.invoices || []);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInvoices();
   }, [router]);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'waiting_for_payment': return 'bg-orange-100 text-orange-800';
+      case 'not_due': return 'bg-blue-100 text-blue-800';
+      case 'due_upon_completion': return 'bg-indigo-100 text-indigo-800';
+      case 'overdue': return 'bg-red-100 text-red-800';
+      case 'cancelled': return 'bg-gray-100 text-gray-800';
+      case 'draft': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'paid': return 'Paid';
+      case 'pending': return 'Pending';
+      case 'waiting_for_payment': return 'Waiting for Payment';
+      case 'not_due': return 'Not Due';
+      case 'due_upon_completion': return 'Due Upon Completion';
+      case 'overdue': return 'Overdue';
+      case 'cancelled': return 'Cancelled';
+      case 'draft': return 'Draft';
+      default: return status;
+    }
+  };
+
+  const formatAmount = (amount, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toLowerCase(),
+    }).format(amount / 100);
+  };
+
+  const formatDate = (timestamp) => {
+    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   if (!user || loading) {
     return (
@@ -112,22 +162,54 @@ export default function PortalInvoicesPage() {
         <div className="border rounded-lg bg-white divide-y">
           {invoices.map((inv) => (
             <div key={inv.id} className="flex items-center justify-between px-4 py-3 text-sm">
-              <div>
-                <div className="font-medium">Invoice {inv.number || inv.id}</div>
-                <div className="text-xs text-gray-600">
-                  Status: {inv.status} · Amount: {inv.amount_due / 100} {inv.currency?.toUpperCase()}
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Invoice {inv.number || inv.id}</span>
+                  {inv.type === 'uploaded' && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      PDF
+                    </span>
+                  )}
+                  {inv.type === 'stripe' && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                      Stripe
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-600 mt-1">
+                  {inv.description && <span>{inv.description}</span>}
+                  {inv.invoice_date && <span> · Date: {new Date(inv.invoice_date).toLocaleDateString()}</span>}
+                  {inv.due_date && <span> · Due: {new Date(inv.due_date).toLocaleDateString()}</span>}
                 </div>
               </div>
-              {inv.hosted_invoice_url && (
-                <a
-                  href={inv.hosted_invoice_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs px-3 py-1 rounded-md border text-[var(--brand-primary)]"
-                >
-                  View &amp; pay
-                </a>
-              )}
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="font-medium">{formatAmount(inv.amount_due, inv.currency)}</div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(inv.status)}`}>
+                    {getStatusLabel(inv.status)}
+                  </span>
+                </div>
+                {inv.type === 'stripe' && inv.hosted_invoice_url && (
+                  <a
+                    href={inv.hosted_invoice_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1 rounded-md border text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
+                  >
+                    View &amp; pay
+                  </a>
+                )}
+                {inv.type === 'uploaded' && inv.file_url && (
+                  <a
+                    href={inv.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1 rounded-md border text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
+                  >
+                    Download PDF
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>

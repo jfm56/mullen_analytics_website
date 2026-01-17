@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabaseClient';
 import TableauEmbed from '@/components/TableauEmbed';
 import AdminProjectStatus from '@/components/AdminProjectStatus';
 import ClientProjectStatusPreview from '@/components/ClientProjectStatusPreview';
+import AdminInvoiceUpload from '@/components/AdminInvoiceUpload';
+import AdminInvoiceManager from '@/components/AdminInvoiceManager';
 
 export default function AdminClientDetailPage() {
   const router = useRouter();
@@ -46,6 +48,11 @@ export default function AdminClientDetailPage() {
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [nextCheckIn, setNextCheckIn] = useState('');
   const [checkInNotes, setCheckInNotes] = useState('');
+  const [projectStatusRefresh, setProjectStatusRefresh] = useState(0);
+
+  const refreshProjectStatus = () => {
+    setProjectStatusRefresh(prev => prev + 1);
+  };
 
   const saveProject = async () => {
     if (!clientId) return;
@@ -428,6 +435,42 @@ export default function AdminClientDetailPage() {
       setError(e.message || 'Failed to upload logo');
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleDeleteUpload = async (uploadId, filename) => {
+    if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(`/api/admin/clients/${encodeURIComponent(clientId)}/uploads/${encodeURIComponent(uploadId)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        }
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete upload');
+      }
+
+      // Refresh uploads list
+      setRefreshUploads(prev => prev + 1);
+      
+      // Show success message (you could add a toast notification here)
+      console.log('Upload deleted successfully');
+
+    } catch (e) {
+      console.error('Failed to delete upload:', e);
+      alert('Failed to delete upload: ' + e.message);
     }
   };
 
@@ -910,6 +953,14 @@ export default function AdminClientDetailPage() {
         </div>
       </section>
 
+      {/* Project Status Section */}
+      <AdminProjectStatus clientId={clientId} refreshKey={projectStatusRefresh} onRefresh={refreshProjectStatus} />
+
+      {/* Client Project Status Preview */}
+      <div className="mt-8">
+        <ClientProjectStatusPreview clientId={clientId} refreshKey={projectStatusRefresh} />
+      </div>
+
       {/* Next Check-in Section */}
       <section className="mb-8">
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -917,6 +968,42 @@ export default function AdminClientDetailPage() {
           Next Check-in
         </h2>
         <div className="border rounded-lg bg-white p-6 shadow-sm">
+          {/* Current Check-in Display */}
+          {nextCheckIn && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3">Current Scheduled Check-in</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-900">
+                    {new Date(nextCheckIn).toLocaleDateString('en-US', { 
+                      weekday: 'long',
+                      month: 'long', 
+                      day: 'numeric', 
+                      year: 'numeric'
+                    })}
+                  </span>
+                  <span className="text-sm text-blue-700">
+                    at {new Date(nextCheckIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </span>
+                </div>
+                {checkInNotes && (
+                  <div className="flex items-start gap-2 mt-3">
+                    <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 mb-1">Notes:</p>
+                      <p className="text-sm text-blue-700 italic">"{checkInNotes}"</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Next Check-in Date</label>
@@ -1268,13 +1355,22 @@ export default function AdminClientDetailPage() {
                         </span>
                       </td>
                       <td className="px-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() => handleDownload(upload.id, upload.original_filename)}
-                          className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
-                        >
-                          Download
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(upload.id, upload.original_filename)}
+                            className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
+                          >
+                            Download
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUpload(upload.id, upload.original_filename)}
+                            className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-red-50 text-red-600 border-red-600"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1285,9 +1381,25 @@ export default function AdminClientDetailPage() {
         </div>
       </div>
 
-      <div className="border rounded-lg bg-white p-4 mb-4 text-xs">
-        <h2 className="text-sm font-semibold mb-2">Invoices</h2>
-        <p className="text-[11px] text-gray-600">Stripe invoices for this client will appear here.</p>
+      {/* Invoice Upload Section */}
+      <div className="mb-8">
+        <AdminInvoiceUpload 
+          clientId={clientId}
+          onInvoiceUploaded={(invoice) => {
+            console.log('Invoice uploaded:', invoice);
+            // You could refresh an invoice list here if needed
+          }}
+        />
+      </div>
+
+      {/* Invoice Management Section */}
+      <div className="mb-8">
+        <AdminInvoiceManager 
+          clientId={clientId}
+          onInvoiceUpdated={(invoice) => {
+            console.log('Invoice updated:', invoice);
+          }}
+        />
       </div>
 
       <div className="border rounded-lg bg-white p-4 text-xs">
@@ -1368,14 +1480,6 @@ export default function AdminClientDetailPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Project Status Section */}
-      <AdminProjectStatus clientId={clientId} />
-
-      {/* Client Project Status Preview */}
-      <div className="mt-8">
-        <ClientProjectStatusPreview clientId={clientId} />
       </div>
 
       {/* Remove Client Confirmation Modal */}

@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
-export default function ClientProjectStatusPreview({ clientId }) {
+export default function ClientProjectStatusPreview({ clientId, refreshKey }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [company, setCompany] = useState('');
+  const [nextCheckIn, setNextCheckIn] = useState('');
+  const [checkInNotes, setCheckInNotes] = useState('');
 
   useEffect(() => {
     if (clientId) {
@@ -13,19 +16,43 @@ export default function ClientProjectStatusPreview({ clientId }) {
     }
   }, [clientId]);
 
+  useEffect(() => {
+    if (refreshKey > 0 && clientId) {
+      loadItems();
+    }
+  }, [refreshKey, clientId]);
+
   const loadItems = async () => {
     setLoading(true);
     
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
       const res = await fetch(`/api/admin/clients/project-status?clientId=${clientId}`, {
         method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
       });
       
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load items');
+      console.log('ClientProjectStatusPreview - response status:', res.status);
+      console.log('ClientProjectStatusPreview - response ok:', res.ok);
+      console.log('ClientProjectStatusPreview - response:', json);
       
+      if (!res.ok) {
+        console.error('ClientProjectStatusPreview - API error:', json.error);
+        throw new Error(json.error || 'Failed to load items');
+      }
+      
+      console.log('ClientProjectStatusPreview - setting items:', json.items || []);
       setItems(json.items || []);
       setCompany(json.company || '');
+      setNextCheckIn(json.next_check_in || '');
+      setCheckInNotes(json.check_in_notes || '');
     } catch (e) {
       console.error('Failed to load project status:', e);
     } finally {
@@ -45,6 +72,22 @@ export default function ClientProjectStatusPreview({ clientId }) {
     if (percent === 100) return 'bg-green-500';
     if (percent > 0) return 'bg-blue-500';
     return 'bg-gray-300';
+  };
+
+  const formatCheckInDate = (dateString) => {
+    if (!dateString) return 'Not scheduled';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return 'Not scheduled';
+    }
   };
 
   if (loading) {
@@ -80,6 +123,11 @@ export default function ClientProjectStatusPreview({ clientId }) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Project Status Section */}
+      <div className="px-6 py-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">PROJECT STATUS</h3>
       </div>
 
       {items.length === 0 ? (

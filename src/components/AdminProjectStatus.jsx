@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function AdminProjectStatus({ clientId }) {
+export default function AdminProjectStatus({ clientId, refreshKey, onRefresh }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -43,6 +43,12 @@ export default function AdminProjectStatus({ clientId }) {
   useEffect(() => {
     loadItems();
   }, [clientId]);
+
+  useEffect(() => {
+    if (refreshKey > 0) {
+      loadItems();
+    }
+  }, [refreshKey]);
 
   const addItem = () => {
     const newItem = {
@@ -102,6 +108,11 @@ export default function AdminProjectStatus({ clientId }) {
     }
     
     setItems(items.filter((_, i) => i !== index));
+    
+    // Trigger refresh of client preview
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   const saveItem = async (index) => {
@@ -164,6 +175,11 @@ export default function AdminProjectStatus({ clientId }) {
       
       setSaveMessage('Item saved successfully');
       setTimeout(() => setSaveMessage(''), 3000);
+      
+      // Trigger refresh of client preview
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (e) {
       setError(e.message || 'Failed to save item');
     } finally {
