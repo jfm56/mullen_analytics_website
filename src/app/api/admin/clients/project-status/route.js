@@ -59,6 +59,13 @@ export async function GET(request) {
       serviceRoleKey
     );
 
+    // Get client info for company name
+    const { data: clientData, error: clientError } = await supabaseAdmin
+      .from('profiles')
+      .select('company')
+      .eq('id', clientId)
+      .single();
+
     const { data, error } = await supabaseAdmin
       .from('project_status_items')
       .select('*')
@@ -70,7 +77,10 @@ export async function GET(request) {
       return Response.json({ error: 'Failed to fetch items' }, { status: 500 });
     }
 
-    return Response.json({ items: data || [] });
+    return Response.json({ 
+      items: data || [], 
+      company: clientData?.company || '' 
+    });
   } catch (e) {
     console.error('Project status GET error:', e);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

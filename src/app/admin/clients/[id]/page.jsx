@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import TableauEmbed from '@/components/TableauEmbed';
 import AdminProjectStatus from '@/components/AdminProjectStatus';
+import ClientProjectStatusPreview from '@/components/ClientProjectStatusPreview';
 
 export default function AdminClientDetailPage() {
   const router = useRouter();
@@ -1371,6 +1372,11 @@ export default function AdminClientDetailPage() {
 
       {/* Project Status Section */}
       <AdminProjectStatus clientId={clientId} />
+
+      {/* Client Project Status Preview */}
+      <div className="mt-8">
+        <ClientProjectStatusPreview clientId={clientId} />
+      </div>
 
       {/* Remove Client Confirmation Modal */}
       {showRemoveConfirm && (

@@ -105,7 +105,7 @@ export async function POST(request) {
     if (tableau_open_url !== undefined) updateData.tableau_open_url = tableau_open_url;
     if (upload_enabled !== undefined) updateData.upload_enabled = upload_enabled ?? false;
     if (allowed_file_types !== undefined) updateData.allowed_file_types = allowed_file_types ?? 'csv,xlsx,json,pdf';
-    if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb ?? 50;
+    if (max_upload_mb !== undefined) updateData.max_upload_mb = max_upload_mb;
 
     // eslint-disable-next-line no-console
     console.log('Updating profile with data:', updateData, 'for clientId:', clientId);
