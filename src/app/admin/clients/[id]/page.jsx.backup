@@ -1,0 +1,1194 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+import TableauEmbed from '@/components/TableauEmbed';
+import AdminProjectStatus from '@/components/AdminProjectStatus';
+import ClientProjectStatusPreview from '@/components/ClientProjectStatusPreview';
+import AdminInvoiceUpload from '@/components/AdminInvoiceUpload';
+import AdminInvoiceManager from '@/components/AdminInvoiceManager';
+import AdminDocumentUpload from '@/components/AdminDocumentUpload';
+import AdminDocumentManager from '@/components/AdminDocumentManager';
+import AdminClientHeader from '@/components/AdminClientHeader';
+import ProjectPulse from '@/components/ProjectPulse';
+import ClientDataFiles from '@/components/ClientDataFiles';
+import AdvancedSettings from '@/components/AdvancedSettings';
+
+export default function AdminClientDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const clientId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+
+  const [loading, setLoading] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+  const [client, setClient] = useState(null);
+  const [error, setError] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [projectStatus, setProjectStatus] = useState('');
+  const [savingProject, setSavingProject] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [company, setCompany] = useState('');
+  const [savingContact, setSavingContact] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [addingTask, setAddingTask] = useState(false);
+  const [newTask, setNewTask] = useState({ title: '', assigned_to: 'Mullen Analytics', status: 'Not started', due_date: '', notes: '' });
+  const [tableauEmbedHtml, setTableauEmbedHtml] = useState('');
+  const [tableauEmbedType, setTableauEmbedType] = useState('dashboard');
+  const [tableauOpenUrl, setTableauOpenUrl] = useState('');
+  const [savingTableau, setSavingTableau] = useState(false);
+  const [uploadEnabled, setUploadEnabled] = useState(false);
+  const [allowedFileTypes, setAllowedFileTypes] = useState('csv,xlsx,json,pdf');
+  const [maxUploadMb, setMaxUploadMb] = useState(50);
+  const [savingUploadSettings, setSavingUploadSettings] = useState(false);
+  const [uploads, setUploads] = useState([]);
+  const [loadingUploads, setLoadingUploads] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [removingClient, setRemovingClient] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [nextCheckIn, setNextCheckIn] = useState('');
+  const [checkInNotes, setCheckInNotes] = useState('');
+  const [projectStatusRefresh, setProjectStatusRefresh] = useState(0);
+
+  const refreshProjectStatus = () => {
+    setProjectStatusRefresh(prev => prev + 1);
+  };
+
+  const saveProject = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    setSavingProject(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          project_name: projectName,
+          project_status: projectStatus,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save project');
+      }
+
+      const json = await res.json();
+      setClient(json.profile);
+      setSaveMessage('Project saved successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save project');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setSavingProject(false);
+    }
+  };
+
+  const saveContact = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    setSavingContact(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          full_name: fullName,
+          company: company,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save contact information');
+      }
+
+      const json = await res.json();
+      setClient(prev => ({ ...prev, full_name: fullName, company: company }));
+      setSaveMessage('Contact information saved successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save contact information');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
+  const removeClient = async () => {
+    if (!clientId) return;
+    setRemovingClient(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
+      const res = await fetch(`/api/admin/clients/delete?id=${encodeURIComponent(clientId)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to remove client');
+      }
+
+      setSaveMessage('Client removed successfully');
+      setTimeout(() => {
+        router.push('/admin');
+      }, 2000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to remove client');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setRemovingClient(false);
+      setShowRemoveConfirm(false);
+    }
+  };
+
+  const saveCheckIn = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        return;
+      }
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          next_check_in: nextCheckIn,
+          check_in_notes: checkInNotes,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save check-in');
+      }
+
+      const json = await res.json();
+      setClient(json.profile);
+      setSaveMessage('Check-in saved successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save check-in');
+      setTimeout(() => setSaveError(''), 5000);
+    }
+  };
+
+  const saveAllChanges = async () => {
+    if (!clientId) return;
+    setError('');
+    setSaveMessage('');
+    setSaveError('');
+    
+    try {
+      // Save contact info
+      await saveContact();
+      // Save upload settings
+      await saveUploadSettings();
+      // Save check-in info
+      await saveCheckIn();
+      setSaveMessage('All changes saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save some changes');
+      setTimeout(() => setSaveError(''), 5000);
+    }
+  };
+
+  const saveTableau = async () => {
+    if (!clientId) return;
+    setError('');
+    setSavingTableau(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('No access token');
+
+      // Parse open URL from embed HTML
+      let openUrl = '';
+      if (tableauEmbedHtml) {
+        // Try to extract URL from various Tableau embed patterns
+        const urlMatch = tableauEmbedHtml.match(/src='([^']+)'/) || 
+                        tableauEmbedHtml.match(/src="([^"]+)"/) ||
+                        tableauEmbedHtml.match(/https:\/\/[^'\s\)]+/);
+        if (urlMatch) {
+          openUrl = urlMatch[1];
+        }
+      }
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          tableau_embed_html: tableauEmbedHtml,
+          tableau_embed_type: tableauEmbedType,
+          tableau_open_url: openUrl,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save Tableau embed');
+
+      setClient(json.profile);
+      setTableauEmbedHtml(json.profile.tableau_embed_html || '');
+      setTableauEmbedType(json.profile.tableau_embed_type || 'dashboard');
+      setTableauOpenUrl(json.profile.tableau_open_url || '');
+    } catch (e) {
+      setError(e.message || 'Failed to save Tableau embed');
+    } finally {
+      setSavingTableau(false);
+    }
+  };
+
+  const saveUploadSettings = async () => {
+    if (!clientId) return;
+    setError('');
+    setSavingUploadSettings(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setSavingUploadSettings(false);
+        return;
+      }
+
+      const res = await fetch('/api/admin/clients/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          upload_enabled: uploadEnabled,
+          allowed_file_types: allowedFileTypes,
+          max_upload_mb: maxUploadMb === 'unlimited' ? null : maxUploadMb,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save upload settings');
+
+      setClient(json.profile);
+      setUploadEnabled(json.profile.upload_enabled || false);
+      setAllowedFileTypes(json.profile.allowed_file_types || 'csv,xlsx,json,pdf');
+      setMaxUploadMb(json.profile.max_upload_mb === null ? 'unlimited' : json.profile.max_upload_mb || 50);
+    } catch (e) {
+      setError(e.message || 'Failed to save upload settings');
+    } finally {
+      setSavingUploadSettings(false);
+    }
+  };
+
+  const loadUploads = async (accessToken, currentClientId) => {
+    try {
+      setLoadingUploads(true);
+      const res = await fetch(`/api/clients/${encodeURIComponent(currentClientId)}/uploads`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load uploads');
+      setUploads(json.uploads || []);
+    } catch (e) {
+      setError(e.message || 'Failed to load uploads');
+    } finally {
+      setLoadingUploads(false);
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFile || !clientId) return;
+    setError('');
+    setUploadingFile(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setUploadingFile(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('clientId', clientId);
+
+      const res = await fetch('/api/clients/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Upload failed');
+      }
+
+      setSelectedFile(null);
+      const fileInput = document.getElementById('file-upload-input');
+      if (fileInput) fileInput.value = '';
+    } catch (e) {
+      setError(e.message || 'Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleLogoUpload = async () => {
+    if (!logoFile || !clientId) return;
+    setUploadingLogo(true);
+    setError('');
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        setUploadingLogo(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('logoFile', logoFile);
+      formData.append('clientId', clientId);
+
+      const res = await fetch('/api/admin/clients/logo', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Logo upload failed');
+      }
+
+      const json = await res.json();
+      setClient(prev => ({ ...prev, logo_url: json.logoUrl }));
+      setLogoFile(null);
+      const logoInput = document.getElementById('logo-upload-input');
+      if (logoInput) logoInput.value = '';
+    } catch (e) {
+      setError(e.message || 'Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleSendPasswordReset = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/admin/clients/${encodeURIComponent(clientId)}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        }
+      });
+
+      if (!res.ok) throw new Error('Failed to send password reset');
+      
+      alert('Password reset email sent successfully!');
+    } catch (e) {
+      alert('Failed to send password reset: ' + e.message);
+    }
+  };
+
+  const handleScheduleCheckIn = () => {
+    // Scroll to check-in section
+    const checkInSection = document.getElementById('check-in-section');
+    if (checkInSection) {
+      checkInSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleArchiveClient = async () => {
+    if (!confirm('Are you sure you want to archive this client? They will no longer be able to access their portal.')) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/admin/clients/${encodeURIComponent(clientId)}/archive`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        }
+      });
+
+      if (!res.ok) throw new Error('Failed to archive client');
+      
+      alert('Client archived successfully!');
+      // Refresh client data
+      loadClient();
+    } catch (e) {
+      alert('Failed to archive client: ' + e.message);
+    }
+  };
+
+  const handleUploadSettingsChange = (key, value) => {
+    switch (key) {
+      case 'uploadEnabled':
+        setUploadEnabled(value);
+        break;
+      case 'allowedFileTypes':
+        setAllowedFileTypes(value);
+        break;
+      case 'maxUploadMb':
+        setMaxUploadMb(value);
+        break;
+    }
+  };
+
+  const handleDeleteUpload = async (uploadId, filename) => {
+    if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(`/api/admin/clients/${encodeURIComponent(clientId)}/uploads/${encodeURIComponent(uploadId)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        }
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete upload');
+      }
+
+      // Refresh uploads list
+      setRefreshUploads(prev => prev + 1);
+      
+      // Show success message (you could add a toast notification here)
+      console.log('Upload deleted successfully');
+
+    } catch (e) {
+      console.error('Failed to delete upload:', e);
+      alert('Failed to delete upload: ' + e.message);
+    }
+  };
+
+  const handleDownload = async (uploadId, filename) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads/${encodeURIComponent(uploadId)}/download`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to get download URL');
+
+      // Open download URL in new tab
+      window.open(json.url, '_blank');
+    } catch (e) {
+      setError(e.message || 'Failed to download file');
+    }
+  };
+
+  const loadTasks = async (accessToken, currentClientId) => {
+    try {
+      setLoadingTasks(true);
+      const res = await fetch(`/api/admin/clients/tasks?clientId=${encodeURIComponent(currentClientId)}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load tasks');
+      setTasks(json.tasks || []);
+    } catch (e) {
+      setError(e.message || 'Failed to load tasks');
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
+  const createTask = async () => {
+    if (!clientId || !newTask.title) {
+      setError('Task title is required.');
+      return;
+    }
+    setError('');
+    setAddingTask(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError('Missing session. Please sign in again.');
+        return;
+      }
+
+      const res = await fetch('/api/admin/clients/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId,
+          title: newTask.title,
+          assigned_to: newTask.assigned_to,
+          status: newTask.status,
+          due_date: newTask.due_date || null,
+          notes: newTask.notes || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to create task');
+
+      setTasks((prev) => [...prev, json.task]);
+      setNewTask({ title: '', assigned_to: 'Mullen Analytics', status: 'Not started', due_date: '', notes: '' });
+      setSaveMessage('Task added successfully');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (e) {
+      setSaveError(e.message || 'Failed to create task');
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setAddingTask(false);
+    }
+  };
+
+  const updateTaskStatus = async (id, status) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch('/api/admin/clients/tasks', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ id, status }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update task');
+
+      setTasks((prev) => prev.map((t) => (t.id === id ? json.task : t)));
+    } catch (e) {
+      setError(e.message || 'Failed to update task');
+    }
+  };
+
+  const deleteTask = async (id) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(`/api/admin/clients/tasks?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete task');
+
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    } catch (e) {
+      setError(e.message || 'Failed to delete task');
+    }
+  };
+
+  // Sort tasks: incomplete first, then by due date
+  const sortedTasks = [...tasks].sort((a, b) => {
+    // Done tasks go to the end
+    if (a.status === 'Done' && b.status !== 'Done') return 1;
+    if (a.status !== 'Done' && b.status === 'Done') return -1;
+    
+    // Sort by due date (null dates go to end)
+    if (!a.due_date && b.due_date) return 1;
+    if (a.due_date && !b.due_date) return -1;
+    if (a.due_date && b.due_date) {
+      return new Date(a.due_date) - new Date(b.due_date);
+    }
+    
+    return 0;
+  });
+
+  const activeTasks = sortedTasks.filter(t => t.status !== 'Done');
+  const completedTasks = sortedTasks.filter(t => t.status === 'Done');
+
+  useEffect(() => {
+    // Add global error handler for unhandled promise rejections
+    const handleUnhandledRejection = (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      setError('An unexpected error occurred. Please refresh the page.');
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    const init = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          router.replace('/portal/login');
+          return;
+        }
+
+        // Verify current user is admin
+        const { data: callerProfile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileErr || !callerProfile || callerProfile.role !== 'admin') {
+          setAllowed(false);
+          setLoading(false);
+          return;
+        }
+
+        setAllowed(true);
+
+        const accessToken = session?.access_token;
+        if (!accessToken || !clientId) {
+          setError('Missing client information.');
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch('/api/admin/users/list', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const json = await res.json();
+
+        if (!res.ok) {
+          setError(json.error || 'Failed to load client.');
+          setLoading(false);
+          return;
+        }
+
+        const match = (json.profiles || []).find((p) => p.id === clientId);
+        if (!match) {
+          setError('Client not found.');
+        } else {
+          setClient(match);
+          setProjectName(match.project_name || '');
+          setProjectStatus(match.project_status || '');
+          setFullName(match.full_name || '');
+          setCompany(match.company || '');
+          setTableauEmbedHtml(match.tableau_embed_html || '');
+          setTableauEmbedType(match.tableau_embed_type || 'dashboard');
+          setTableauOpenUrl(match.tableau_open_url || '');
+          setUploadEnabled(match.upload_enabled || false);
+          setAllowedFileTypes(match.allowed_file_types || 'csv,xlsx,json,pdf');
+          setMaxUploadMb(match.max_upload_mb === null ? 'unlimited' : match.max_upload_mb || 50);
+          setNextCheckIn(match.next_check_in || '');
+          setCheckInNotes(match.check_in_notes || '');
+          await loadTasks(accessToken, clientId);
+          await loadUploads(accessToken, clientId);
+        }
+      } catch (e) {
+        console.error('Init error:', e);
+        setError(e.message || 'Failed to load client.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (clientId) {
+      void init();
+    }
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [clientId, router]);
+
+  if (loading) {
+    return (
+      <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">Loading client...</div>
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">
+        Not authorized.
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-md mx-auto py-16 px-4 text-center text-red-600 text-sm">{error}</div>
+    );
+  }
+
+  if (!client) {
+    return (
+      <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">Client not found.</div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto py-8 px-4">
+      {/* Toast Notifications */}
+      {saveMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md shadow-sm">
+        <div className="flex items-center">
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          {saveMessage}
+        </div>
+      </div>
+      )}
+      
+      {saveError && (
+        <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md shadow-sm">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {saveError}
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white border rounded-lg p-6 shadow-sm mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6 text-sm">
+            <div>
+              <span className="text-gray-500">Client:</span>
+              <span className="ml-2 font-medium">{client.full_name || client.email}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Company:</span>
+              <span className="ml-2 font-medium">{client.company || 'Company not set'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Active project:</span>
+              <span className="ml-2 font-medium text-green-600">Yes</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Uploads enabled:</span>
+              <span className="ml-2 font-medium text-green-600">Yes</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={saveAllChanges}
+              className="text-xs bg-[var(--brand-primary)] text-white px-4 py-1.5 rounded-md hover:bg-[var(--brand-primary-dark,#1d3d73)]"
+            >
+              Save All Changes
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRemoveConfirm(true)}
+              className="text-xs text-red-600 hover:text-red-800 border border-red-300 px-3 py-1.5 rounded-md hover:bg-red-50"
+            >
+              Remove Client
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/admin')}
+              className="text-xs text-[var(--brand-primary)] hover:underline"
+            >
+              ← Back to admin
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Client Overview Section */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="w-1 h-6 bg-blue-500 rounded"></div>
+          Client Overview
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="border rounded-lg bg-white p-6 shadow-sm">
+            <h3 className="text-base font-semibold mb-4">Project Details</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Project name</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="EMS Staffing Forecast – Phase 1"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={projectStatus}
+                  onChange={(e) => setProjectStatus(e.target.value)}
+                >
+                  <option value="">Select status...</option>
+                  <option value="Planned">Planned</option>
+                  <option value="In progress">In progress</option>
+                  <option value="On hold">On hold</option>
+                  <option value="Complete">Complete</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={saveProject}
+                disabled={savingProject}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {savingProject ? 'Saving...' : 'Save project'}
+              </button>
+            </div>
+          </div>
+          <div className="border rounded-lg bg-white p-6 shadow-sm">
+            <h3 className="text-base font-semibold mb-4">Contact Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50"
+                  value={client?.email || ''}
+                  disabled
+                  title="Email cannot be changed"
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="Enter company name"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="Enter full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={saveContact}
+                disabled={savingContact}
+                className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {savingContact ? 'Saving...' : 'Save contact info'}
+              </button>
+            </div>
+            
+            {/* Logo Upload Section */}
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="text-base font-semibold mb-4">Client Logo</h4>
+              {client?.logo_url && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">Current logo:</p>
+                  <img 
+                    src={client.logo_url} 
+                    alt="Client logo" 
+                    className="h-20 w-auto max-w-[200px] object-contain border rounded p-2 bg-gray-50"
+                  />
+                </div>
+              )}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload new logo</label>
+                  <input
+                    id="logo-upload-input"
+                    type="file"
+                    accept="image/*,.png,.jpg,.jpeg,.gif,.svg"
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, SVG (max 2MB)</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogoUpload}
+                  disabled={!logoFile || uploadingLogo}
+                  className="inline-flex items-center px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Project Status Section */}
+      <AdminProjectStatus clientId={clientId} refreshKey={projectStatusRefresh} onRefresh={refreshProjectStatus} />
+
+      {/* Client Project Status Preview */}
+      <div className="mt-8">
+        <ClientProjectStatusPreview clientId={clientId} refreshKey={projectStatusRefresh} />
+      </div>
+
+      {/* Next Check-in Section */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="w-1 h-6 bg-purple-500 rounded"></div>
+                            task.status === 'Not started' ? 'bg-gray-100 text-gray-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {task.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Client Interaction & Scheduling */}
+      <div id="check-in-section" className="bg-white border rounded-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Client Interaction & Scheduling</h2>
+          <p className="text-sm text-gray-600 mt-1">When am I talking to them next and about what?</p>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Next Check-in Date
+              </label>
+              <input
+                type="date"
+                value={client?.next_check_in || ''}
+                onChange={(e) => {
+                  setClient(prev => ({ ...prev, next_check_in: e.target.value }));
+                }}
+                className="w-full border rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Check-in Notes / Agenda
+              </label>
+              <textarea
+                value={client?.check_in_notes || ''}
+                onChange={(e) => {
+                  setClient(prev => ({ ...prev, check_in_notes: e.target.value }));
+                }}
+                className="w-full border rounded-md px-3 py-2 text-sm min-h-[80px]"
+                placeholder="Topics to discuss, questions to ask, etc."
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={async () => {
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session) return;
+
+                  const res = await fetch(`/api/admin/clients/project-status`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      clientId,
+                      next_check_in: client?.next_check_in,
+                      check_in_notes: client?.check_in_notes,
+                    }),
+                  });
+
+                  if (!res.ok) throw new Error('Failed to save check-in');
+                  
+                  setSaveMessage('Check-in saved successfully');
+                  setTimeout(() => setSaveMessage(''), 3000);
+                } catch (e) {
+                  setSaveError(e.message || 'Failed to save check-in');
+                  setTimeout(() => setSaveError(''), 5000);
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+            >
+              Save Check-in
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Data & Documents - Grouped Together */}
+      <ClientDataFiles clientId={clientId} />
+
+      {/* Analytics & Dashboard */}
+      <div className="bg-white border rounded-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Client Analytics Dashboard</h2>
+          <p className="text-sm text-gray-600 mt-1">This is the output of everything above</p>
+        </div>
+        <div className="p-6">
+          <TableauEmbed 
+            embedHtml={client?.tableau_embed_html || ''}
+            embedType={client?.tableau_embed_type || 'dashboard'}
+          />
+        </div>
+      </div>
+
+      {/* Advanced Settings - Collapsed by Default */}
+      <AdvancedSettings
+        client={client}
+        uploadEnabled={uploadEnabled}
+        allowedFileTypes={allowedFileTypes}
+        maxUploadMb={maxUploadMb}
+        onUploadSettingsChange={handleUploadSettingsChange}
+        onRemoveClient={() => {
+          if (confirm('Are you sure you want to remove this client? This action cannot be undone.')) {
+            handleRemoveClient();
+          }
+        }}
+      />
+                <p className="text-sm text-red-800 font-medium mb-2">This will permanently delete:</p>
+                <ul className="text-xs text-red-700 space-y-1">
+                  <li>• Client profile and contact information</li>
+                  <li>• All uploaded files and data</li>
+                  <li>• Tasks and project history</li>
+                  <li>• Dashboard configurations</li>
+                  <li>• Client portal access</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRemoveConfirm(false)}
+                disabled={removingClient}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={removeClient}
+                disabled={removingClient}
+                className="flex-1 px-4 py-2 border border-red-300 rounded-md text-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {removingClient ? 'Removing...' : 'Remove Client'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

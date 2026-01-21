@@ -54,7 +54,7 @@ export async function GET(request) {
     // Use service role client to bypass RLS and list all profiles
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, role, full_name, company, project_name, project_status, next_check_in, check_in_notes, tableau_embed_html, tableau_embed_type, tableau_open_url, upload_enabled, allowed_file_types, max_upload_mb, logo_url')
+      .select('id, email, role, full_name, company, project_name, project_status, next_check_in, check_in_notes, tableau_embed_html, tableau_embed_type, tableau_open_url, upload_enabled, allowed_file_types, max_upload_mb, logo_url, last_login, client_status, tags, contract_value, start_date, renewal_date, notes, health_score, project_phase, project_deadline')
       .order('email');
 
     if (error) {

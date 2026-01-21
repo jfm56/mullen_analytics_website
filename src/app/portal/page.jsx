@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
+import { useLastLoginTracking } from '@/hooks/useLastLoginTracking';
 import ClientProjectStatus from '@/components/ClientProjectStatus';
 
 export default function PortalHomePage() {
@@ -18,6 +19,9 @@ export default function PortalHomePage() {
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [savingContact, setSavingContact] = useState(false);
+
+  // Track last login when client accesses portal
+  useLastLoginTracking();
   const [contactMessage, setContactMessage] = useState('');
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
   const unreadMessages = useUnreadMessagesCount();
