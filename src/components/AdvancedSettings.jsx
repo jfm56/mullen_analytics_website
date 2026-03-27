@@ -8,9 +8,21 @@ export default function AdvancedSettings({
   allowedFileTypes, 
   maxUploadMb,
   onUploadSettingsChange,
-  onRemoveClient 
+  onRemoveClient,
+  onDashboardSettingsChange
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState(client?.tableau_embed_html || '');
+  const [dashboardType, setDashboardType] = useState(client?.tableau_embed_type || 'tableau');
+
+  const handleSaveDashboard = () => {
+    if (onDashboardSettingsChange) {
+      onDashboardSettingsChange({
+        tableau_embed_html: dashboardUrl,
+        tableau_embed_type: dashboardType
+      });
+    }
+  };
 
   return (
     <div className="bg-white border rounded-lg">
@@ -39,6 +51,56 @@ export default function AdvancedSettings({
       {isExpanded && (
         <div className="border-t border-gray-200">
           <div className="p-6 space-y-6">
+            {/* Dashboard/Analytics API Settings */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Dashboard & Analytics</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dashboard Type
+                  </label>
+                  <select
+                    value={dashboardType}
+                    onChange={(e) => setDashboardType(e.target.value)}
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                  >
+                    <option value="tableau">Tableau</option>
+                    <option value="powerbi">Power BI</option>
+                    <option value="looker">Looker</option>
+                    <option value="metabase">Metabase</option>
+                    <option value="custom">Custom Embed</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">Select the analytics platform for this client</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dashboard Embed URL / API
+                  </label>
+                  <textarea
+                    value={dashboardUrl}
+                    onChange={(e) => setDashboardUrl(e.target.value)}
+                    className="w-full border rounded-md px-3 py-2 text-sm font-mono"
+                    rows={4}
+                    placeholder="Paste your dashboard embed URL or embed code here..."
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Paste the embed URL, iframe code, or API endpoint for the client's interactive dashboard
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleSaveDashboard}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Save Dashboard Settings
+                </button>
+              </div>
+            </div>
+
             {/* Upload Settings */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Configuration</h3>

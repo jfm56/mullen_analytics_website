@@ -1,56 +1,33 @@
 import { useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/api';
 
+/**
+ * Hook to track last login time using FastAPI backend.
+ * Replaces Supabase-based tracking.
+ */
 export function useLastLoginTracking() {
   useEffect(() => {
     const updateLastLogin = async () => {
       try {
-        // Only update if user is authenticated
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          console.log('No session found, skipping last login update');
+        // Check session via FastAPI
+        const session = await auth.getSession();
+        if (!session.authenticated) {
+          // Silently skip - user not logged in
           return;
         }
 
-        console.log('Updating last login for user:', session.user.id);
-
-        // Try the main endpoint first
-        let response = await fetch('/api/auth/update-last-login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
+        // Update last login via FastAPI profile endpoint
+        await fetch('/api/proxy/profiles/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ last_login: new Date().toISOString() }),
         });
-
-        // If main endpoint fails, try fallback
-        if (!response.ok) {
-          console.log('Main endpoint failed, trying fallback...');
-          response = await fetch('/api/auth/update-last-login-fallback', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-          });
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Both endpoints failed to update last login:', errorData);
-          return;
-        }
-
-        const result = await response.json();
-        console.log('Last login updated successfully:', result);
-        
       } catch (error) {
         // Silently fail - don't break the app if last login tracking fails
-        console.warn('Failed to update last login:', error);
       }
     };
 
-    // Update last login on component mount
     updateLastLogin();
   }, []);
 }

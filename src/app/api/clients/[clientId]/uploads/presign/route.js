@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import {
@@ -14,7 +14,7 @@ import { getFileUploadedNotificationTemplate } from '@/lib/emailTemplates';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function getUserClient(accessToken: string) {
+function getUserClient(accessToken) {
   if (!supabaseUrl || !supabaseAnonKey || !accessToken) return null;
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -25,10 +25,7 @@ function getUserClient(accessToken: string) {
   });
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ clientId: string }> }
-) {
+export async function POST(request, { params }) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 });

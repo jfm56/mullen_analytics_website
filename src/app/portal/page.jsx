@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
-import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
-import { useLastLoginTracking } from '@/hooks/useLastLoginTracking';
+import { auth, users } from '@/lib/api';
 import ClientProjectStatus from '@/components/ClientProjectStatus';
 
 export default function PortalHomePage() {
@@ -19,53 +17,55 @@ export default function PortalHomePage() {
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [savingContact, setSavingContact] = useState(false);
-
-  // Track last login when client accesses portal
-  useLastLoginTracking();
   const [contactMessage, setContactMessage] = useState('');
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
-  const unreadMessages = useUnreadMessagesCount();
 
   useEffect(() => {
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const session = await auth.getSession();
+        
+        if (!session.authenticated) {
+          router.replace('/portal/login');
+          return;
+        }
+
+        // Admins are redirected to /admin UNLESS they are impersonating a client
+        if (session.profile?.role === 'admin' && !session.impersonating) {
+          router.replace('/admin');
+          return;
+        }
+
+        setUser(session.user);
+        setProfile(session.profile);
+        setFullName(session.profile?.full_name || '');
+        setCompany(session.profile?.company || '');
+        setLoading(false);
+
+        // Load unread message count
+        try {
+          const { count } = await fetch('/api/proxy/messages/unread-count', {
+            credentials: 'include',
+          }).then(r => r.json());
+          setUnreadMessages(count || 0);
+        } catch (e) {
+          // Ignore errors loading unread count
+        }
+      } catch (err) {
         router.replace('/portal/login');
-        return;
       }
-
-      // Check role in profiles; admins are redirected to /admin
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, logo_url, full_name, company')
-        .eq('id', session.user.id)
-        .single();
-
-      // TEMP: debug logs to verify role lookup
-      // eslint-disable-next-line no-console
-      console.log('portal session user id:', session.user.id);
-      // eslint-disable-next-line no-console
-      console.log('portal profile:', profile);
-
-      if (profile?.role === 'admin') {
-        router.replace('/admin');
-        return;
-      }
-
-      setUser(session.user);
-      setProfile(profile);
-      setFullName(profile?.full_name || '');
-      setCompany(profile?.company || '');
-      setLoading(false);
     };
 
     checkSession();
   }, [router]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await auth.logout();
+    } catch (err) {
+      // Ignore logout errors
+    }
     router.push('/portal/login');
   };
 
@@ -73,24 +73,18 @@ export default function PortalHomePage() {
     setResetStatus('');
     setResettingPassword(true);
     try {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-
-      if (!currentUser?.email) {
+      if (!user?.email) {
         setResetStatus('error:Unable to get your email address');
         setResettingPassword(false);
         return;
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, {
-        redirectTo: `${window.location.origin}/portal/reset-password`,
-      });
+      const result = await auth.requestPasswordReset(user.email);
 
-      if (error) {
-        setResetStatus(`error:${error.message}`);
-      } else {
+      if (result.success) {
         setResetStatus('success:Password reset link sent! Check your email.');
+      } else {
+        setResetStatus(`error:${result.message || 'Failed to send reset email'}`);
       }
     } catch (err) {
       setResetStatus('error:Something went wrong. Please try again.');
@@ -103,24 +97,17 @@ export default function PortalHomePage() {
     setContactMessage('');
     setSavingContact(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          company: company,
-        })
-        .eq('id', user?.id);
+      const updated = await users.updateMyProfile({
+        full_name: fullName,
+        company: company,
+      });
 
-      if (error) {
-        setContactMessage(`error:${error.message}`);
-      } else {
-        setProfile(prev => ({ ...prev, full_name: fullName, company: company }));
-        setContactMessage('success:Contact information updated successfully!');
-        setEditingContact(false);
-        setTimeout(() => setContactMessage(''), 3000);
-      }
+      setProfile(prev => ({ ...prev, full_name: fullName, company: company }));
+      setContactMessage('success:Contact information updated successfully!');
+      setEditingContact(false);
+      setTimeout(() => setContactMessage(''), 3000);
     } catch (err) {
-      setContactMessage('error:Something went wrong. Please try again.');
+      setContactMessage(`error:${err.message || 'Something went wrong. Please try again.'}`);
     } finally {
       setSavingContact(false);
     }
@@ -312,6 +299,20 @@ export default function PortalHomePage() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">QUICK ACTIONS</h2>
         <p className="text-sm text-gray-600 mb-4">Common things you may want to do.</p>
         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link
+            href="/portal/projects"
+            className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+          >
+            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">View Projects</div>
+              <div className="text-xs text-gray-500">Access your dashboards, uploads, and reports.</div>
+            </div>
+          </Link>
           <Link
             href="/portal/uploads"
             className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors"

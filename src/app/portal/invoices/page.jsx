@@ -2,40 +2,46 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
+import { auth } from '@/lib/api';
+
+const API_URL = '/api/proxy';
 
 export default function PortalInvoicesPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
-  const unreadMessages = useUnreadMessagesCount();
 
   const loadInvoices = async () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = await auth.getSession();
       
-      if (!session) {
+      if (!session.authenticated) {
         router.replace('/portal/login');
         return;
       }
 
       setUser(session.user);
 
-      const res = await fetch('/api/portal/invoices', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        }
+      // TODO: Replace with FastAPI endpoint when ready
+      const res = await fetch(`${API_URL}/invoices/`, {
+        credentials: 'include',
       });
       const data = await res.json();
-      setInvoices(data.invoices || []);
+      setInvoices(data || []);
+
+      // Load unread count
+      try {
+        const { count } = await fetch(`${API_URL}/messages/unread-count`, {
+          credentials: 'include',
+        }).then(r => r.json());
+        setUnreadMessages(count || 0);
+      } catch (e) {}
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error(e);
+      router.replace('/portal/login');
     } finally {
       setLoading(false);
     }

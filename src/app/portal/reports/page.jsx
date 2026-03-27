@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
+import { auth } from '@/lib/api';
 import TableauEmbed from '@/components/TableauEmbed';
 
+const API_URL = '/api/proxy';
 
 export default function PortalReportsPage() {
   const router = useRouter();
@@ -14,41 +14,40 @@ export default function PortalReportsPage() {
   const [tableauEmbedHtml, setTableauEmbedHtml] = useState('');
   const [tableauEmbedType, setTableauEmbedType] = useState('dashboard');
   const [tableauOpenUrl, setTableauOpenUrl] = useState('');
-  const unreadMessages = useUnreadMessagesCount();
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     const init = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        router.replace('/portal/login');
-        return;
-      }
-      setUser(session.user);
-      
-      // Fetch user profile including Tableau data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, company, tableau_embed_html, tableau_embed_type, tableau_open_url')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (profile) {
-        console.log('Portal profile:', profile);
-        console.log('Tableau embed from DB:', profile.tableau_embed_html);
-        setTableauEmbedHtml(profile.tableau_embed_html || '');
-        setTableauEmbedType(profile.tableau_embed_type || 'dashboard');
-        setTableauOpenUrl(profile.tableau_open_url || '');
-      }
-      
       try {
-        const res = await fetch('/api/portal/reports');
-        const data = await res.json();
-        setReports(data.reports || []);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
+        const session = await auth.getSession();
+        
+        if (!session.authenticated) {
+          router.replace('/portal/login');
+          return;
+        }
+        
+        setUser(session.user);
+        
+        // Get Tableau data from profile
+        const profile = session.profile;
+        if (profile) {
+          setTableauEmbedHtml(profile.tableau_embed_html || '');
+          setTableauEmbedType(profile.tableau_embed_type || 'dashboard');
+          setTableauOpenUrl(profile.tableau_open_url || '');
+        }
+        
+        // Load unread count
+        try {
+          const { count } = await fetch(`${API_URL}/messages/unread-count`, {
+            credentials: 'include',
+          }).then(r => r.json());
+          setUnreadMessages(count || 0);
+        } catch (e) {}
+        
+        // TODO: Load reports from FastAPI when endpoint is ready
+        // For now, reports will be empty
+      } catch (err) {
+        router.replace('/portal/login');
       }
     };
 

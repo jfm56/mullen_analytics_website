@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/api';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -12,12 +12,12 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [myProfile, setMyProfile] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'users' | 'messages'
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'profile' | 'users' | 'messages'
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [invitingUser, setInvitingUser] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: '',
-    role: 'user',
+    role: 'client',
     full_name: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,113 +40,88 @@ export default function AdminPage() {
     const init = async () => {
       setLoading(true);
       setError('');
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      
+      try {
+        // Use FastAPI auth instead of Supabase
+        const session = await auth.getSession();
 
-      if (!session) {
-        setAllowed(false);
-        setLoading(false);
-        router.replace('/portal/login');
-        return;
-      }
-
-      const { data: callerProfile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('id, email, role, full_name, company, project_name')
-        .eq('id', session.user.id)
-        .single();
-
-      // TEMP: debug admin access
-      // eslint-disable-next-line no-console
-      console.log('admin session user id:', session.user.id);
-      // eslint-disable-next-line no-console
-      console.log('admin callerProfile:', callerProfile, 'error:', profileErr);
-
-      if (profileErr || !callerProfile || callerProfile.role !== 'admin') {
-        setAllowed(false);
-        setLoading(false);
-        return;
-      }
-
-      setAllowed(true);
-
-      setMyProfile(callerProfile);
-
-      const accessToken = session?.access_token;
-
-      if (!accessToken) {
-        setError('Failed to load users.');
-        setProfiles([]);
-      } else {
-        const res = await fetch('/api/admin/users/list', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const json = await res.json();
-
-        if (!res.ok) {
-          setError(json.error || 'Failed to load users.');
-          setProfiles([]);
-        } else {
-          const others = (json.profiles || []).filter((p) => p.id !== callerProfile.id);
-          setProfiles(others);
+        if (!session.authenticated) {
+          setAllowed(false);
+          setLoading(false);
+          router.replace('/portal/login');
+          return;
         }
 
+        const callerProfile = session.profile;
+
+        if (!callerProfile || callerProfile.role !== 'admin') {
+          setAllowed(false);
+          setLoading(false);
+          return;
+        }
+
+        setAllowed(true);
+        setMyProfile(callerProfile);
+
+        // Load users list via FastAPI proxy
         try {
-          setLoadingAdminMessages(true);
-          const resMessages = await fetch('/api/admin/messages', {
+          const res = await fetch('/api/proxy/users/', {
             method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+            credentials: 'include',
           });
-          const jsonMessages = await resMessages.json();
-          if (!resMessages.ok) {
-            // eslint-disable-next-line no-console
-            console.error('Failed to load admin messages', jsonMessages.error);
+          const json = await res.json();
+
+          if (!res.ok) {
+            setError(json.detail || 'Failed to load users.');
+            setProfiles([]);
           } else {
-            setAdminMessages(jsonMessages.messages || []);
+            const others = (json || []).filter((p) => p.id !== callerProfile.id);
+            setProfiles(others);
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error('Admin messages load error', e);
+          setError('Failed to load users.');
+          setProfiles([]);
+        }
+
+        // Load admin messages via FastAPI proxy
+        try {
+          setLoadingAdminMessages(true);
+          const resMessages = await fetch('/api/proxy/messages/admin', {
+            method: 'GET',
+            credentials: 'include',
+          });
+          const jsonMessages = await resMessages.json();
+          if (resMessages.ok) {
+            setAdminMessages(jsonMessages || []);
+          }
+        } catch (e) {
+          // Silently fail
         } finally {
           setLoadingAdminMessages(false);
         }
 
+        // Load dashboard metrics (placeholder - will need FastAPI endpoint)
         try {
           setLoadingDashboard(true);
-          const resDashboard = await fetch('/api/admin/dashboard', {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
+          // TODO: Create FastAPI dashboard endpoint
+          setDashboard({
+            metrics: {
+              totalClients: 0,
+              activeProjects: 0,
+              unreadMessages: 0,
+              openTasks: 0,
             },
+            tasksDueSoon: [],
+            clientsNeedingOutreach: [],
           });
-          const jsonDashboard = await resDashboard.json();
-          if (!resDashboard.ok) {
-            // eslint-disable-next-line no-console
-            console.error('Failed to load admin dashboard', jsonDashboard.error);
-          } else {
-            setDashboard({
-              metrics: jsonDashboard.metrics || {
-                totalClients: 0,
-                activeProjects: 0,
-                unreadMessages: 0,
-                openTasks: 0,
-              },
-              tasksDueSoon: jsonDashboard.tasksDueSoon || [],
-              clientsNeedingOutreach: jsonDashboard.clientsNeedingOutreach || [],
-            });
-          }
         } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error('Admin dashboard load error', e);
+          // Silently fail
         } finally {
           setLoadingDashboard(false);
         }
+      } catch (err) {
+        setAllowed(false);
+        router.replace('/portal/login');
       }
 
       setLoading(false);
@@ -157,28 +132,17 @@ export default function AdminPage() {
 
   const refreshAdminMessages = async () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) return;
       setLoadingAdminMessages(true);
-      const res = await fetch('/api/admin/messages', {
+      const res = await fetch('/api/proxy/messages/admin', {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
       });
       const json = await res.json();
-      if (!res.ok) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to refresh admin messages', json.error);
-        return;
+      if (res.ok) {
+        setAdminMessages(json || []);
       }
-      setAdminMessages(json.messages || []);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('refreshAdminMessages error', e);
+      // Silently fail
     } finally {
       setLoadingAdminMessages(false);
     }
@@ -192,30 +156,18 @@ export default function AdminPage() {
     setError('');
     setSendingMessage(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) {
-        setError('Missing session. Please sign in again.');
-        setSendingMessage(false);
-        return;
-      }
-
-      const res = await fetch('/api/admin/messages', {
+      const res = await fetch('/api/proxy/messages/admin', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          userId: compose.userId,
+          user_id: compose.userId,
           subject: compose.subject,
           body: compose.body,
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to send message');
+      if (!res.ok) throw new Error(json.detail || 'Failed to send message');
 
       setCompose({ userId: '', subject: '', body: '' });
       await refreshAdminMessages();
@@ -229,22 +181,13 @@ export default function AdminPage() {
   const updateAdminMessagesRead = async (ids, read) => {
     if (!ids || ids.length === 0) return;
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) return;
-      const res = await fetch('/api/admin/messages', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ ids, read }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to update messages');
-
+      // Mark messages as read/unread via FastAPI
+      for (const id of ids) {
+        await fetch(`/api/proxy/messages/${id}/read`, {
+          method: read ? 'POST' : 'DELETE',
+          credentials: 'include',
+        });
+      }
       setAdminMessages((prev) =>
         prev.map((m) => (ids.includes(m.id) ? { ...m, read_at: read ? new Date().toISOString() : null } : m))
       );
@@ -256,22 +199,12 @@ export default function AdminPage() {
   const deleteAdminMessages = async (ids) => {
     if (!ids || ids.length === 0) return;
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) return;
-      const res = await fetch('/api/admin/messages', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ ids }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to delete messages');
-
+      for (const id of ids) {
+        await fetch(`/api/proxy/messages/${id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+      }
       setAdminMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
     } catch (e) {
       setError(e.message || 'Failed to delete messages');
@@ -281,23 +214,17 @@ export default function AdminPage() {
   const updateRole = async (userId, role) => {
     setError('');
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      const res = await fetch('/api/admin/users/role', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({ userId, role }),
+      const res = await fetch(`/api/proxy/profiles/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ role }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to update role');
+      if (!res.ok) throw new Error(json.detail || 'Failed to update role');
 
       setProfiles((prev) =>
-        prev.map((p) => (p.id === userId ? { ...p, role: json.profile.role } : p))
+        prev.map((p) => (p.id === userId ? { ...p, role: json.role } : p))
       );
     } catch (e) {
       setError(e.message || 'Failed to update role');
@@ -309,20 +236,18 @@ export default function AdminPage() {
     setError('');
     setSavingProfile(true);
     try {
-      const { error: updateErr, data: updated } = await supabase
-        .from('profiles')
-        .update({
+      const res = await fetch('/api/proxy/profiles/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
           full_name: myProfile.full_name || null,
           company: myProfile.company || null,
           project_name: myProfile.project_name || null,
-        })
-        .eq('id', myProfile.id)
-        .select('id, email, role, full_name, company, project_name')
-        .single();
-
-      if (updateErr) {
-        throw updateErr;
-      }
+        }),
+      });
+      const updated = await res.json();
+      if (!res.ok) throw new Error(updated.detail || 'Failed to update profile');
 
       setMyProfile(updated);
       setProfiles((prev) =>
@@ -343,27 +268,25 @@ export default function AdminPage() {
     setError('');
     setInvitingUser(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      const res = await fetch('/api/admin/users/create', {
+      const res = await fetch('/api/proxy/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email: inviteForm.email,
           full_name: inviteForm.full_name || null,
-          role: inviteForm.role,
+          role: inviteForm.role === 'user' ? 'client' : inviteForm.role,
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to invite user');
+      if (!res.ok) throw new Error(json.detail || 'Failed to invite user');
 
-      setProfiles((prev) => [...prev, json.profile]);
-      setInviteForm({ email: '', role: 'user', full_name: '' });
+      // Show temporary password to admin
+      if (json.temporary_password) {
+        alert(`User created! Temporary password: ${json.temporary_password}\n\nPlease share this with the user securely.`);
+      }
+      setProfiles((prev) => [...prev, json]);
+      setInviteForm({ email: '', role: 'client', full_name: '' });
       setShowInviteModal(false);
     } catch (e) {
       setError(e.message || 'Failed to invite user');
@@ -375,23 +298,17 @@ export default function AdminPage() {
   const confirmAndUpdateRole = async (userId, newRole) => {
     setError('');
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      const res = await fetch('/api/admin/users/role', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({ userId, role: newRole }),
+      const res = await fetch(`/api/proxy/profiles/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ role: newRole }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to update role');
+      if (!res.ok) throw new Error(json.detail || 'Failed to update role');
 
       setProfiles((prev) =>
-        prev.map((p) => (p.id === userId ? { ...p, role: json.profile.role } : p))
+        prev.map((p) => (p.id === userId ? { ...p, role: json.role } : p))
       );
       setConfirmRoleChange(null);
     } catch (e) {
@@ -403,12 +320,16 @@ export default function AdminPage() {
     setError('');
     setResettingPassword(true);
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(userEmail, {
-        redirectTo: `${window.location.origin}/portal/reset-password`,
+      const res = await fetch('/api/proxy/auth/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: userEmail }),
       });
-
-      if (resetError) {
-        setError(resetError.message || 'Failed to send reset email');
+      const json = await res.json();
+      
+      if (!res.ok) {
+        setError(json.detail || 'Failed to send reset email');
       } else {
         setError('');
         alert(`Password reset email sent to ${userEmail}`);
@@ -436,7 +357,7 @@ export default function AdminPage() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await auth.logout();
     router.push('/portal/login');
   };
 
@@ -461,8 +382,12 @@ export default function AdminPage() {
         <nav className="flex gap-4 text-xs">
           <button
             type="button"
-            onClick={() => router.push('/portal')}
-            className="pb-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+            onClick={() => setActiveTab('home')}
+            className={`pb-2 px-1 border-b-2 ${
+              activeTab === 'home'
+                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
           >
             Home
           </button>
@@ -499,89 +424,127 @@ export default function AdminPage() {
           >
             Messages
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('clients')}
+            className={`pb-2 px-1 border-b-2 ${
+              activeTab === 'clients'
+                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Clients
+          </button>
         </nav>
       </div>
+      {activeTab === 'home' && (
+        <>
+          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div className="border rounded-lg bg-white p-4">
+              <p className="text-[11px] text-gray-500 mb-1">Total clients</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {loadingDashboard ? '—' : dashboard.metrics.totalClients}
+              </p>
+            </div>
+            <div className="border rounded-lg bg-white p-4">
+              <p className="text-[11px] text-gray-500 mb-1">Active projects</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {loadingDashboard ? '—' : dashboard.metrics.activeProjects}
+              </p>
+            </div>
+            <div className="border rounded-lg bg-white p-4">
+              <p className="text-[11px] text-gray-500 mb-1">Open tasks</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {loadingDashboard ? '—' : dashboard.metrics.openTasks}
+              </p>
+            </div>
+            <div className="border rounded-lg bg-white p-4">
+              <p className="text-[11px] text-gray-500 mb-1">Unread messages</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {loadingDashboard ? '—' : dashboard.metrics.unreadMessages}
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+            <div className="border rounded-lg bg-white p-4">
+              <h2 className="text-sm font-semibold mb-2">Tasks due soon</h2>
+              {loadingDashboard ? (
+                <p className="text-[11px] text-gray-600">Loading tasks...</p>
+              ) : dashboard.tasksDueSoon.length === 0 ? (
+                <p className="text-[11px] text-gray-600">No tasks due in the next 7 days.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {dashboard.tasksDueSoon.map((t) => (
+                    <li key={t.id} className="flex justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-gray-800 truncate">{t.title}</p>
+                        <p className="text-[11px] text-gray-500">{t.status}</p>
+                      </div>
+                      <p className="text-[11px] text-gray-600 whitespace-nowrap">
+                        {t.due_date ? new Date(t.due_date).toLocaleDateString() : ''}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="border rounded-lg bg-white p-4">
+              <h2 className="text-sm font-semibold mb-2">Clients needing outreach</h2>
+              {loadingDashboard ? (
+                <p className="text-[11px] text-gray-600">Loading clients...</p>
+              ) : dashboard.clientsNeedingOutreach.length === 0 ? (
+                <p className="text-[11px] text-gray-600">All clients have recent messages.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {dashboard.clientsNeedingOutreach.map((c) => (
+                    <li key={c.id} className="flex justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-gray-800 truncate">{c.full_name || c.email}</p>
+                        <p className="text-[11px] text-gray-500 truncate">
+                          {c.company || 'No company'}
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-gray-600 whitespace-nowrap">
+                        {c.last_message_at
+                          ? new Date(c.last_message_at).toLocaleDateString()
+                          : 'No messages yet'}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <div className="border rounded-lg bg-white p-4">
+            <h2 className="text-sm font-semibold mb-2">Quick Actions</h2>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setActiveTab('users')}
+                className="text-xs px-3 py-2 bg-[var(--brand-primary)] text-white rounded-md hover:opacity-90"
+              >
+                Manage Users
+              </button>
+              <button
+                onClick={() => setActiveTab('messages')}
+                className="text-xs px-3 py-2 border rounded-md hover:bg-gray-50"
+              >
+                View Messages
+              </button>
+              <button
+                onClick={() => setActiveTab('clients')}
+                className="text-xs px-3 py-2 border rounded-md hover:bg-gray-50"
+              >
+                Manage Clients
+              </button>
+            </div>
+          </div>
+        </>
+      )}
       {activeTab === 'profile' && myProfile && (
         <>
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <div className="border rounded-lg bg-white p-4">
-            <p className="text-[11px] text-gray-500 mb-1">Total clients</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {loadingDashboard ? '—' : dashboard.metrics.totalClients}
-            </p>
-          </div>
-          <div className="border rounded-lg bg-white p-4">
-            <p className="text-[11px] text-gray-500 mb-1">Active projects</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {loadingDashboard ? '—' : dashboard.metrics.activeProjects}
-            </p>
-          </div>
-          <div className="border rounded-lg bg-white p-4">
-            <p className="text-[11px] text-gray-500 mb-1">Open tasks</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {loadingDashboard ? '—' : dashboard.metrics.openTasks}
-            </p>
-          </div>
-          <div className="border rounded-lg bg-white p-4">
-            <p className="text-[11px] text-gray-500 mb-1">Unread messages</p>
-            <p className="text-xl font-semibold text-gray-900">
-              {loadingDashboard ? '—' : dashboard.metrics.unreadMessages}
-            </p>
-          </div>
-        </div>
-
-        <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
-          <div className="border rounded-lg bg-white p-4">
-            <h2 className="text-sm font-semibold mb-2">Tasks due soon</h2>
-            {loadingDashboard ? (
-              <p className="text-[11px] text-gray-600">Loading tasks...</p>
-            ) : dashboard.tasksDueSoon.length === 0 ? (
-              <p className="text-[11px] text-gray-600">No tasks due in the next 7 days.</p>
-            ) : (
-              <ul className="space-y-2">
-                {dashboard.tasksDueSoon.map((t) => (
-                  <li key={t.id} className="flex justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[12px] text-gray-800 truncate">{t.title}</p>
-                      <p className="text-[11px] text-gray-500">{t.status}</p>
-                    </div>
-                    <p className="text-[11px] text-gray-600 whitespace-nowrap">
-                      {t.due_date ? new Date(t.due_date).toLocaleDateString() : ''}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="border rounded-lg bg-white p-4">
-            <h2 className="text-sm font-semibold mb-2">Clients needing outreach</h2>
-            {loadingDashboard ? (
-              <p className="text-[11px] text-gray-600">Loading clients...</p>
-            ) : dashboard.clientsNeedingOutreach.length === 0 ? (
-              <p className="text-[11px] text-gray-600">All clients have recent messages.</p>
-            ) : (
-              <ul className="space-y-2">
-                {dashboard.clientsNeedingOutreach.map((c) => (
-                  <li key={c.id} className="flex justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[12px] text-gray-800 truncate">{c.full_name || c.email}</p>
-                      <p className="text-[11px] text-gray-500 truncate">
-                        {c.company || 'No company'}
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-gray-600 whitespace-nowrap">
-                      {c.last_message_at
-                        ? new Date(c.last_message_at).toLocaleDateString()
-                        : 'No messages yet'}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-8 border rounded-lg bg_WHITE p-4">
+        <div className="mb-8 border rounded-lg bg-white p-4">
           <h2 className="text-sm font-semibold mb-3">My profile</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
@@ -1011,6 +974,95 @@ export default function AdminPage() {
         </div>
       )}
         </>
+      )}
+      {activeTab === 'clients' && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold">Client Management</h2>
+              <p className="text-[11px] text-gray-600">
+                View and manage your clients. Click on a client to see their full workspace.
+              </p>
+            </div>
+          </div>
+          
+          {/* Client List */}
+          <div className="border rounded-lg bg-white overflow-hidden">
+            {profiles.filter(p => p.role === 'client').length === 0 ? (
+              <div className="p-8 text-center text-gray-500 text-sm">
+                No clients yet. Invite a client from the Users & Roles tab.
+              </div>
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">Client</th>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">Company</th>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">Status</th>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">Last Login</th>
+                    <th className="text-right px-4 py-2 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {profiles.filter(p => p.role === 'client').map((client) => (
+                    <tr key={client.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium">{client.full_name || 'No name'}</p>
+                          <p className="text-gray-500">{client.email}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {client.company || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                          client.client_status === 'active' ? 'bg-green-100 text-green-800' :
+                          client.client_status === 'prospect' ? 'bg-blue-100 text-blue-800' :
+                          client.client_status === 'churned' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {client.client_status || 'prospect'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {client.last_login 
+                          ? new Date(client.last_login).toLocaleDateString() 
+                          : 'Never'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => router.push(`/admin/clients/${client.id}`)}
+                          className="text-[var(--brand-primary)] hover:underline mr-3"
+                        >
+                          View Details
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await fetch('/api/proxy/impersonation/start', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ client_id: client.id }),
+                              });
+                              router.push('/portal/projects');
+                            } catch (e) {
+                              setError('Failed to start impersonation');
+                            }
+                          }}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          View as Client
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

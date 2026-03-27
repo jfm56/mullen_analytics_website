@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
+import { auth } from '@/lib/api';
+
+const API_URL = '/api/proxy';
 
 export default function PortalUploadsPage() {
   const router = useRouter();
@@ -14,49 +15,58 @@ export default function PortalUploadsPage() {
   const [uploads, setUploads] = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
   const [uploadSettings, setUploadSettings] = useState(null);
-  const unreadMessages = useUnreadMessagesCount();
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     const init = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const session = await auth.getSession();
+        
+        if (!session.authenticated) {
+          router.replace('/portal/login');
+          return;
+        }
+        
+        setUser(session.user);
+        
+        // Load upload settings from profile
+        const profile = session.profile;
+        setUploadSettings({
+          upload_enabled: profile?.upload_enabled || false,
+          allowed_file_types: profile?.allowed_file_types || 'csv,xlsx,json,pdf',
+          max_upload_mb: profile?.max_upload_mb || 50,
+        });
+        
+        if (profile?.upload_enabled) {
+          await loadUploads(session.user.id);
+        }
+
+        // Load unread count
+        try {
+          const { count } = await fetch(`${API_URL}/messages/unread-count`, {
+            credentials: 'include',
+          }).then(r => r.json());
+          setUnreadMessages(count || 0);
+        } catch (e) {}
+      } catch (err) {
         router.replace('/portal/login');
-        return;
-      }
-      
-      setUser(session.user);
-      
-      // Load upload settings and uploads
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('upload_enabled, allowed_file_types, max_upload_mb')
-        .eq('id', session.user.id)
-        .single();
-      
-      setUploadSettings(profile);
-      
-      if (profile?.upload_enabled) {
-        await loadUploads(session.access_token, session.user.id);
       }
     };
 
     init();
   }, [router]);
 
-  const loadUploads = async (accessToken, clientId) => {
+  const loadUploads = async (clientId) => {
     try {
       setLoadingUploads(true);
-      const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/uploads`, {
+      // TODO: Replace with FastAPI endpoint when ready
+      const res = await fetch(`${API_URL}/uploads/`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load uploads');
-      setUploads(json.uploads || []);
+      if (!res.ok) throw new Error(json.detail || 'Failed to load uploads');
+      setUploads(json || []);
     } catch (e) {
       setStatus(e.message || 'Failed to load uploads');
     } finally {
@@ -71,32 +81,29 @@ export default function PortalUploadsPage() {
     setUploadingFile(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) {
-        setStatus('Missing session. Please sign in again.');
-        setUploadingFile(false);
-        return;
-      }
+      // TODO: Implement file upload via FastAPI when storage endpoints are ready
+      // For now, show a message that uploads are temporarily unavailable
+      setStatus('File uploads are being migrated. Please try again shortly.');
+      setUploadingFile(false);
+      return;
 
+      /* Original S3 upload flow - will be restored with FastAPI storage endpoints
       // Step 1: Get presigned URL
-      const presignRes = await fetch(`/api/clients/${encodeURIComponent(user.id)}/uploads/presign`, {
+      const presignRes = await fetch(`${API_URL}/api/uploads/presign`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           filename: selectedFile.name,
-          contentType: selectedFile.type,
-          sizeBytes: selectedFile.size,
+          content_type: selectedFile.type,
+          size_bytes: selectedFile.size,
         }),
       });
 
       const presignJson = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignJson.error || 'Failed to get upload URL');
+      if (!presignRes.ok) throw new Error(presignJson.detail || 'Failed to get upload URL');
 
       // Step 2: Upload to S3
       const formData = new FormData();
@@ -111,25 +118,18 @@ export default function PortalUploadsPage() {
       });
 
       if (!uploadRes.ok) {
-        throw new Error('Failed to upload file to S3');
+        throw new Error('Failed to upload file to storage');
       }
 
-      // Step 3: Send notification email
-      await fetch(`/api/clients/${encodeURIComponent(user.id)}/uploads/${encodeURIComponent(presignJson.uploadId)}/notify`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      // Step 4: Refresh uploads list
-      await loadUploads(accessToken, user.id);
+      // Step 3: Refresh uploads list
+      await loadUploads(user.id);
       setSelectedFile(null);
       setStatus('File uploaded successfully!');
       
       // Reset file input
       const fileInput = document.getElementById('file-upload-input');
       if (fileInput) fileInput.value = '';
+      */
     } catch (e) {
       setStatus(e.message || 'Failed to upload file');
     } finally {
@@ -139,21 +139,14 @@ export default function PortalUploadsPage() {
 
   const handleDownload = async (uploadId, filename) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) return;
-
-      const res = await fetch(`/api/clients/${encodeURIComponent(user.id)}/uploads/${encodeURIComponent(uploadId)}/download`, {
+      // TODO: Implement download via FastAPI when storage endpoints are ready
+      const res = await fetch(`${API_URL}/api/uploads/${encodeURIComponent(uploadId)}/download`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to get download URL');
+      if (!res.ok) throw new Error(json.detail || 'Failed to get download URL');
 
       // Open download URL in new tab
       window.open(json.url, '_blank');

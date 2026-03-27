@@ -1,19 +1,36 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { auth } from '@/lib/api';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  useEffect(() => {
+    // Get token from URL
+    const tokenParam = searchParams.get('token');
+    if (tokenParam) {
+      setToken(tokenParam);
+    } else {
+      setError('Invalid or missing reset token. Please request a new password reset link.');
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!token) {
+      setError('Invalid or missing reset token');
+      return;
+    }
 
     if (!newPassword || !confirmPassword) {
       setError('Both fields are required');
@@ -33,21 +50,16 @@ export default function ResetPasswordPage() {
     setUpdating(true);
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
+      const result = await auth.resetPassword(token, newPassword);
 
-      if (updateError) {
-        setError(updateError.message);
+      if (result.success) {
+        router.push('/portal/login?message=Password updated successfully. Please log in with your new password.');
+      } else {
+        setError(result.message || 'Failed to update password');
         setUpdating(false);
-        return;
       }
-
-      // Sign out and redirect to login
-      await supabase.auth.signOut();
-      router.push('/portal/login?message=Password updated successfully. Please log in with your new password.');
     } catch (e) {
-      setError(e.message || 'Failed to update password');
+      setError(e.message || 'Failed to update password. The reset link may have expired.');
       setUpdating(false);
     }
   };
@@ -126,5 +138,17 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

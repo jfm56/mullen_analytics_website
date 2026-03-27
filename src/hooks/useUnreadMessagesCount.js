@@ -1,26 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/api';
 
+/**
+ * Hook to get unread messages count using FastAPI backend.
+ * Replaces Supabase-based counting.
+ */
 export function useUnreadMessagesCount() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const session = await auth.getSession();
+        if (!session.authenticated) return;
 
-      if (!session?.user) return;
-
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id, read_at')
-        .eq('user_id', session.user.id);
-
-      if (!error && data) {
-        setCount(data.filter((m) => !m.read_at).length);
+        const res = await fetch('/api/proxy/messages/unread-count', {
+          credentials: 'include',
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setCount(data.count || 0);
+        }
+      } catch (error) {
+        // Silently fail
       }
     };
 

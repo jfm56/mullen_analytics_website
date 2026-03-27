@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { auth, messages as messagesApi } from '@/lib/api';
+
+const API_URL = '/api/proxy';
 
 export default function PortalMessagesPage() {
   const router = useRouter();
@@ -32,19 +34,9 @@ export default function PortalMessagesPage() {
     if (selectedIds.length === 0) return;
     const markRead = async () => {
       try {
+        await messagesApi.markRead(selectedIds);
+        
         const now = new Date().toISOString();
-        const { error: updateError } = await supabase
-          .from('messages')
-          .update({ read_at: now })
-          .in('id', selectedIds);
-
-        if (updateError) {
-          // eslint-disable-next-line no-console
-          console.error('Error marking messages read', updateError);
-          setError('Failed to mark messages as read.');
-          return;
-        }
-
         setMessages((prev) =>
           prev.map((m) =>
             selectedIds.includes(m.id) ? { ...m, read_at: now } : m
@@ -52,7 +44,8 @@ export default function PortalMessagesPage() {
         );
         setSelectedIds([]);
       } catch (e) {
-        setError(e.message || 'Failed to mark messages as read.');
+        console.error('Error marking messages read', e);
+        setError('Failed to mark messages as read.');
       }
     };
 
@@ -63,22 +56,13 @@ export default function PortalMessagesPage() {
     if (selectedIds.length === 0) return;
     const deleteSelected = async () => {
       try {
-        const { error: deleteError } = await supabase
-          .from('messages')
-          .delete()
-          .in('id', selectedIds);
-
-        if (deleteError) {
-          // eslint-disable-next-line no-console
-          console.error('Error deleting messages', deleteError);
-          setError('Failed to delete messages.');
-          return;
-        }
-
+        await messagesApi.deleteBulk(selectedIds);
+        
         setMessages((prev) => prev.filter((m) => !selectedIds.includes(m.id)));
         setSelectedIds([]);
       } catch (e) {
-        setError(e.message || 'Failed to delete messages.');
+        console.error('Error deleting messages', e);
+        setError('Failed to delete messages.');
       }
     };
 
@@ -87,30 +71,29 @@ export default function PortalMessagesPage() {
 
   useEffect(() => {
     const init = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const session = await auth.getSession();
+        
+        if (!session.authenticated) {
+          router.replace('/portal/login');
+          return;
+        }
+        
+        setUser(session.user);
+
+        // Load messages
+        try {
+          const data = await messagesApi.list();
+          setMessages(data || []);
+        } catch (e) {
+          console.error('Error loading messages', e);
+          setError('Failed to load messages.');
+        }
+
+        setLoading(false);
+      } catch (err) {
         router.replace('/portal/login');
-        return;
       }
-      setUser(session.user);
-
-      const { data, error: messagesError } = await supabase
-        .from('messages')
-        .select('id, from_name, subject, body, created_at, read_at')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-
-      if (messagesError) {
-        // eslint-disable-next-line no-console
-        console.error('Error loading messages', messagesError);
-        setError('Failed to load messages.');
-      } else {
-        setMessages(data || []);
-      }
-
-      setLoading(false);
     };
 
     init();
