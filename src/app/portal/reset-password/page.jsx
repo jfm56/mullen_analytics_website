@@ -1,27 +1,17 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from '@/lib/api';
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [token, setToken] = useState('');
+  const token = useMemo(() => searchParams.get('token') || '', [searchParams]);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(token ? '' : 'Invalid or missing reset token. Please request a new password reset link.');
   const [updating, setUpdating] = useState(false);
-
-  useEffect(() => {
-    // Get token from URL
-    const tokenParam = searchParams.get('token');
-    if (tokenParam) {
-      setToken(tokenParam);
-    } else {
-      setError('Invalid or missing reset token. Please request a new password reset link.');
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -59,6 +59,7 @@ export default function EnhancedProjectPulse({ client, projectStatus, tasks, nex
   }) || [];
 
   const criticalTasks = activeTasks?.filter(task => task.priority === 'critical') || [];
+  const now = Date.now();
 
   // Calculate revenue metrics from all clients
   const activeClients = allClients?.filter(c => c.client_status === 'active') || [];
@@ -353,8 +354,8 @@ export default function EnhancedProjectPulse({ client, projectStatus, tasks, nex
           </div>
           <div className={`text-sm font-medium ${
             !client?.last_login ? 'text-gray-500' :
-            new Date(client.last_login) > new Date(Date.now() - 24*60*60*1000) ? 'text-green-600' :
-            new Date(client.last_login) > new Date(Date.now() - 7*24*60*60*1000) ? 'text-yellow-600' :
+            new Date(client.last_login) > new Date(now - 86400000) ? 'text-green-600' :
+            new Date(client.last_login) > new Date(now - 604800000) ? 'text-yellow-600' :
             'text-red-600'
           }`}>
             {formatRelativeTime(client?.last_login)}
