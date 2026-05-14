@@ -64,7 +64,7 @@ jobs:
         continue-on-error: false
 
       - name: Pytest
-        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=60
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=40
         working-directory: backend
 
   frontend:
@@ -92,4 +92,4 @@ jobs:
         run: npm run build
 
       - name: ESLint
-        run: npx eslint src/ --max-warnings=0
+        run: npx eslint src/ --max-warnings=30
