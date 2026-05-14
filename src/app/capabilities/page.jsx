@@ -1,441 +1,331 @@
 'use client';
 
+const TRUST_INDICATORS = [
+  'Veteran-Owned & Operated',
+  'Real-World Operational Experience',
+  'Explainable AI You Can Trust',
+  'Security & Compliance Focused',
+];
+
+const CAPABILITY_BLOCKS = [
+  {
+    title: 'Decision Intelligence & Analytics Strategy',
+    desc: 'We help leadership teams translate complex data into clear, actionable direction aligned with organizational goals and operational reality.',
+    points: ['Analytics Strategy', 'KPI Design', 'Performance Insights', 'Executive Dashboards', 'Operational Reporting', 'Model Governance'],
+    img: '/From%20Dashboards%20to%20Decisions.png',
+    alt: 'Decision Intelligence & Analytics Strategy',
+    imgLeft: true,
+    bg: '#FFFFFF',
+  },
+  {
+    title: 'Public Safety & Emergency Services Analytics',
+    desc: 'Data-driven operational solutions for EMS, fire, and public safety agencies to improve response, reduce risk, and optimize resources.',
+    points: ['Demand Forecasting', 'Staffing Optimization', 'Response Analytics', 'Risk Modeling', 'Deployment Planning', 'Incident Intelligence'],
+    img: '/Public%20Safety%20%26%20Emergency%20Services%20Analytics.jpeg',
+    alt: 'Public Safety Analytics',
+    imgLeft: false,
+    bg: '#F8FAFD',
+  },
+  {
+    title: 'Healthcare & Biomedical Intelligence',
+    desc: 'Analytics designed for accuracy, accountability, and care quality in healthcare environments where lives and resources are on the line.',
+    points: ['Patient Flow Analysis', 'LOS Optimization', 'Clinical Insights', 'Readmission AI', 'Healthcare Dashboards', 'Biomedical Reporting'],
+    img: '/Healthcare%20%26%20Biomedical%20Intelligence.jpg',
+    alt: 'Healthcare & Biomedical Intelligence',
+    imgLeft: true,
+    bg: '#FFFFFF',
+  },
+  {
+    title: 'Biology, Life Sciences & Research Analytics',
+    desc: 'We support research organizations in turning data into discoveries through advanced analytics, AI, and machine learning for biomedical and life sciences.',
+    points: ['Biomarker Analytics', 'Cohort Analysis', 'Predictive Modeling', 'Research Dashboards', 'Trial Performance', 'Data Quality Monitoring'],
+    img: '/Biology, Life Sciences & Research Analytics.jpg',
+    alt: 'Biology, Life Sciences & Research Analytics',
+    imgLeft: false,
+    bg: '#F8FAFD',
+  },
+  {
+    title: 'Analytics Platforms, AI & Technology Delivery',
+    desc: 'We design and deliver secure, scalable, and modern analytics platforms and AI systems built to power mission-critical operations.',
+    points: ['Modern Data Platforms', 'AI & Machine Learning', 'Data Engineering', 'Secure Integrations', 'Dashboard Systems', 'Workflow Automation'],
+    img: '/Analytics Platforms, AI & Technology Delivery.jpg',
+    alt: 'Analytics Platforms, AI & Technology Delivery',
+    imgLeft: true,
+    bg: '#FFFFFF',
+  },
+];
+
+const PROCUREMENT_CARDS = [
+  { title: 'Security & Compliance', desc: 'Information security and data protection standards built into every engagement.' },
+  { title: 'Explainable AI', desc: 'Auditable analytics models with clear documentation and defensible logic.' },
+  { title: 'Ownership Ready', desc: 'Deliverables structured for client ownership, transfer, and long-term use.' },
+  { title: 'Secure Data Handling', desc: 'Structured protocols for sensitive, regulated, and protected data.' },
+  { title: 'Scalable Solutions', desc: 'Systems architected for growth, change, and multi-year operations.' },
+  { title: 'Flexible Engagement', desc: 'Pilots, phased rollouts, retainers, or multi-year program support.' },
+];
+
+const ENGAGEMENT_ITEMS = [
+  'Project-based engagements',
+  'Retainer-based advisory support',
+  'Long-term partnerships',
+  'Change management & stakeholder enablement',
+  'Staff augmentation',
+  'Embedded analytics leadership',
+];
+
+const WHY_CARDS = [
+  { title: 'Domain Expertise', desc: 'Deep operational experience in EMS, public safety, healthcare, and research.' },
+  { title: 'Operational Focus', desc: 'Solutions designed for real operational impact, not just reports and dashboards.' },
+  { title: 'Explainable AI', desc: 'Transparent models leaders can understand, trust, and defend.' },
+  { title: 'Results That Matter', desc: 'We deliver measurable improvements in performance, efficiency, and outcomes.' },
+];
+
 export default function CapabilitiesPage() {
   return (
     <div>
-      {/* Hero Section - Enterprise Navy with Accent Bar */}
-      <section className="relative overflow-hidden" style={{ backgroundColor: '#0B3C5D' }}>
-        <div className="absolute inset-0" style={{ backgroundImage: 'url(/Turning%20Complex%20Data%20Into%20Defensible%20Decisions.webp)', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(0.3)' }} />
-        
-        <div className="relative max-w-7xl mx-auto px-4 py-24 md:py-32">
+
+      {/* HERO IMAGE */}
+      <section className="w-full overflow-hidden">
+        <img
+          src="/capabilities%20hero.png"
+          alt="Capabilities Hero"
+          className="w-full"
+          style={{ display: 'block' }}
+        />
+      </section>
+
+      {/* HERO BANNER */}
+      <section style={{ backgroundColor: '#071829' }}>
+        <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
           <div className="max-w-4xl">
-            <div className="border-l-4 border-[#5FB3A2] pl-6 mb-8">
-              <h1 className="mb-6" style={{ color: '#FFB88C' }}>
-                Turning Complex Data Into Defensible Decisions
-              </h1>
+            <p className="text-xs font-bold uppercase tracking-widest mb-6" style={{ color: '#0EA5E9' }}>
+              Mullen Analytics & AI Consulting
+            </p>
+            <h1
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8"
+              style={{ color: '#FFFFFF', lineHeight: 1.07, letterSpacing: '-0.025em' }}
+            >
+              Turning Complex Data Into<br />Defensible Decisions
+            </h1>
+            <p className="text-lg md:text-xl mb-4 leading-relaxed" style={{ color: '#94A3B8', maxWidth: '700px' }}>
+              Mullen Analytics is a veteran-owned analytics and AI consulting firm specializing in EMS, fire, public safety, and healthcare organizations.
+            </p>
+            <p className="text-base mb-10 leading-relaxed" style={{ color: '#64748B', maxWidth: '640px' }}>
+              We build forecasting models, dashboards, and AI systems for high-stakes environments where decisions must be fast, explainable, and defensible.
+            </p>
+            <div className="flex flex-wrap gap-3 mb-10">
+              {TRUST_INDICATORS.map((t) => (
+                <span
+                  key={t}
+                  className="flex items-center gap-2 px-4 py-2 rounded text-xs font-semibold"
+                  style={{ backgroundColor: 'rgba(14,165,233,0.1)', color: '#7DD3FC', border: '1px solid rgba(14,165,233,0.2)' }}
+                >
+                  <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {t}
+                </span>
+              ))}
             </div>
-            <div className="h-px bg-[#5FB3A2] w-24 mb-8" />
-            <p className="text-xl text-gray-200 leading-relaxed mb-6 max-w-3xl">
-              Mullen Analytics & AI Consulting partners with public agencies, healthcare organizations, and research-driven institutions to design, deploy, and operationalize advanced analytics and artificial intelligence in high-stakes, regulated, and mission-critical environments.
-            </p>
-            <p className="text-lg text-gray-300 leading-relaxed max-w-3xl mb-8">
-              We specialize in decision-focused analytics—from predictive modeling and machine learning to secure data pipelines and executive dashboards—delivering solutions that support accountability, transparency, and real-world operational outcomes, not just technical performance.
-            </p>
-            <p className="text-sm text-gray-400 mb-10 max-w-3xl">
-              Supporting mission-critical decisions across public safety, healthcare, and research
-            </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="/contact"
-                className="px-8 py-4 rounded-md font-semibold shadow-lg transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0B3C5D] text-center"
-                style={{ backgroundColor: '#FFFFFF', color: '#0B3C5D' }}
-              >
-                Request a capabilities briefing
-              </a>
               <a
                 href="https://calendar.app.google/4JuyKX7s75GmJT5u9"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 rounded-md border-2 font-semibold transition-all duration-200 hover:bg-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0B3C5D] text-center"
-                style={{ borderColor: '#FFFFFF', color: '#FFFFFF' }}
-                onMouseEnter={(e) => { e.target.style.backgroundColor = '#FFFFFF'; e.target.style.color = '#0B3C5D'; }}
-                onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#FFFFFF'; }}
+                className="px-8 py-4 rounded font-semibold text-base text-center transition-all duration-200"
+                style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
               >
-                Schedule a strategy consultation
+                Schedule a Strategy Call
+              </a>
+              <a
+                href="#capabilities"
+                className="px-8 py-4 rounded font-semibold text-base text-center transition-all duration-200"
+                style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A6FA5'; e.currentTarget.style.color = '#FFFFFF'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3A58'; e.currentTarget.style.color = '#E2E8F0'; }}
+              >
+                See How We Help Organizations
               </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Capabilities Overview - Separated Section */}
-      <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="h-px bg-[#5FB3A2] w-24 mx-auto mb-8" />
-          <h2 className="mb-6" style={{ color: '#0B3C5D' }}>Capabilities</h2>
-          <p className="text-xl leading-relaxed max-w-2xl mx-auto" style={{ color: '#1F2933' }}>
-            Our capabilities span strategy, analytics, and technology delivery, purpose-built for organizations operating in complex, regulated, and mission-critical environments.
-          </p>
-          <div className="h-px bg-[#5FB3A2] w-24 mx-auto mt-8" />
-        </div>
-      </section>
-
-      {/* Decision Intelligence - Image LEFT */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Decision Intelligence & Analytics Strategy.webp" alt="Decision Intelligence & Analytics Strategy" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Decision Intelligence & Analytics Strategy</h2>
-              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                We help leadership teams translate complex data into actionable, defensible decisions aligned with organizational goals and operational realities.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Analytics Strategy</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>KPI Design</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Use-Case Analysis</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Model Governance</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Public Safety - Image RIGHT */}
-      <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Public Safety & Emergency Services Analytics</h2>
-              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                Built on direct operational experience, our analytics reflect the realities of emergency response—not theoretical models.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Demand Forecasting</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Staffing Optimization</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Response Analysis</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Risk Modeling</span>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Public%20Safety%20%26%20Emergency%20Services%20Analytics.jpeg" alt="Public Safety Analytics" className="w-full h-full object-cover" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Healthcare - Image LEFT */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Healthcare%20%26%20Biomedical%20Intelligence.jpg" alt="Healthcare & Biomedical Intelligence" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Healthcare & Biomedical Intelligence</h2>
-              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                Analytics designed for accuracy, accountability, and explainability in healthcare environments where trust and compliance are critical.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Clinical Modeling</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Risk Stratification</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Data Integration</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Explainable AI</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Biology - Image RIGHT */}
-      <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Biology, Life Sciences & Research Analytics</h2>
-              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                We support research-driven organizations by applying advanced analytics to complex biological data, bridging research and production.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Biological Modeling</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Omics Analysis</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Feature Engineering</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Research Pipelines</span>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Biology, Life Sciences & Research Analytics.jpg" alt="Biology, Life Sciences & Research Analytics" className="w-full h-full object-cover" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Environmental - Image LEFT */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Environmental, Ecological & Geospatial Analytics.png" alt="Environmental, Ecological & Geospatial Analytics" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Environmental, Ecological & Geospatial Analytics</h2>
-              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                Advanced analytics for environmentally sensitive regions, with expertise in ecology, land-use, and wildfire risk modeling.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Ecological Modeling</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Wildfire Risk</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Geospatial Analytics</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F7F9FC' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Climate Analysis</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Analytics Platforms - Image RIGHT */}
-      <section className="py-20" style={{ backgroundColor: '#F7F9FC' }}>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Analytics Platforms, AI & Technology Delivery</h2>
-              <p className="text-lg leading-relaxed mb-6" style={{ color: '#1F2933' }}>
-                We design and deploy secure, scalable, production-ready analytics systems that integrate seamlessly into existing operations.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Machine Learning</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Data Engineering</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Dashboards & Viz</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md bg-white">
-                  <span className="mr-2 text-lg" style={{ color: '#5FB3A2' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1F2933' }}>Secure Systems</span>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Analytics Platforms, AI & Technology Delivery.jpg" alt="Analytics Platforms, AI & Technology Delivery" className="w-full h-full object-cover" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Procurement - Credibility Block */}
-      <section className="py-20" style={{ backgroundColor: '#0B3C5D' }}>
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="mb-12 rounded-lg overflow-hidden shadow-xl">
-            <img src="/Procurement%20%26%20Contracting%20Alignment.jpg" alt="Procurement & Contracting Alignment" className="w-full h-auto object-cover" />
-          </div>
-          <div className="text-center mb-12">
-            <h2 className="mb-4" style={{ color: '#FFFFFF' }}>Procurement & Contracting Alignment</h2>
-            <p className="text-xl max-w-2xl mx-auto" style={{ color: '#E5E7EB' }}>
-              Experienced in supporting public-sector procurement, RFP-based engagements, and multi-year contracts.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-3">🛡️</div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: '#FFFFFF' }}>Security & Compliance</h3>
-              <p className="text-sm" style={{ color: '#E5E7EB' }}>Information security and data protection standards</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-3">📋</div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: '#FFFFFF' }}>Explainable AI</h3>
-              <p className="text-sm" style={{ color: '#E5E7EB' }}>Auditable analytics models with clear documentation</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-3">📊</div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: '#FFFFFF' }}>Oversight Ready</h3>
-              <p className="text-sm" style={{ color: '#E5E7EB' }}>Documentation suitable for compliance and review</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-3">🔒</div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: '#FFFFFF' }}>Secure Data Handling</h3>
-              <p className="text-sm" style={{ color: '#E5E7EB' }}>Secure handling of sensitive and regulated data</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-3">📈</div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: '#FFFFFF' }}>Scalable Solutions</h3>
-              <p className="text-sm" style={{ color: '#E5E7EB' }}>Built to support long-term operations</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-3">🎯</div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: '#FFFFFF' }}>Flexible Engagement</h3>
-              <p className="text-sm" style={{ color: '#E5E7EB' }}>Pilots, phased rollouts, or multi-year programs</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Engagement Models - White Background */}
-      <section className="bg-white py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="rounded-lg border overflow-hidden shadow-sm mb-8" style={{ backgroundColor: '#F7F9FC', borderColor: '#E5E7EB' }}>
-            <div className="aspect-[16/9] bg-gray-200 overflow-hidden">
-              <img src="/Engagement Models.jpg" alt="Engagement Models" className="w-full h-full object-cover" />
-            </div>
-          </div>
-          <div className="border-l-4 border-[#5FB3A2] pl-6 mb-8">
-            <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Engagement Models</h2>
-            <p className="text-lg leading-relaxed mb-6 max-w-3xl" style={{ color: '#1F2933' }}>
-              Our work is structured to meet organizations where they are—whether validating a single use case or deploying enterprise-level analytics programs.
-            </p>
-          </div>
-          <p className="text-lg leading-relaxed mb-6 max-w-3xl" style={{ color: '#1F2933' }}>
-            Typical engagements include:
-          </p>
-          <div className="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-8">
-            <div className="flex items-start">
-              <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#5FB3A2' }} />
-              <span style={{ color: '#1F2933' }}>Targeted analytics pilots and feasibility studies</span>
-            </div>
-            <div className="flex items-start">
-              <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#5FB3A2' }} />
-              <span style={{ color: '#1F2933' }}>Production model and dashboard development</span>
-            </div>
-            <div className="flex items-start">
-              <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#5FB3A2' }} />
-              <span style={{ color: '#1F2933' }}>Multi-phase analytics programs</span>
-            </div>
-            <div className="flex items-start">
-              <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#5FB3A2' }} />
-              <span style={{ color: '#1F2933' }}>Ongoing analytics, model maintenance, and support</span>
-            </div>
-          </div>
-          <p className="text-lg leading-relaxed max-w-3xl" style={{ color: '#1F2933' }}>
-            Engagements are scoped based on complexity, data maturity, and operational impact, with pricing aligned to the value and risk profile of the work.
+      {/* CAPABILITIES INTRO */}
+      <section id="capabilities" className="py-20" style={{ backgroundColor: '#F8FAFD' }}>
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#071829' }}>Capabilities</h2>
+          <div className="w-16 h-px mx-auto mb-6" style={{ backgroundColor: '#0EA5E9' }} />
+          <p className="text-lg leading-relaxed mx-auto" style={{ color: '#1E293B', maxWidth: '680px' }}>
+            Our capabilities span strategy, analytics, AI, technology delivery, and purpose-built solutions for organizations operating in complex, high-stakes, and mission-critical environments.
           </p>
         </div>
       </section>
 
-      {/* Why Mullen Analytics - Value Grid */}
-      <section className="py-24" style={{ backgroundColor: '#F7F9FC' }}>
-        <div className="max-w-6xl mx-auto px-4">
+      {/* CORE CAPABILITY BLOCKS */}
+      {CAPABILITY_BLOCKS.map((block) => (
+        <section key={block.title} className="py-20" style={{ backgroundColor: block.bg }}>
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-14 items-center">
+              <div
+                className={`rounded-xl overflow-hidden shadow-xl${block.imgLeft ? '' : ' md:order-2'}`}
+                style={{ border: '1px solid rgba(7,24,41,0.08)' }}
+              >
+                <img src={block.img} alt={block.alt} className="w-full h-full object-cover" style={{ display: 'block' }} />
+              </div>
+              <div className={block.imgLeft ? '' : 'md:order-1'}>
+                <div className="w-10 h-0.5 mb-5" style={{ backgroundColor: '#0EA5E9' }} />
+                <h2 className="text-2xl md:text-3xl font-bold mb-5" style={{ color: '#071829', letterSpacing: '-0.015em' }}>
+                  {block.title}
+                </h2>
+                <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+                  {block.desc}
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {block.points.map((pt) => (
+                    <div
+                      key={pt}
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-lg"
+                      style={{ backgroundColor: block.bg === '#FFFFFF' ? '#F8FAFD' : '#FFFFFF', border: '1px solid #E1E8F5' }}
+                    >
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-xs font-semibold" style={{ color: '#1E293B' }}>{pt}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* PROCUREMENT & CONTRACTING */}
+      <section className="py-24" style={{ background: 'linear-gradient(180deg, #071829 0%, #0A1F35 100%)' }}>
+        <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="mb-4" style={{ color: '#0B3C5D' }}>Why Mullen Analytics</h2>
-            <div className="h-px bg-[#5FB3A2] w-24 mx-auto" />
+            <h2 className="text-3xl md:text-4xl font-bold mb-5" style={{ color: '#FFFFFF' }}>
+              Procurement & Contracting Alignment
+            </h2>
+            <p className="text-lg mx-auto" style={{ color: '#64748B', maxWidth: '540px' }}>
+              Experienced in supporting public sector procurement, RFP-based engagements, and multi-year contracts.
+            </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg p-8 shadow-lg border-t-4" style={{ borderColor: '#5FB3A2' }}>
-              <div className="text-4xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Domain Expertise</h3>
-              <p style={{ color: '#4B5563' }}>Deep knowledge across public safety, healthcare, biology, and environmental analytics</p>
+          <div className="grid md:grid-cols-3 gap-5">
+            {PROCUREMENT_CARDS.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl p-7 transition-all duration-200"
+                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderTop: '3px solid #1D4ED8' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)')}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(14,165,233,0.12)' }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-bold mb-2" style={{ color: '#F1F5F9' }}>{card.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{card.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ENGAGEMENT MODELS */}
+      <section className="py-24" style={{ backgroundColor: '#FFFFFF' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-16 items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#0EA5E9' }}>How We Work</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#071829', letterSpacing: '-0.015em' }}>
+                Engagement Models
+              </h2>
+              <p className="text-base leading-relaxed mb-4" style={{ color: '#475569' }}>
+                Our work is collaborative and built around your needs. We offer flexible engagement models to fit your team, timeline, and goals.
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>
+                Engagements are scoped based on complexity, data maturity, and operational impact — with pricing aligned to delivered value.
+              </p>
             </div>
-            <div className="bg-white rounded-lg p-8 shadow-lg border-t-4" style={{ borderColor: '#5FB3A2' }}>
-              <div className="text-4xl mb-4">⚙️</div>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Operational Focus</h3>
-              <p style={{ color: '#4B5563' }}>Solutions designed for real operational decisions, not academic demonstrations</p>
-            </div>
-            <div className="bg-white rounded-lg p-8 shadow-lg border-t-4" style={{ borderColor: '#5FB3A2' }}>
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Explainable AI</h3>
-              <p style={{ color: '#4B5563' }}>Defensible models suitable for regulated and public environments</p>
-            </div>
-            <div className="bg-white rounded-lg p-8 shadow-lg border-t-4" style={{ borderColor: '#5FB3A2' }}>
-              <div className="text-4xl mb-4">🔒</div>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Secure Systems</h3>
-              <p style={{ color: '#4B5563' }}>Production-ready systems built to deploy, scale, and endure</p>
-            </div>
-            <div className="bg-white rounded-lg p-8 shadow-lg border-t-4" style={{ borderColor: '#5FB3A2' }}>
-              <div className="text-4xl mb-4">👥</div>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Leadership Access</h3>
-              <p style={{ color: '#4B5563' }}>Direct engagement with senior leadership and operational stakeholders</p>
-            </div>
-            <div className="bg-white rounded-lg p-8 shadow-lg border-t-4" style={{ borderColor: '#5FB3A2' }}>
-              <div className="text-4xl mb-4">📈</div>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#0B3C5D' }}>Long-term Support</h3>
-              <p style={{ color: '#4B5563' }}>Committed partnerships that extend beyond initial deployment</p>
+            <div className="grid gap-3">
+              {ENGAGEMENT_ITEMS.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-4 px-5 py-4 rounded-xl"
+                  style={{ backgroundColor: '#F8FAFD', border: '1px solid #E1E8F5' }}
+                >
+                  <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(14,165,233,0.12)' }}>
+                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium" style={{ color: '#1E293B' }}>{item}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Explore Further - Light Gray Background */}
-      <section className="py-12" style={{ backgroundColor: '#F7F9FC' }}>
-        <div className="max-w-5xl mx-auto px-4">
-          <h3 className="text-lg font-semibold mb-6" style={{ color: '#0B3C5D' }}>Explore Further</h3>
-          <div className="flex flex-wrap gap-6">
-            <a href="/portfolio" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Case studies</a>
-            <a href="/industries" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Industry applications</a>
-            <a href="/about" className="transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: '#2E6F95' }} onMouseEnter={(e) => e.target.style.color = '#0B3C5D'} onMouseLeave={(e) => e.target.style.color = '#2E6F95'}>Technical approach</a>
+      {/* WHY MULLEN ANALYTICS */}
+      <section className="py-24" style={{ backgroundColor: '#F8FAFD' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#071829' }}>Why Mullen Analytics</h2>
+            <div className="w-16 h-px mx-auto mt-5" style={{ backgroundColor: '#0EA5E9' }} />
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {WHY_CARDS.map((card) => (
+              <div
+                key={card.title}
+                className="p-8 rounded-xl"
+                style={{ backgroundColor: '#FFFFFF', border: '1px solid #E1E8F5', borderTop: '3px solid #0EA5E9', boxShadow: '0 4px 20px rgba(7,24,41,0.06)' }}
+              >
+                <h3 className="text-base font-bold mb-3" style={{ color: '#071829' }}>{card.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{card.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA - Dark Background */}
-      <section className="py-24" style={{ backgroundColor: '#0B3C5D' }}>
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="mb-6 text-4xl font-bold" style={{ color: '#FFFFFF' }}>Ready to move forward?</h2>
-          <div className="flex flex-col sm:flex-row justify-center gap-6 mt-12">
-            <a
-              href="/contact"
-              className="px-12 py-6 rounded-md font-semibold text-lg shadow-xl transition-all duration-200 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 text-center"
-              style={{ backgroundColor: '#5FB3A2', color: '#0B3C5D' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#FFFFFF'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#5FB3A2'}
-            >
-              Request Briefing
-            </a>
+      {/* FINAL CTA */}
+      <section className="py-28" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <h2
+            className="text-4xl md:text-5xl font-bold mb-6 mx-auto"
+            style={{ color: '#FFFFFF', lineHeight: 1.1, maxWidth: '640px', letterSpacing: '-0.02em' }}
+          >
+            Ready to Move Forward?
+          </h2>
+          <p className="text-lg mb-12 mx-auto leading-relaxed" style={{ color: '#475569', maxWidth: '520px' }}>
+            If you're ready to improve operations, optimize resources, and make stronger decisions with analytics and AI, we're ready to help.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="https://calendar.app.google/4JuyKX7s75GmJT5u9"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-12 py-6 rounded-md border-2 font-semibold text-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 text-center"
-              style={{ borderColor: '#FFFFFF', color: '#FFFFFF', backgroundColor: 'transparent' }}
-              onMouseEnter={(e) => { e.target.style.backgroundColor = '#FFFFFF'; e.target.style.color = '#0B3C5D'; }}
-              onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#FFFFFF'; }}
+              className="px-10 py-5 rounded font-semibold text-base text-center transition-all duration-200"
+              style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
             >
-              Schedule a strategy consultation
+              Schedule a Call
+            </a>
+            <a
+              href="/portfolio"
+              className="px-10 py-5 rounded font-semibold text-base text-center transition-all duration-200"
+              style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A6FA5'; e.currentTarget.style.color = '#FFFFFF'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3A58'; e.currentTarget.style.color = '#E2E8F0'; }}
+            >
+              Explore Our Work
             </a>
           </div>
         </div>

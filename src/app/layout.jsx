@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ChatWidget from "@/components/ChatWidget";
 import CookieConsent from "@/components/CookieConsent";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Mullen Analytics & AI Consulting",
-  description: "Professional analytics and AI consulting services.",
+  title: "Mullen Analytics | EMS, Healthcare & Public Safety Analytics Consulting",
+  description: "Mullen Analytics builds forecasting models, dashboards, and AI systems for EMS, fire, hospitals, and healthcare organizations. Explainable, defensible analytics for high-stakes operational decisions.",
   icons: {
     icon: [
       "/favicon.ico",
@@ -34,7 +35,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body className={`${inter.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
         <Script
           async
@@ -50,11 +51,13 @@ export default function RootLayout({ children }) {
             gtag('config', 'AW-17747483900');
           `}
         </Script>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <ChatWidget />
-        <CookieConsent />
+        <ThemeProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <ChatWidget />
+          <CookieConsent />
+        </ThemeProvider>
         <SpeedInsights />
       </body>
     </html>

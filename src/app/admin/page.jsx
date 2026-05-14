@@ -25,6 +25,10 @@ export default function AdminPage() {
   const [confirmRoleChange, setConfirmRoleChange] = useState(null);
   const [resetPasswordUser, setResetPasswordUser] = useState(null);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [deleteUser, setDeleteUser] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [adminMessages, setAdminMessages] = useState([]);
   const [loadingAdminMessages, setLoadingAdminMessages] = useState(false);
   const [compose, setCompose] = useState({ userId: '', subject: '', body: '' });
@@ -292,6 +296,54 @@ export default function AdminPage() {
       setError(e.message || 'Failed to invite user');
     } finally {
       setInvitingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteUser) return;
+    setDeletingUser(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/proxy/users/${deleteUser.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.detail || 'Failed to delete user');
+      }
+      setProfiles((prev) => prev.filter((p) => p.id !== deleteUser.id));
+      setDeleteUser(null);
+    } catch (e) {
+      setError(e.message || 'Failed to delete user');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editUser) return;
+    setSavingEdit(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/proxy/users/${editUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          full_name: editUser.full_name || null,
+          company: editUser.company || null,
+          role: editUser.role,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail || 'Failed to update user');
+      setProfiles((prev) => prev.map((p) => p.id === json.id ? { ...p, ...json } : p));
+      setEditUser(null);
+    } catch (e) {
+      setError(e.message || 'Failed to update user');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -830,6 +882,13 @@ export default function AdminPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setEditUser({ ...p })}
+                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setResetPasswordUser({ email: p.email, name: p.full_name || p.email })}
                       className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
                     >
@@ -844,6 +903,13 @@ export default function AdminPage() {
                         Set role: Admin
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteUser({ id: p.id, name: p.full_name || p.email })}
+                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-red-50 text-red-600 border-red-300"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -939,6 +1005,77 @@ export default function AdminPage() {
                 className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
               >
                 Confirm change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4">Edit user</h3>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Full name</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={editUser.full_name || ''}
+                  onChange={(e) => setEditUser((prev) => ({ ...prev, full_name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={editUser.company || ''}
+                  onChange={(e) => setEditUser((prev) => ({ ...prev, company: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                  value={editUser.role}
+                  onChange={(e) => setEditUser((prev) => ({ ...prev, role: e.target.value }))}
+                >
+                  <option value="client">Client</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                  value={editUser.email}
+                  disabled
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button type="button" onClick={() => setEditUser(null)} className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60">
+                {savingEdit ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-2 text-red-700">Delete user</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to permanently delete <strong>{deleteUser.name}</strong>? This cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button type="button" onClick={() => setDeleteUser(null)} disabled={deletingUser} className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={handleDeleteUser} disabled={deletingUser} className="px-4 py-2 border rounded-md text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+                {deletingUser ? 'Deleting...' : 'Delete user'}
               </button>
             </div>
           </div>

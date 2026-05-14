@@ -5,6 +5,8 @@ from .config import get_settings
 from .database import engine, Base
 from .routers import auth, users, messages, profiles, invoices, uploads, tasks
 from .routers import projects, documents, impersonation, reports, dashboard_refresh, quickbooks
+from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder
+from .services.storage import ensure_storage_root
 
 settings = get_settings()
 
@@ -48,6 +50,17 @@ app.include_router(impersonation.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(dashboard_refresh.router, prefix="/api")
 app.include_router(quickbooks.router, prefix="/api")
+app.include_router(agencies.router,     prefix="/api")
+app.include_router(agency_files.router, prefix="/api")
+app.include_router(pipeline.router,     prefix="/api")
+app.include_router(incidents.router,       prefix="/api")
+app.include_router(report_builder.router,  prefix="/api")
+app.include_router(admin.router,           prefix="/api")
+
+
+@app.on_event("startup")
+async def on_startup():
+    ensure_storage_root(settings.data_storage_root)
 
 
 @app.get("/")

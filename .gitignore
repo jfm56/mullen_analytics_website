@@ -43,3 +43,8 @@ logs/
 *.tsbuildinfo
 next-env.d.ts
 backend/venv/
+backend/**/__pycache__/
+backend/__pycache__/
+backend/.coverage
+backend/.pytest_cache/
+backend/htmlcov/

@@ -2,16 +2,23 @@
 
 :root {
   --background: #FFFFFF;
-  --heading: #0B3C5D;
-  --text: #1F2933;
-  --text-secondary: #4B5563;
-  --brand-primary: #0B3C5D;
-  --brand-secondary: #2E6F95;
-  --accent: #5FB3A2;
-  --card: #F7F9FC;
-  --border: #E5E7EB;
-  --footer-bg: #0B3C5D;
-  --footer-text: #E5E7EB;
+  --heading: #071829;
+  --text: #1E293B;
+  --text-secondary: #475569;
+  --brand-primary: #071829;
+  --brand-secondary: #1D4ED8;
+  --accent: #0EA5E9;
+  --accent-alt: #0891B2;
+  --card: #F8FAFD;
+  --border: #E1E8F5;
+  --footer-bg: #040E1C;
+  --footer-text: #CBD5E1;
+  --surface-elevated: #FFFFFF;
+  --navy-deep: #071829;
+  --navy-surface: #0D2035;
+  --navy-border: #1A3A58;
+  --electric-blue: #1D4ED8;
+  --sky: #0EA5E9;
 }
 
 @theme inline {
@@ -30,11 +37,35 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Premium dark mode — enterprise intelligence aesthetic */
+.dark {
+  --background: #071829;
+  --heading: #F1F5F9;
+  --text: #CBD5E1;
+  --text-secondary: #94A3B8;
+  --brand-primary: #60A5FA;
+  --brand-secondary: #93C5FD;
+  --accent: #22D3EE;
+  --accent-alt: #06B6D4;
+  --card: #0D2035;
+  --border: #1A3A58;
+  --footer-bg: #030D18;
+  --footer-text: #CBD5E1;
+  --surface-elevated: #0D2035;
+}
+
+.dark h1,
+.dark h2,
+.dark h3 {
+  color: var(--heading);
+}
+
+.dark a {
+  color: var(--brand-primary);
+}
+
+.dark a:hover {
+  color: var(--brand-secondary);
 }
 
 body {
@@ -49,57 +80,53 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Typography scale - Enterprise grade */
-h1 { 
-  font-size: clamp(2.5rem, 5vw, 3.5rem); 
-  font-weight: 700; 
-  line-height: 1.1; 
+/* Typography scale — executive grade */
+h1 {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--heading);
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.15;
   color: var(--heading);
   letter-spacing: -0.02em;
 }
 
-h2 { 
-  font-size: clamp(1.75rem, 3.5vw, 2.25rem); 
-  font-weight: 600; 
-  line-height: 1.2; 
-  color: var(--heading);
-  letter-spacing: -0.01em;
-}
-
-h3 { 
-  font-size: clamp(1.125rem, 2.5vw, 1.375rem); 
-  font-weight: 600; 
-  line-height: 1.3; 
+h3 {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--brand-primary);
 }
 
 p {
   max-width: 70ch;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
-small, .text-small { font-size: 14px; }
+small, .text-small { font-size: 13px; }
 
-/* Use brand border color for bordered elements */
-.border { border-color: var(--color-border) !important; }
-
-/* Force white heading in the dark contact section */
-#contact h2 { color: #ffffff !important; }
-
-/* Enterprise accent bar */
+/* Accent bar — premium left-border treatment */
 .accent-bar {
-  border-left: 4px solid var(--accent);
-  padding-left: 1.5rem;
+  border-left: 3px solid var(--accent);
+  padding-left: 1.25rem;
 }
 
-/* Button focus states for accessibility */
+/* Focus accessibility */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--brand-primary);
+  outline: 2px solid var(--brand-secondary);
   outline-offset: 2px;
 }
 
-/* Improved link contrast */
+/* Force white heading in dark contact section */
+#contact h2 { color: #ffffff !important; }
+
 a {
   color: var(--brand-primary);
   text-decoration: none;

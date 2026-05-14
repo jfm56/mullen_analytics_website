@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     gcs_bucket: str = ""
     gcs_project_id: str = ""
     
+    # EMS Platform storage root (D: drive)
+    data_storage_root: str = r"D:\MullenAnalytics\ClientData"
+
     # App
     app_url: str = "http://localhost:3000"
     api_url: str = "http://localhost:8000"

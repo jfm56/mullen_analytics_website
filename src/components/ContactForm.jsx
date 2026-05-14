@@ -11,8 +11,9 @@ export default function ContactForm() {
     e.preventDefault();
     setStatus('Sending...');
     
-    const recaptchaToken = recaptchaRef.current?.getValue();
-    if (!recaptchaToken) {
+    const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    const recaptchaToken = sitekey ? recaptchaRef.current?.getValue() : 'no-captcha';
+    if (sitekey && !recaptchaToken) {
       setStatus('Please verify you are human.');
       return;
     }
@@ -54,12 +55,14 @@ export default function ContactForm() {
         <label className="block text-sm font-medium">Message</label>
         <textarea name="message" rows="4" required className="mt-1 w-full border rounded px-3 py-2" />
       </div>
-      <div>
-        <ReCAPTCHA
-          ref={recaptchaRef}
-          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
-        />
-      </div>
+      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+        <div>
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+          />
+        </div>
+      )}
       <button type="submit" className="px-6 py-3 rounded bg-black text-white">Send</button>
       <div className="text-sm text-gray-600">{status}</div>
     </form>

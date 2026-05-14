@@ -20,7 +20,7 @@ export default function PortalLoginPage() {
         if (session.authenticated) {
           // Redirect based on role (impersonating admins go to portal)
           if (session.profile?.role === 'admin' && !session.impersonating) {
-            router.replace('/admin');
+            router.replace('/platform');
           } else {
             router.replace('/portal');
           }
@@ -47,7 +47,7 @@ export default function PortalLoginPage() {
         // Get session to check role
         const session = await auth.getSession();
         if (session.profile?.role === 'admin' && !session.impersonating) {
-          router.push('/admin');
+          router.push('/platform');
         } else {
           router.push('/portal');
         }

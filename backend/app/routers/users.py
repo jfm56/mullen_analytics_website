@@ -9,6 +9,7 @@ import secrets
 from ..database import get_db
 from ..models.user import User, Profile
 from ..services.auth import hash_password
+from ..services.email import send_invite_email
 from .auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -202,12 +203,30 @@ class UserCreateResponse(BaseModel):
         from_attributes = True
 
 
+@router.delete("/{user_id}", status_code=204)
+async def delete_user(
+    user_id: UUID,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Delete a user and all their data (admin only)."""
+    if str(user_id) == str(admin.id):
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.delete(user)
+    db.commit()
+
+
 @router.post("/", response_model=UserCreateResponse)
 async def create_user(
     user_data: UserCreate,
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
-):
+) -> UserCreateResponse:
     """Create a new user (admin only). Returns a temporary password."""
     # Check if email already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
@@ -243,6 +262,12 @@ async def create_user(
     
     db.commit()
     db.refresh(new_profile)
+
+    await send_invite_email(
+        to_email=new_profile.email,
+        full_name=new_profile.full_name,
+        temporary_password=temp_password,
+    )
     
     return UserCreateResponse(
         id=new_profile.id,

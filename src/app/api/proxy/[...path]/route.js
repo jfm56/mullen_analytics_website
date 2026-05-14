@@ -3,7 +3,7 @@
  * This solves cross-origin cookie issues by proxying requests through Next.js
  */
 
-const API_URL = process.env.FASTAPI_URL || 'http://localhost:8001';
+const API_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
 export async function GET(request, { params }) {
   const path = (await params).path.join('/');
@@ -34,25 +34,28 @@ async function proxyRequest(request, path, method) {
   const url = `${API_URL}/api/${path}`;
   
   const headers = new Headers();
-  headers.set('Content-Type', 'application/json');
-  
+
+  const contentType = request.headers.get('content-type') || '';
+
   // Forward cookies from the request
   const cookie = request.headers.get('cookie');
-  if (cookie) {
-    headers.set('Cookie', cookie);
-  }
-  
-  const options = {
-    method,
-    headers,
-  };
-  
-  // Forward body for non-GET requests
+  if (cookie) headers.set('Cookie', cookie);
+
+  const options = { method, headers };
+
   if (method !== 'GET' && method !== 'HEAD') {
     try {
-      const body = await request.text();
-      if (body) {
-        options.body = body;
+      if (contentType.includes('multipart/form-data')) {
+        // Parse the multipart body and pass FormData directly to fetch.
+        // fetch() will encode it with a fresh boundary and set Content-Type automatically.
+        // Do NOT set Content-Type manually here — that would break the boundary.
+        const formData = await request.formData();
+        options.body = formData;
+      } else {
+        // JSON and other text-based bodies
+        if (contentType) headers.set('Content-Type', contentType);
+        const body = await request.text();
+        if (body) options.body = body;
       }
     } catch (e) {
       // No body
