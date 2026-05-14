@@ -27,7 +27,7 @@ from ..database import get_db
 from ..models.agency import Agency, AgencyMembership, PipelineRun
 from ..models.user import User
 from ..services.auth import get_user_profile
-from ..services.report_builder.draft import draft_section, is_drafting_available
+from ..services.report_builder.draft import ask_report, draft_section, is_drafting_available
 from ..services.report_builder.pdf import build_pdf, is_pdf_available
 from ..services.report_builder.sections import compute_section, get_section_meta
 from .auth import get_current_user
@@ -85,6 +85,10 @@ def _get_run(db: Session, agency_id: str, run_id: str) -> PipelineRun:
 
 class DraftRequest(BaseModel):
     section_id: str
+
+
+class AskRequest(BaseModel):
+    question: str
 
 
 class ExportSection(BaseModel):
@@ -171,6 +175,36 @@ async def draft_section_text(
         raise HTTPException(status_code=502, detail=f"LLM error: {exc}") from exc
 
     return {"draft": draft, "section_id": body.section_id}
+
+
+@router.post("/{agency_id}/pipeline/runs/{run_id}/report-builder/ask")
+async def ask_assistant(
+    agency_id: str,
+    run_id: str,
+    body: AskRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Free-form EMS analytics Q&A against the pipeline report data using Claude.
+    Requires ANTHROPIC_API_KEY to be set.
+    """
+    _assert_access(db, agency_id, current_user)
+    run    = _get_run(db, agency_id, run_id)
+    report = _load_report(run)
+
+    if not is_drafting_available():
+        raise HTTPException(
+            status_code=503,
+            detail="LLM unavailable — set ANTHROPIC_API_KEY in backend/.env",
+        )
+
+    try:
+        answer = await ask_report(body.question.strip(), report)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"LLM error: {exc}") from exc
+
+    return {"answer": answer, "question": body.question}
 
 
 @router.post("/{agency_id}/pipeline/runs/{run_id}/report-builder/export-pdf")

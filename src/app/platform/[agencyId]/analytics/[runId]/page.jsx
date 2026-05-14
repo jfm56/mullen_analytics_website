@@ -11,106 +11,6 @@ function fmtSec(s) {
   return m > 0 ? `${m}m ${String(r).padStart(2, '0')}s` : `${r}s`;
 }
 
-function riskBg(level) {
-  if (level === 'critical') return 'bg-red-500/10 border-red-500/30';
-  if (level === 'high')     return 'bg-red-500/10 border-red-500/30';
-  if (level === 'warning')  return 'bg-amber-500/10 border-amber-500/30';
-  return 'bg-emerald-500/10 border-emerald-500/30';
-}
-function riskText(level) {
-  if (level === 'critical' || level === 'high') return 'text-red-400';
-  if (level === 'warning') return 'text-amber-400';
-  return 'text-emerald-400';
-}
-
-// ── ALERT BUILDER ────────────────────────────────────────────────────────────
-function buildAlerts(report) {
-  const alerts = [];
-  const rt    = report?.modules?.response_times || {};
-  const nfpa  = rt.nfpa_1710 || {};
-  const up    = report?.modules?.unit_performance || {};
-  const mn    = report?.modules?.municipality || {};
-  const fc    = report?.modules?.forecasting || {};
-  const sf    = report?.modules?.staffing || {};
-  const flags = report?.chart_flags || {};
-
-  if (flags.response_time !== false && nfpa.valid !== false && !nfpa.compliant && nfpa.pct_within_target != null) {
-    const p90 = rt.total_response?.p90;
-    alerts.push({ level: 'critical', icon: '🚨',
-      title: 'NFPA 1710 Non-Compliant',
-      message: `P90 response is ${fmtSec(p90)}, exceeding the 5m 00s BLS target. Only ${nfpa.pct_within_target?.toFixed(1)}% of calls met the standard.`,
-      action: 'Investigate deployment gaps and unit coverage zones.',
-    });
-  }
-
-  const failingUnits = Object.entries(up.units || {})
-    .filter(([, s]) => s.response_p90 != null && s.response_p90 > 300)
-    .sort((a, b) => b[1].response_p90 - a[1].response_p90);
-  if (failingUnits.length > 0) {
-    const top = failingUnits[0];
-    alerts.push({ level: 'high', icon: '⚠',
-      title: `${failingUnits.length} Unit${failingUnits.length > 1 ? 's' : ''} Exceed NFPA P90 Target`,
-      message: `${top[0]} has highest P90 at ${fmtSec(top[1].response_p90)}.${failingUnits.length > 1 ? ` Also: ${failingUnits.slice(1, 3).map(([u]) => u).join(', ')}.` : ''}`,
-      action: 'Review deployment, zone assignment, or unit availability.',
-    });
-  }
-
-  const failingMuni = Object.entries(mn.municipalities || {})
-    .filter(([, s]) => s.response_p90 != null && s.response_p90 > 300)
-    .sort((a, b) => b[1].response_p90 - a[1].response_p90);
-  if (failingMuni.length > 0) {
-    const top = failingMuni[0];
-    alerts.push({ level: 'high', icon: '📍',
-      title: `Response Delays in ${failingMuni.length} Area${failingMuni.length > 1 ? 's' : ''}`,
-      message: `${top[0]} leads with P90 of ${fmtSec(top[1].response_p90)}.${failingMuni.length > 1 ? ` Plus ${failingMuni.length - 1} additional area${failingMuni.length > 2 ? 's' : ''}.` : ''}`,
-      action: 'Consider repositioning units or mutual aid agreements.',
-    });
-  }
-
-  if ((sf.overtime_pct ?? 0) > 20) {
-    alerts.push({ level: 'warning', icon: '⏱',
-      title: `Overtime Rate at ${sf.overtime_pct}%`,
-      message: 'Sustained overtime above 20% increases attrition risk and operational cost.',
-      action: 'Review shift scheduling and hiring pipeline.',
-    });
-  }
-
-  if (fc.attrition_risk?.risk_level === 'high' || fc.attrition_risk?.risk_level === 'medium') {
-    alerts.push({
-      level: fc.attrition_risk.risk_level === 'high' ? 'critical' : 'warning', icon: '👥',
-      title: `${fc.attrition_risk.risk_level === 'high' ? 'High' : 'Moderate'} Staffing Attrition Risk`,
-      message: fc.attrition_risk.indicators?.join(' · ') || 'Multiple attrition risk factors detected.',
-      action: 'Initiate hiring process. Review retention incentives.',
-    });
-  }
-
-  if (fc.call_volume_forecast?.trend_direction === 'increasing' && (fc.call_volume_forecast?.trend_slope ?? 0) > 0.5) {
-    alerts.push({ level: 'warning', icon: '📈',
-      title: 'Call Volume Trending Up',
-      message: `+${fc.call_volume_forecast.trend_slope?.toFixed(2)} calls/day increase trend detected.`,
-      action: 'Project additional staffing needs for next 6 months.',
-    });
-  }
-
-  return alerts;
-}
-
-// ── ALERT CARD ───────────────────────────────────────────────────────────────
-function AlertCard({ alert }) {
-  return (
-    <div className={`flex items-start gap-3 rounded-lg border px-4 py-3 ${riskBg(alert.level)}`}>
-      <span className="text-lg shrink-0 mt-0.5">{alert.icon}</span>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`text-[10px] font-bold uppercase tracking-widest ${riskText(alert.level)}`}>{alert.level}</span>
-          <span className="text-sm font-semibold text-white">{alert.title}</span>
-        </div>
-        <p className="text-xs text-slate-300">{alert.message}</p>
-        {alert.action && <p className="text-xs text-slate-500 mt-0.5">→ {alert.action}</p>}
-      </div>
-    </div>
-  );
-}
 
 // ── KPI CARD ─────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, benchmark, status = 'neutral', trend, insight, large }) {
@@ -136,24 +36,37 @@ function KpiCard({ label, value, sub, benchmark, status = 'neutral', trend, insi
 }
 
 // ── DARK BAR CHART ────────────────────────────────────────────────────────────
-function DarkBarChart({ data, maxBars = 12, accent = '#3b82f6' }) {
+function DarkBarChart({ data, maxBars = 12, accent = '#3b82f6', activeKey, onSelect }) {
   if (!data || Object.keys(data).length === 0) {
     return <p className="text-xs text-slate-500 py-4 text-center">No data available</p>;
   }
   const entries = Object.entries(data).map(([k, v]) => [k, Number(v)]).sort((a, b) => b[1] - a[1]).slice(0, maxBars);
   const max = Math.max(...entries.map(([, v]) => v), 1);
   return (
-    <div className="space-y-2">
-      {entries.map(([label, val]) => (
-        <div key={label} className="flex items-center gap-3">
-          <span className="text-xs text-slate-400 w-36 truncate shrink-0">{label}</span>
-          <div className="flex-1 h-5 bg-slate-800/80 rounded overflow-hidden relative">
-            <div className="h-full rounded transition-all" style={{ width: `${(val / max) * 100}%`, background: accent }} />
-            <span className="absolute right-2 top-0.5 text-[10px] text-slate-400">{((val / max) * 100).toFixed(0)}%</span>
+    <div className="space-y-1.5">
+      {entries.map(([label, val]) => {
+        const isActive = !!activeKey && activeKey === label;
+        const isDimmed = !!activeKey && activeKey !== label;
+        return (
+          <div key={label}
+            className={`flex items-center gap-3 rounded-lg px-1 py-0.5 transition-all
+              ${onSelect ? 'cursor-pointer hover:bg-white/5' : ''}
+              ${isActive ? 'bg-white/8 ring-1 ring-inset ring-white/20' : ''}`}
+            onClick={() => onSelect && onSelect(isActive ? '' : label)}
+          >
+            <span className={`text-xs w-36 truncate shrink-0 transition-colors ${isActive ? 'text-white font-semibold' : 'text-slate-400'}`}>{label}</span>
+            <div className="flex-1 h-5 bg-slate-800/80 rounded overflow-hidden relative">
+              <div className="h-full rounded transition-all"
+                style={{ width: `${(val / max) * 100}%`, background: isDimmed ? `${accent}40` : accent }} />
+              <span className="absolute right-2 top-0.5 text-[10px] text-slate-400">{((val / max) * 100).toFixed(0)}%</span>
+            </div>
+            <span className={`text-xs w-14 text-right shrink-0 font-medium transition-colors ${isActive ? 'text-white' : 'text-slate-300'}`}>{val.toLocaleString()}</span>
           </div>
-          <span className="text-xs text-slate-300 w-14 text-right shrink-0 font-medium">{val.toLocaleString()}</span>
-        </div>
-      ))}
+        );
+      })}
+      {activeKey && onSelect && (
+        <p className="text-[10px] text-blue-400 text-right mt-1 cursor-pointer hover:text-blue-300" onClick={() => onSelect('')}>✕ Clear filter</p>
+      )}
     </div>
   );
 }
@@ -240,18 +153,49 @@ function SectionLabel({ title, sub, badge }) {
   );
 }
 
+// ── RISK SCORE ────────────────────────────────────────────────────────────────
+function calcRiskScore(stats, avgCalls) {
+  let score = 0;
+  const p90  = stats.response_p90;
+  const calls = stats.calls ?? 0;
+  const util  = stats.utilisation_hours;
+  if (p90 != null) {
+    if (p90 > 600) score += 40;
+    else if (p90 > 480) score += 32;
+    else if (p90 > 360) score += 22;
+    else if (p90 > 300) score += 14;
+  }
+  if (p90 != null && p90 > 300) score += 20;
+  if (avgCalls > 0 && calls > 0) {
+    const r = calls / avgCalls;
+    if (r > 2.0) score += 20; else if (r > 1.5) score += 13; else if (r > 1.2) score += 7;
+  }
+  if (util != null) {
+    if (util > 100) score += 20; else if (util > 70) score += 12; else if (util > 40) score += 5;
+  }
+  return Math.min(100, Math.max(0, score));
+}
+
 // ── SORTABLE UNIT TABLE ───────────────────────────────────────────────────────
-function UnitTable({ up }) {
-  const [sortKey, setSortKey] = useState('calls');
+function UnitTable({ up, filterUnit }) {
+  const [sortKey, setSortKey] = useState('risk');
   const [sortDir, setSortDir] = useState('desc');
+
+  const avgCalls = useMemo(() => {
+    const vals = Object.values(up.units || {}).map(s => s.calls ?? 0).filter(v => v > 0);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [up.units]);
+
   const entries = useMemo(() => {
     const sk = sortKey === 'nfpa' ? 'response_p90' : sortKey;
-    return Object.entries(up.units || {}).sort((a, b) => {
+    let rows = Object.entries(up.units || {}).map(([u, s]) => [u, { ...s, risk: calcRiskScore(s, avgCalls) }]);
+    if (filterUnit) rows = rows.filter(([u]) => u === filterUnit);
+    return rows.sort((a, b) => {
       const va = a[1][sk] ?? (sortDir === 'desc' ? -Infinity : Infinity);
       const vb = b[1][sk] ?? (sortDir === 'desc' ? -Infinity : Infinity);
       return sortDir === 'desc' ? vb - va : va - vb;
     });
-  }, [up.units, sortKey, sortDir]);
+  }, [up.units, sortKey, sortDir, avgCalls, filterUnit]);
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
@@ -259,12 +203,13 @@ function UnitTable({ up }) {
   }
 
   const cols = [
-    { key: 'unit', label: 'Unit', sortable: false },
-    { key: 'calls', label: 'Calls', sortable: true },
-    { key: 'response_median', label: 'Median RT', sortable: true },
-    { key: 'response_p90', label: 'P90 RT', sortable: true },
-    { key: 'nfpa', label: 'NFPA P90', sortable: true },
-    { key: 'utilisation_hours', label: 'Util. hrs', sortable: true },
+    { key: 'unit',              label: 'Unit',       sortable: false },
+    { key: 'risk',              label: 'Risk Score',  sortable: true  },
+    { key: 'calls',             label: 'Calls',       sortable: true  },
+    { key: 'response_median',   label: 'Median RT',   sortable: true  },
+    { key: 'response_p90',      label: 'P90 RT',      sortable: true  },
+    { key: 'nfpa',              label: 'NFPA P90',    sortable: true  },
+    { key: 'utilisation_hours', label: 'Util. hrs',   sortable: true  },
   ];
 
   return (
@@ -277,11 +222,12 @@ function UnitTable({ up }) {
               const active = sortKey === sk;
               return (
                 <th key={col.key}
-                  className={`pb-3 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500 pr-4 ${col.sortable ? 'cursor-pointer hover:text-slate-300 select-none' : ''}`}
+                  className={`pb-3 text-left text-[11px] font-bold uppercase tracking-widest pr-4 select-none
+                    ${col.sortable ? 'cursor-pointer hover:text-slate-300' : ''}
+                    ${active ? 'text-blue-400' : 'text-slate-500'}`}
                   onClick={() => col.sortable && toggleSort(sk)}
                 >
-                  {col.label}
-                  {col.sortable && active && <span className="ml-1 text-blue-400">{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                  {col.label}{col.sortable && active && <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>}
                 </th>
               );
             })}
@@ -291,26 +237,37 @@ function UnitTable({ up }) {
           {entries.map(([unit, s]) => {
             const failing  = s.response_p90 != null && s.response_p90 > 300;
             const critical = s.response_p90 != null && s.response_p90 > 480;
+            const risk     = s.risk ?? 0;
+            const riskColor    = risk >= 70 ? 'text-red-400'    : risk >= 40 ? 'text-amber-400'    : 'text-emerald-400';
+            const riskBarColor = risk >= 70 ? 'bg-red-500'      : risk >= 40 ? 'bg-amber-500'      : 'bg-emerald-500';
             return (
-              <tr key={unit} className={`border-b border-white/5 last:border-0 ${critical ? 'bg-red-500/5' : failing ? 'bg-amber-500/5' : ''}`}>
-                <td className="py-3 pr-4 font-bold text-white">
+              <tr key={unit} className={`border-b border-white/5 last:border-0 transition-colors ${critical ? 'bg-red-500/5' : failing ? 'bg-amber-500/5' : ''}`}>
+                <td className="py-3.5 pr-4 font-bold text-white whitespace-nowrap">
                   {unit}
                   {critical && <span className="ml-2 text-[9px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded uppercase">Critical</span>}
                   {failing && !critical && <span className="ml-2 text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase">At Risk</span>}
                 </td>
-                <td className="py-3 pr-4 text-slate-300 font-medium">{s.calls?.toLocaleString() ?? '—'}</td>
-                <td className="py-3 pr-4 text-slate-300">{s.response_median != null ? fmtSec(s.response_median) : '—'}</td>
-                <td className={`py-3 pr-4 font-bold ${critical ? 'text-red-400' : failing ? 'text-amber-400' : 'text-slate-200'}`}>
+                <td className="py-3.5 pr-5">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold w-8 shrink-0 tabular-nums ${riskColor}`}>{risk}</span>
+                    <div className="w-16 h-2 bg-slate-800 rounded overflow-hidden">
+                      <div className={`h-full rounded transition-all ${riskBarColor}`} style={{ width: `${risk}%` }} />
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3.5 pr-4 text-slate-300 font-medium tabular-nums">{s.calls?.toLocaleString() ?? '—'}</td>
+                <td className="py-3.5 pr-4 text-slate-300 tabular-nums">{s.response_median != null ? fmtSec(s.response_median) : '—'}</td>
+                <td className={`py-3.5 pr-4 font-bold tabular-nums ${critical ? 'text-red-400' : failing ? 'text-amber-400' : 'text-slate-200'}`}>
                   {s.response_p90 != null ? fmtSec(s.response_p90) : '—'}
                 </td>
-                <td className="py-3 pr-4">
+                <td className="py-3.5 pr-4">
                   {s.response_p90 != null ? (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded ${s.response_p90 <= 300 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/15 text-red-400 border border-red-500/30'}`}>
                       {s.response_p90 <= 300 ? '✓ PASS' : '✗ FAIL'}
                     </span>
                   ) : '—'}
                 </td>
-                <td className="py-3 text-slate-500 text-xs">{s.utilisation_hours != null ? `${s.utilisation_hours}h` : '—'}</td>
+                <td className="py-3.5 text-slate-500 text-xs tabular-nums">{s.utilisation_hours != null ? `${s.utilisation_hours}h` : '—'}</td>
               </tr>
             );
           })}
@@ -380,13 +337,349 @@ function ModelExplanationCard({ explanation }) {
   );
 }
 
+// ── ACTION BUILDER ────────────────────────────────────────────────────────────
+function buildActions(report) {
+  const actions = [];
+  const rt   = report?.modules?.response_times   || {};
+  const nfpa = rt.nfpa_1710                      || {};
+  const up   = report?.modules?.unit_performance || {};
+  const mn   = report?.modules?.municipality     || {};
+  const sf   = report?.modules?.staffing         || {};
+  const fc   = report?.modules?.forecasting      || {};
+  const total = rt.total_response || {};
+
+  if (!nfpa.compliant && nfpa.pct_within_target != null) {
+    const p90 = total.p90;
+    const gap = p90 != null ? p90 - 300 : null;
+    const wmu = Object.entries(mn.municipalities || {}).filter(([, s]) => s.response_p90 > 300).sort((a, b) => b[1].response_p90 - a[1].response_p90)[0];
+    const wu  = Object.entries(up.units || {}).filter(([, s]) => s.response_p90 > 300).sort((a, b) => b[1].response_p90 - a[1].response_p90)[0];
+    actions.push({
+      priority: 'CRITICAL', icon: '🚨',
+      title: 'NFPA 1710 Compliance — Immediate Intervention Required',
+      situation: `Agency P90 response is ${fmtSec(p90)}${gap != null ? `, exceeding the 5:00 BLS standard by ${fmtSec(gap)}` : ''}. Only ${nfpa.pct_within_target?.toFixed(1)}% of calls meet the standard (target ≥ 90%).`,
+      recommended: [
+        wu  ? `Prioritize deployment rebalancing for ${wu[0]} (P90: ${fmtSec(wu[1].response_p90)})` : 'Audit unit deployment strategy across all zones',
+        wmu ? `Address coverage gaps in ${wmu[0]} (P90: ${fmtSec(wmu[1].response_p90)})` : 'Review geographic post positioning',
+        'Evaluate peak-demand hours vs. on-duty unit availability',
+      ],
+      impact: 'Optimized deployment typically yields +12–20% compliance improvement within 60 days.',
+      tier: null,
+    });
+  }
+
+  const riskUnits = Object.entries(up.units || {}).filter(([, s]) => s.response_p90 != null && s.response_p90 > 300).sort((a, b) => b[1].response_p90 - a[1].response_p90);
+  if (riskUnits.length > 0) {
+    const top = riskUnits[0];
+    actions.push({
+      priority: 'HIGH', icon: '⚡',
+      title: `Unit Performance Alert — ${riskUnits.length} Unit${riskUnits.length > 1 ? 's' : ''} Failing NFPA P90`,
+      situation: `${top[0]} has P90 of ${fmtSec(top[1].response_p90)}, which is ${fmtSec(top[1].response_p90 - 300)} over target.${riskUnits.length > 1 ? ` Also failing: ${riskUnits.slice(1, 3).map(([u]) => u).join(', ')}.` : ''}`,
+      recommended: [
+        `Conduct zone-coverage audit for ${top[0]}`,
+        'Analyze call density vs. post positioning for all failing units',
+        riskUnits.length > 2 ? 'Consider adding supplemental unit during peak demand windows' : 'Review mutual aid trigger thresholds',
+      ],
+      impact: 'Resolving top-unit delays typically reduces agency-wide P90 by 30–90 seconds.',
+      tier: null,
+    });
+  }
+
+  if ((sf.overtime_pct ?? 0) > 20) {
+    actions.push({
+      priority: 'HIGH', icon: '💰',
+      title: `Staffing Cost Risk — ${sf.overtime_pct}% Overtime Rate`,
+      situation: `Overtime at ${sf.overtime_pct}% exceeds the 10–15% sustainable benchmark, elevating both budget exposure and attrition risk simultaneously.`,
+      recommended: [
+        'Open 2–3 FTE recruitment positions immediately',
+        'Implement mandatory overtime ceiling for current quarter',
+        'Cross-train per-diem roster to absorb coverage gaps',
+      ],
+      impact: 'Reducing to 15% overtime: estimated 25–35% reduction in OT labor cost.',
+      tier: null,
+    });
+  }
+
+  if (fc.attrition_risk?.risk_level === 'high' || fc.attrition_risk?.risk_level === 'medium') {
+    const lvl = fc.attrition_risk.risk_level;
+    actions.push({
+      priority: lvl === 'high' ? 'CRITICAL' : 'MEDIUM', icon: '👥',
+      title: `${lvl === 'high' ? 'High' : 'Moderate'} Attrition Risk — Retention Action Required`,
+      situation: fc.attrition_risk.indicators?.join(' ') || 'Predictive model detected multiple staffing attrition risk factors.',
+      recommended: [
+        'Conduct retention interviews with 5+ year tenure staff this quarter',
+        'Benchmark compensation against regional EMS market rates',
+        'Initiate hiring pipeline 60–90 days ahead of projected vacancies',
+      ],
+      impact: 'Proactive retention reduces replacement cost by $45,000–$85,000 per position.',
+      tier: 'Predictive',
+    });
+  }
+
+  if (fc.call_volume_forecast?.trend_direction === 'increasing' && (fc.call_volume_forecast?.trend_slope ?? 0) > 0.3) {
+    const slope  = fc.call_volume_forecast.trend_slope;
+    const annual = Math.round(slope * 365);
+    actions.push({
+      priority: 'MEDIUM', icon: '📈',
+      title: 'Volume Growth — Capacity Planning Window Opening',
+      situation: `Call volume is increasing at +${slope?.toFixed(2)} calls/day. Projected annual growth: ~${annual} additional calls.`,
+      recommended: [
+        'Model 12-month staffing needs for a +15% volume scenario',
+        'Present capacity investment case to board before next budget cycle',
+        'Evaluate station and post placement for growing demand zones',
+      ],
+      impact: `Proactive staffing for +${annual} annual calls prevents NFPA compliance degradation.`,
+      tier: 'Predictive',
+    });
+  }
+
+  return actions;
+}
+
+// ── ACTION CARD ───────────────────────────────────────────────────────────────
+function ActionCard({ action }) {
+  const cfg = {
+    CRITICAL: { wrap: 'border-red-500/40 bg-red-500/5',    badge: 'bg-red-500/20 text-red-400',    label: '🚨 ACTION REQUIRED' },
+    HIGH:     { wrap: 'border-amber-500/40 bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-400', label: '⚡ HIGH PRIORITY' },
+    MEDIUM:   { wrap: 'border-blue-500/30 bg-blue-500/5',  badge: 'bg-blue-500/20 text-blue-400',  label: '📋 RECOMMENDED' },
+    LOW:      { wrap: 'border-white/10 bg-white/3',        badge: 'bg-white/10 text-slate-400',    label: '💡 ADVISORY' },
+  }[action.priority] || { wrap: 'border-white/10 bg-white/3', badge: 'bg-white/10 text-slate-400', label: '💡 ADVISORY' };
+
+  return (
+    <div className={`rounded-xl border p-6 ${cfg.wrap}`}>
+      <div className="flex items-start gap-4 mb-4">
+        <span className="text-2xl shrink-0 mt-0.5">{action.icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${cfg.badge}`}>{cfg.label}</span>
+            {action.tier && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30 uppercase tracking-widest">{action.tier}</span>}
+          </div>
+          <h3 className="text-sm font-bold text-white leading-snug">{action.title}</h3>
+        </div>
+      </div>
+      <p className="text-xs text-slate-300 leading-relaxed mb-4">{action.situation}</p>
+      <div className="mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-2">Recommended Actions</p>
+        <ul className="space-y-1.5">
+          {action.recommended.map((r, i) => (
+            <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+              <span className="text-blue-400 shrink-0 font-bold mt-0.5">›</span>{r}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="bg-black/20 rounded-lg px-4 py-2.5 border border-white/5">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-1">Projected Impact</p>
+        <p className="text-xs text-emerald-300 leading-relaxed">{action.impact}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── FILTER SELECT ─────────────────────────────────────────────────────────────
+function FilterSelect({ name, options, placeholder, value, onChange }) {
+  if (!options.length) return null;
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(name, e.target.value)}
+      className={`text-xs px-3 py-1.5 rounded-lg border bg-[#0d1627] outline-none cursor-pointer transition-colors
+        ${value ? 'border-blue-500/60 text-blue-200' : 'border-white/10 text-slate-400 hover:border-white/20'}`}
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+// ── EXECUTIVE FILTER BAR ──────────────────────────────────────────────────────
+function FilterBar({ report, filters, setFilters }) {
+  const rt = report?.modules?.response_times   || {};
+  const up = report?.modules?.unit_performance || {};
+  const mn = report?.modules?.municipality     || {};
+  const cv = report?.modules?.call_volume      || {};
+
+  const munis = Object.keys(mn.municipalities || {}).sort();
+  const units = Object.keys(up.units || {}).sort();
+  const types = Object.keys(cv.by_incident_type || {}).sort();
+  const prios = Object.keys(rt.by_priority || {}).sort();
+  const days  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].filter(d => (cv.by_day_of_week || {})[d] != null);
+  const active = Object.values(filters).some(v => v !== '');
+
+  function handleChange(name, value) {
+    setFilters(f => ({ ...f, [name]: value }));
+  }
+
+  return (
+    <div className="bg-[#040a14]/95 border-b border-white/8 px-6 py-2.5 sticky top-[49px] z-40 backdrop-blur-sm">
+      <div className="max-w-screen-xl mx-auto flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700 mr-1 shrink-0">Filters</span>
+        <FilterSelect name="muni" options={munis} placeholder="All Municipalities" value={filters.muni} onChange={handleChange} />
+        <FilterSelect name="unit" options={units} placeholder="All Units"          value={filters.unit} onChange={handleChange} />
+        <FilterSelect name="type" options={types} placeholder="All Incident Types" value={filters.type} onChange={handleChange} />
+        <FilterSelect name="prio" options={prios} placeholder="All Priorities"     value={filters.prio} onChange={handleChange} />
+        <FilterSelect name="day"  options={days}  placeholder="All Days"           value={filters.day}  onChange={handleChange} />
+        {active && (
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {Object.entries(filters).filter(([, v]) => v).map(([k, v]) => (
+                <span key={k} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20 flex items-center gap-1">
+                  {v}
+                  <button onClick={() => setFilters(f => ({ ...f, [k]: '' }))} className="hover:text-white ml-0.5">✕</button>
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={() => setFilters({ muni: '', unit: '', type: '', prio: '', day: '' })}
+              className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 transition-colors shrink-0"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── BENCHMARK PANEL ───────────────────────────────────────────────────────────
+function BenchmarkRow({ label, standard, yourValue, target, isTime }) {
+  if (yourValue == null) return null;
+  const over   = isTime ? yourValue > target : yourValue < target;
+  const gapAbs = isTime ? Math.abs(yourValue - target) : Math.abs(target - yourValue);
+  const gapFmt = isTime ? fmtSec(gapAbs) : `${gapAbs.toFixed(1)}%`;
+  const valFmt = isTime ? fmtSec(yourValue) : `${yourValue.toFixed(1)}%`;
+  const tgtFmt = isTime ? fmtSec(target)    : `${target}%`;
+  return (
+    <div className="grid grid-cols-4 gap-4 py-3.5 border-b border-white/5 last:border-0 items-center">
+      <div>
+        <p className="text-xs font-semibold text-slate-200">{label}</p>
+        <p className="text-[10px] text-slate-600 mt-0.5">{standard}</p>
+      </div>
+      <div className="text-center">
+        <p className={`text-xl font-bold tabular-nums ${over ? 'text-red-400' : 'text-emerald-400'}`}>{valFmt}</p>
+        <p className="text-[10px] text-slate-600">Your agency</p>
+      </div>
+      <div className="text-center">
+        <p className="text-xl font-bold tabular-nums text-slate-500">{tgtFmt}</p>
+        <p className="text-[10px] text-slate-600">Standard</p>
+      </div>
+      <div className="text-right">
+        <p className={`text-sm font-bold tabular-nums ${over ? 'text-red-400' : 'text-emerald-400'}`}>
+          {over ? `+${gapFmt} over` : `−${gapFmt} under`}
+        </p>
+        <p className="text-[10px] text-slate-600">vs target</p>
+      </div>
+    </div>
+  );
+}
+
+function BenchmarkPanel({ rt, nfpa }) {
+  const total  = rt.total_response || {};
+  const callPr = rt.call_processing || {};
+  const turnout = rt.turnout || {};
+  const travel  = rt.travel  || {};
+  return (
+    <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
+      <SectionLabel title="Benchmark Comparison" sub="Your agency vs NFPA 1710 standards and national EMS averages" />
+      <div className="grid grid-cols-4 gap-4 pb-3 border-b border-white/10 mb-1">
+        {['Metric','Your Agency','Standard','Gap'].map(h => (
+          <p key={h} className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{h}</p>
+        ))}
+      </div>
+      <BenchmarkRow label="P90 Total Response"  standard="NFPA 1710 BLS"      yourValue={total.p90}       target={300} isTime />
+      <BenchmarkRow label="Median Response"      standard="National EMS avg"    yourValue={total.median}    target={270} isTime />
+      <BenchmarkRow label="Call Processing Time" standard="NFPA 1710"           yourValue={callPr.median}   target={64}  isTime />
+      <BenchmarkRow label="Turnout Time"         standard="NFPA 1710"           yourValue={turnout.median}  target={60}  isTime />
+      <BenchmarkRow label="Travel Time"          standard="NFPA 1710"           yourValue={travel.median}   target={240} isTime />
+      {nfpa?.pct_within_target != null && (
+        <BenchmarkRow label="NFPA Compliance Rate" standard="NFPA 1710 ≥ 90%" yourValue={nfpa.pct_within_target} target={90} isTime={false} />
+      )}
+    </div>
+  );
+}
+
+// ── AI ASSISTANT ──────────────────────────────────────────────────────────────
+function AiAssistant({ agencyId, runId }) {
+  const [question, setQuestion] = useState('');
+  const [answer,   setAnswer]   = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [asked,    setAsked]    = useState('');
+
+  const presets = [
+    'What should leadership prioritize this month?',
+    'Which unit is at highest operational risk?',
+    'Which municipality is driving response time failures?',
+    'Are we heading toward a staffing crisis?',
+    'How can we improve NFPA compliance?',
+    'What is driving our overtime rate?',
+  ];
+
+  async function ask(q) {
+    const q2 = q.trim();
+    if (!q2) return;
+    setLoading(true); setAsked(q2); setAnswer('');
+    try {
+      const res = await fetch(
+        `/api/proxy/agencies/${agencyId}/pipeline/runs/${runId}/report-builder/ask`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ question: q2 }) }
+      );
+      const data = await res.json();
+      setAnswer(res.ok ? (data.answer || 'No response generated.') : `Error: ${data.detail || res.statusText}`);
+    } catch { setAnswer('Network error. Please try again.'); }
+    finally   { setLoading(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-500/30 bg-[#0d1627] p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0 text-xl">🤖</div>
+        <div className="flex-1">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-white">Data Intelligence Assistant</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Ask anything about your operational data · Powered by Claude AI</p>
+        </div>
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30 uppercase tracking-widest shrink-0">Predictive</span>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {presets.map((p, i) => (
+          <button key={i} onClick={() => ask(p)}
+            className="text-[11px] px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 hover:border-white/20 transition-all text-left">
+            {p}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2 mb-4">
+        <input
+          value={question}
+          onChange={e => setQuestion(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && ask(question)}
+          placeholder="Ask a custom question about your operational data…"
+          className="flex-1 px-4 py-2.5 bg-black/30 border border-white/10 rounded-lg text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500/50 transition-colors"
+        />
+        <button onClick={() => ask(question)} disabled={loading || !question.trim()}
+          className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors shrink-0">
+          {loading ? '…' : 'Ask'}
+        </button>
+      </div>
+      {(loading || answer) && (
+        <div className="bg-black/20 border border-white/10 rounded-lg p-4">
+          {asked && <p className="text-[10px] text-violet-400 font-bold mb-2 uppercase tracking-widest">Q: {asked}</p>}
+          {loading
+            ? <div className="flex items-center gap-2 text-xs text-slate-400"><div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /> Analyzing operational data…</div>
+            : <p className="text-sm text-slate-200 leading-relaxed">{answer}</p>
+          }
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const router = useRouter();
   const { agencyId, runId } = useParams();
   const [loading, setLoading] = useState(true);
   const [report,  setReport]  = useState(null);
   const [error,   setError]   = useState('');
-  const [alertsOpen, setAlertsOpen] = useState(true);
+  const [filters, setFilters] = useState({ muni: '', unit: '', type: '', prio: '', day: '' });
 
   useEffect(() => {
     if (!agencyId || !runId) return;
@@ -408,22 +701,7 @@ export default function AnalyticsPage() {
     })();
   }, [agencyId, runId, router]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#070d1a]">
-      <div className="text-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm text-slate-400">Loading intelligence…</p>
-      </div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#070d1a] flex-col gap-4">
-      <p className="text-sm text-red-400">{error}</p>
-      <Link href={`/platform/${agencyId}`} className="text-sm text-blue-400 hover:text-blue-300">← Back to dashboard</Link>
-    </div>
-  );
-
+  // ── All derived state MUST be before early returns (Rules of Hooks) ────────
   const m     = report?.key_metrics || {};
   const cv    = report?.modules?.call_volume || {};
   const rt    = report?.modules?.response_times || {};
@@ -443,15 +721,40 @@ export default function AnalyticsPage() {
   const travel    = rt.travel          || {};
   const nfpa      = rt.nfpa_1710       || {};
 
-  const alerts     = buildAlerts(report);
-  const critCount  = alerts.filter(a => a.level === 'critical' || a.level === 'high').length;
-
+  const actions    = useMemo(() => buildActions(report), [report]);
+  const critCount  = actions.filter(a => a.priority === 'CRITICAL' || a.priority === 'HIGH').length;
   const nfpaValid  = flags.response_time !== false && nfpa.valid !== false;
   const p90Val     = totalResp.p90;
   const p90Status  = !nfpaValid ? 'neutral' : nfpa.compliant ? 'good' : p90Val > 480 ? 'critical' : 'warning';
   const pctStatus  = !nfpaValid ? 'neutral' : (nfpa.pct_within_target ?? 0) >= 90 ? 'good' : (nfpa.pct_within_target ?? 0) >= 70 ? 'warning' : 'critical';
   const failUnits  = Object.values(up.units || {}).filter(s => s.response_p90 != null && s.response_p90 > 300).length;
   const totalUnits = Object.keys(up.units || {}).length;
+
+  const filteredMunis = useMemo(() => {
+    const entries = Object.entries(report?.modules?.municipality?.municipalities || {});
+    return filters.muni ? entries.filter(([name]) => name === filters.muni) : entries;
+  }, [report, filters.muni]);
+
+  const filteredPrios = useMemo(() => {
+    const entries = Object.entries(report?.modules?.response_times?.by_priority || {});
+    return filters.prio ? entries.filter(([p]) => p === filters.prio) : entries;
+  }, [report, filters.prio]);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#070d1a]">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm text-slate-400">Loading intelligence…</p>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#070d1a] flex-col gap-4">
+      <p className="text-sm text-red-400">{error}</p>
+      <Link href={`/platform/${agencyId}`} className="text-sm text-blue-400 hover:text-blue-300">← Back to dashboard</Link>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#070d1a] text-white">
@@ -465,56 +768,60 @@ export default function AnalyticsPage() {
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold uppercase tracking-widest shrink-0">Intelligence</span>
           {critCount > 0 && (
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold animate-pulse shrink-0">
-              {critCount} ALERT{critCount > 1 ? 'S' : ''}
+              {critCount} ACTION{critCount > 1 ? 'S' : ''}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] text-slate-700 hidden sm:block">
-            {report?.generated_at ? new Date(report.generated_at).toLocaleString() : ''}
-          </span>
+          <span className="text-[10px] text-slate-700 hidden sm:block">{report?.generated_at ? new Date(report.generated_at).toLocaleString() : ''}</span>
           <Link href={`/platform/${agencyId}/analytics/${runId}/interactive`}
-            className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-colors">
-            Interactive →
-          </Link>
+            className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-colors">Interactive →</Link>
           <Link href={`/platform/${agencyId}/analytics/${runId}/report-builder`}
-            className="text-xs px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold transition-colors">
-            Build Report →
-          </Link>
+            className="text-xs px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold transition-colors">Build Report →</Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      {/* ── STICKY FILTER BAR ──────────────────────────────────────────── */}
+      {report && <FilterBar report={report} filters={filters} setFilters={setFilters} />}
 
-        {/* ── OPERATIONAL ALERTS ──────────────────────────────────────── */}
-        {alerts.length > 0 && (
+      <main className="max-w-screen-xl mx-auto px-6 py-10 space-y-10">
+
+        {/* ── EXECUTIVE ACTION PANEL ──────────────────────────────────── */}
+        {actions.length > 0 && (
           <div>
-            <button onClick={() => setAlertsOpen(o => !o)} className="flex items-center gap-3 mb-3 w-full group">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-400 flex items-center gap-2">
-                <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${critCount > 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
-                Operational Alerts ({alerts.length})
-                <span className="text-slate-700">{alertsOpen ? '▲' : '▼'}</span>
-              </span>
-              <div className="flex-1 h-px bg-white/10" />
-            </button>
-            {alertsOpen && (
-              <div className="grid grid-cols-1 gap-3">
-                {alerts.map((a, i) => <AlertCard key={i} alert={a} />)}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-white/8" />
+              <div className="flex items-center gap-2">
+                {critCount > 0 && <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                  Executive Recommended Actions
+                </span>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-white/8">
+                  {actions.length} item{actions.length > 1 ? 's' : ''}
+                </span>
               </div>
-            )}
+              <div className="flex-1 h-px bg-white/8" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {actions.map((a, i) => <ActionCard key={i} action={a} />)}
+            </div>
           </div>
         )}
 
         {/* ── EXECUTIVE KPI TIER 1 ────────────────────────────────────── */}
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Executive Summary</span>
-            <div className="flex-1 h-px bg-white/10" />
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-base font-bold text-white">Executive Summary</h2>
+              <p className="text-xs text-slate-500 mt-0.5">{m.date_range_start ?? '—'} – {m.date_range_end ?? '—'}</p>
+            </div>
+            {Object.values(filters).some(v => v) && (
+              <span className="text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-lg">
+                Filtered view active
+              </span>
+            )}
           </div>
-          <p className="text-[11px] text-slate-600 text-right mb-4">{m.date_range_start ?? '—'} – {m.date_range_end ?? '—'}</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <KpiCard label="Total Calls" value={m.total_calls?.toLocaleString()} status="neutral" large
               sub={`Busiest: ${cv.busiest_day ?? '—'}`} />
             <KpiCard label="P90 Response Time" value={m.p90_response_fmt ?? fmtSec(p90Val)}
@@ -531,7 +838,7 @@ export default function AnalyticsPage() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <KpiCard label="Median Response" value={m.median_response_fmt ?? fmtSec(totalResp.median)} sub="50th percentile" />
-            <KpiCard label="Mean Response" value={m.avg_total_response_fmt ?? fmtSec(totalResp.mean)} sub="Average" />
+            <KpiCard label="Mean Response"   value={m.avg_total_response_fmt ?? fmtSec(totalResp.mean)} sub="Average" />
             <KpiCard label="Data Coverage"
               value={dq?.total_rows_raw > 0 ? `${Math.round((dq.total_rows_clean / Math.max(dq.total_rows_raw, 1)) * 100)}%` : '—'}
               sub={`${dq?.total_rows_clean?.toLocaleString() ?? 0} / ${dq?.total_rows_raw?.toLocaleString() ?? 0} clean`}
@@ -543,6 +850,11 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* ── BENCHMARK COMPARISON ────────────────────────────────────── */}
+        {(totalResp.p90 != null || totalResp.median != null) && (
+          <BenchmarkPanel rt={rt} nfpa={nfpa} />
+        )}
+
         {/* ── RESPONSE TIME ANALYSIS ──────────────────────────────────── */}
         {flags.response_time !== false ? (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
@@ -550,7 +862,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">Phase Intervals</p>
-                <RtRow label="Call Processing  (call → dispatch)"    value={callProc.median}  target={64} />
+                <RtRow label="Call Processing  (call → dispatch)"     value={callProc.median}  target={64} />
                 <RtRow label="Turnout          (dispatch → en route)" value={turnout.median}   target={60} />
                 <RtRow label="Travel           (en route → on scene)" value={travel.median}    target={240} />
                 <RtRow label="Total Response   (call → on scene)"     value={totalResp.median} target={300} isKey />
@@ -563,14 +875,20 @@ export default function AnalyticsPage() {
                 <RtRow label="Max (raw)" value={totalResp.max} />
               </div>
             </div>
-            {Object.keys(rt.by_priority || {}).length > 0 && (
+            {filteredPrios.length > 0 && (
               <div className="mt-6 pt-5 border-t border-white/10">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">By Call Priority</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+                  By Call Priority
+                  {filters.prio && <span className="ml-2 text-blue-400 normal-case font-normal">— filtered: {filters.prio}</span>}
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {Object.entries(rt.by_priority).map(([prio, stats]) => (
-                    <div key={prio} className="bg-slate-800/50 rounded-lg px-4 py-3">
+                  {filteredPrios.map(([prio, stats]) => (
+                    <div key={prio}
+                      className={`rounded-lg px-4 py-3 cursor-pointer transition-colors ${filters.prio === prio ? 'bg-blue-500/15 border border-blue-500/30' : 'bg-slate-800/50 hover:bg-slate-800'}`}
+                      onClick={() => setFilters(f => ({ ...f, prio: f.prio === prio ? '' : prio }))}
+                    >
                       <p className="text-xs font-bold text-slate-400 mb-2">Priority {prio}</p>
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-xs gap-2 flex-wrap">
                         <span className="text-slate-500">{stats.count?.toLocaleString()} calls</span>
                         <span className="text-slate-300">Median <span className="font-bold text-white">{fmtSec(stats.median)}</span></span>
                         <span className={stats.p90 > 300 ? 'text-red-400' : 'text-slate-300'}>P90 <span className="font-bold">{fmtSec(stats.p90)}</span></span>
@@ -583,22 +901,20 @@ export default function AnalyticsPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-4">
-            <p className="text-sm text-amber-300 flex items-start gap-2">
-              <span>⚠</span>
-              <span>{rt.warning || 'Response time data unavailable — arrival timestamps not found or zero-filled.'}</span>
-            </p>
+            <p className="text-sm text-amber-300 flex items-start gap-2"><span>⚠</span><span>{rt.warning || 'Response time data unavailable — arrival timestamps not found or zero-filled.'}</span></p>
           </div>
         )}
 
         {/* ── CALL VOLUME ─────────────────────────────────────────────── */}
         {(Object.keys(cv.by_incident_type || {}).length > 0 || Object.keys(cv.by_month || {}).length > 0) && (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
-            <SectionLabel title="Call Volume Analysis" />
+            <SectionLabel title="Call Volume Analysis" sub="Click any bar to filter the dashboard" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {Object.keys(cv.by_incident_type || {}).length > 0 && (
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">By Incident Type</p>
-                  <DarkBarChart data={cv.by_incident_type} maxBars={12} accent="#3b82f6" />
+                  <DarkBarChart data={cv.by_incident_type} maxBars={12} accent="#3b82f6"
+                    activeKey={filters.type} onSelect={v => setFilters(f => ({ ...f, type: v }))} />
                 </div>
               )}
               {Object.keys(cv.by_month || {}).length > 0 && (
@@ -610,7 +926,8 @@ export default function AnalyticsPage() {
               {Object.keys(cv.by_day_of_week || {}).length > 0 && (
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">By Day of Week</p>
-                  <DarkBarChart data={cv.by_day_of_week} maxBars={7} accent="#10b981" />
+                  <DarkBarChart data={cv.by_day_of_week} maxBars={7} accent="#10b981"
+                    activeKey={filters.day} onSelect={v => setFilters(f => ({ ...f, day: v }))} />
                 </div>
               )}
               {flags.call_volume_by_hour !== false && Object.keys(cv.by_hour || {}).length > 0 && (
@@ -622,7 +939,8 @@ export default function AnalyticsPage() {
               {Object.keys(cv.by_unit || {}).length > 0 && (
                 <div className="lg:col-span-2">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">Top Units by Call Volume</p>
-                  <DarkBarChart data={cv.by_unit} maxBars={15} accent="#06b6d4" />
+                  <DarkBarChart data={cv.by_unit} maxBars={15} accent="#06b6d4"
+                    activeKey={filters.unit} onSelect={v => setFilters(f => ({ ...f, unit: v }))} />
                 </div>
               )}
             </div>
@@ -637,10 +955,18 @@ export default function AnalyticsPage() {
         {/* ── UNIT PERFORMANCE ────────────────────────────────────────── */}
         {up.total_units > 0 && (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
-            <SectionLabel title="Unit Performance"
-              sub={`${up.total_units} units · ${failUnits} failing NFPA P90 · click column headers to sort`}
+            <SectionLabel title="Unit Performance — Risk-Ranked"
+              sub={`${up.total_units} units · ${failUnits} failing NFPA P90 · sorted by risk score · click headers to re-sort`}
               badge="Operational" />
-            <UnitTable up={up} />
+            {filters.unit && (
+              <div className="mb-4 flex items-center gap-2">
+                <span className="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-lg">
+                  Filtered: {filters.unit}
+                </span>
+                <button onClick={() => setFilters(f => ({ ...f, unit: '' }))} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">✕ Clear</button>
+              </div>
+            )}
+            <UnitTable up={up} filterUnit={filters.unit} />
           </div>
         )}
 
@@ -648,8 +974,14 @@ export default function AnalyticsPage() {
         {mn.total_municipalities > 0 && (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
             <SectionLabel title="Geographic Breakdown"
-              sub={`${mn.total_municipalities} areas · ${mn.flagged_municipalities?.length ?? 0} exceeding NFPA P90`}
+              sub={`${mn.total_municipalities} areas · ${mn.flagged_municipalities?.length ?? 0} exceeding NFPA P90 · click row to filter`}
               badge="Operational" />
+            {filters.muni && (
+              <div className="mb-4 flex items-center gap-2">
+                <span className="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-lg">Filtered: {filters.muni}</span>
+                <button onClick={() => setFilters(f => ({ ...f, muni: '' }))} className="text-[10px] text-slate-500 hover:text-slate-300">✕ Clear</button>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -660,27 +992,31 @@ export default function AnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(mn.municipalities || {}).map(([name, s]) => {
+                  {filteredMunis.map(([name, s]) => {
                     const failing = s.response_p90 != null && s.response_p90 > 300;
                     const topType = s.top_incident_types ? Object.keys(s.top_incident_types)[0] : '—';
                     return (
-                      <tr key={name} className={`border-b border-white/5 last:border-0 ${failing ? 'bg-amber-500/5' : ''}`}>
-                        <td className="py-3 pr-4 font-bold text-white">
+                      <tr key={name}
+                        className={`border-b border-white/5 last:border-0 cursor-pointer transition-colors
+                          ${filters.muni === name ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/20' : failing ? 'bg-amber-500/5 hover:bg-amber-500/8' : 'hover:bg-white/3'}`}
+                        onClick={() => setFilters(f => ({ ...f, muni: f.muni === name ? '' : name }))}
+                      >
+                        <td className="py-3.5 pr-4 font-bold text-white">
                           {name}{failing && <span className="ml-2 text-[10px] text-amber-400">⚠</span>}
                         </td>
-                        <td className="py-3 pr-4 text-slate-300">{s.calls}</td>
-                        <td className="py-3 pr-4 text-slate-300">{s.response_median != null ? fmtSec(s.response_median) : '—'}</td>
-                        <td className={`py-3 pr-4 font-bold ${failing ? 'text-amber-400' : 'text-slate-200'}`}>
+                        <td className="py-3.5 pr-4 text-slate-300 tabular-nums">{s.calls}</td>
+                        <td className="py-3.5 pr-4 text-slate-300 tabular-nums">{s.response_median != null ? fmtSec(s.response_median) : '—'}</td>
+                        <td className={`py-3.5 pr-4 font-bold tabular-nums ${failing ? 'text-amber-400' : 'text-slate-200'}`}>
                           {s.response_p90 != null ? fmtSec(s.response_p90) : '—'}
                         </td>
-                        <td className="py-3 pr-4">
+                        <td className="py-3.5 pr-4">
                           {s.response_p90 != null ? (
                             <span className={`text-[10px] font-bold px-2 py-1 rounded ${s.response_p90 <= 300 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/15 text-red-400 border border-red-500/30'}`}>
                               {s.response_p90 <= 300 ? '✓ PASS' : '✗ FAIL'}
                             </span>
                           ) : '—'}
                         </td>
-                        <td className="py-3 text-slate-500 text-xs truncate max-w-[120px]">{topType}</td>
+                        <td className="py-3.5 text-slate-500 text-xs truncate max-w-[120px]">{topType}</td>
                       </tr>
                     );
                   })}
@@ -690,14 +1026,14 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {/* ── AI MODEL ────────────────────────────────────────────────── */}
-        {me?.model_name && <ModelExplanationCard explanation={me} />}
+        {/* ── DATA INTELLIGENCE ASSISTANT ─────────────────────────────── */}
+        <AiAssistant agencyId={agencyId} runId={runId} />
 
-        {/* ── FORECAST ────────────────────────────────────────────────── */}
+        {/* ── FORECAST CENTER ─────────────────────────────────────────── */}
         {fc.call_volume_forecast?.forecast_months?.length > 0 && (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
-            <SectionLabel title="12-Month Call Volume Forecast"
-              sub={`Trend: ${fc.call_volume_forecast.trend_direction} · ${fc.call_volume_forecast.trend_slope > 0 ? '+' : ''}${fc.call_volume_forecast.trend_slope} calls/day`}
+            <SectionLabel title="Forecast Center — 12-Month Call Volume"
+              sub={`Trend: ${fc.call_volume_forecast.trend_direction} · ${fc.call_volume_forecast.trend_slope > 0 ? '+' : ''}${fc.call_volume_forecast.trend_slope} calls/day · 80% prediction interval shown`}
               badge="Predictive" />
             <DarkForecastChart
               historical={fc.call_volume_forecast.historical}
@@ -706,6 +1042,15 @@ export default function AnalyticsPage() {
               forecastLower={fc.call_volume_forecast.forecast_lower}
               forecastUpper={fc.call_volume_forecast.forecast_upper}
             />
+            {fc.call_volume_forecast?.trend_direction === 'increasing' && (
+              <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+                <p className="text-xs text-amber-300 font-semibold">Staffing Implication</p>
+                <p className="text-xs text-amber-200/80 mt-1">
+                  At +{fc.call_volume_forecast.trend_slope} calls/day, expect ~{Math.round(fc.call_volume_forecast.trend_slope * 365)} additional annual calls.
+                  Begin capacity modeling for the next budget cycle.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -714,8 +1059,7 @@ export default function AnalyticsPage() {
           <div className={`rounded-xl border p-6 ${
             fc.attrition_risk.risk_level === 'high'   ? 'border-red-500/30 bg-red-500/5' :
             fc.attrition_risk.risk_level === 'medium' ? 'border-amber-500/30 bg-amber-500/5' :
-            'border-emerald-500/30 bg-emerald-500/5'
-          }`}>
+            'border-emerald-500/30 bg-emerald-500/5'}`}>
             <div className="flex items-center gap-4 mb-4">
               <span className="text-3xl">{fc.attrition_risk.risk_level === 'high' ? '🔴' : fc.attrition_risk.risk_level === 'medium' ? '🟡' : '🟢'}</span>
               <div>
@@ -733,16 +1077,19 @@ export default function AnalyticsPage() {
           </div>
         )}
 
+        {/* ── AI MODEL EXPLANATION ────────────────────────────────────── */}
+        {me?.model_name && <ModelExplanationCard explanation={me} />}
+
         {/* ── STAFFING ────────────────────────────────────────────────── */}
         {sf.unique_employees > 0 && (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
             <SectionLabel title="Staffing Overview" sub={`${sf.total_records} records · ${sf.unique_employees} unique staff`} badge="Operational" />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               {[
-                { label: 'Unique Staff',   value: sf.unique_employees,       color: 'text-white' },
-                { label: 'Avg Hrs/Shift',  value: sf.avg_hours_per_shift ?? '—', color: 'text-white' },
-                { label: 'Overtime Rate',  value: `${sf.overtime_pct ?? 0}%`,  color: sf.overtime_pct > 20 ? 'text-red-400' : 'text-white' },
-                { label: 'Gap Days',       value: sf.staffing_gaps?.length ?? 0, color: (sf.staffing_gaps?.length ?? 0) > 0 ? 'text-amber-400' : 'text-emerald-400' },
+                { label: 'Unique Staff',  value: sf.unique_employees,              color: 'text-white' },
+                { label: 'Avg Hrs/Shift', value: sf.avg_hours_per_shift ?? '—',    color: 'text-white' },
+                { label: 'Overtime Rate', value: `${sf.overtime_pct ?? 0}%`,        color: sf.overtime_pct > 20 ? 'text-red-400' : 'text-white' },
+                { label: 'Gap Days',      value: sf.staffing_gaps?.length ?? 0,     color: (sf.staffing_gaps?.length ?? 0) > 0 ? 'text-amber-400' : 'text-emerald-400' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="bg-slate-800/50 rounded-lg px-4 py-3 text-center">
                   <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -789,9 +1136,7 @@ export default function AnalyticsPage() {
             </div>
             {qw?.length > 0 && (
               <div className="space-y-1">
-                {qw.map((w, i) => (
-                  <p key={i} className="text-xs text-amber-300 flex items-start gap-1.5"><span className="shrink-0">›</span>{w}</p>
-                ))}
+                {qw.map((w, i) => <p key={i} className="text-xs text-amber-300 flex items-start gap-1.5"><span className="shrink-0">›</span>{w}</p>)}
               </div>
             )}
           </div>
@@ -802,14 +1147,8 @@ export default function AnalyticsPage() {
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
             <SectionLabel title="Data Validation" sub={`${val.files_validated} file${val.files_validated > 1 ? 's' : ''} checked`} />
             <div className="flex gap-6 mb-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-emerald-400">{val.files_passed}</p>
-                <p className="text-[11px] text-slate-500">Passed</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-400">{val.files_failed}</p>
-                <p className="text-[11px] text-slate-500">Failed</p>
-              </div>
+              <div className="text-center"><p className="text-2xl font-bold text-emerald-400">{val.files_passed}</p><p className="text-[11px] text-slate-500">Passed</p></div>
+              <div className="text-center"><p className="text-2xl font-bold text-red-400">{val.files_failed}</p><p className="text-[11px] text-slate-500">Failed</p></div>
             </div>
             {(val.results || []).filter(r => r.warnings?.length > 0).length === 0 && (
               <p className="text-xs text-emerald-400">✓ All validation checks passed</p>
@@ -824,9 +1163,15 @@ export default function AnalyticsPage() {
         )}
 
         {/* ── FOOTER ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between pt-4 pb-8 border-t border-white/10">
+        <div className="flex items-center justify-between pt-4 pb-10 border-t border-white/10">
           <Link href={`/platform/${agencyId}`} className="text-sm text-slate-500 hover:text-slate-300 transition-colors">← Back to platform</Link>
-          <p className="text-[11px] text-slate-700">{report?.agency_name} · Intelligence Report</p>
+          <div className="flex items-center gap-3">
+            <Link href={`/platform/${agencyId}/analytics/${runId}/report-builder`}
+              className="text-xs px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg border border-blue-500/30 font-bold transition-colors">
+              Export Board Report →
+            </Link>
+            <p className="text-[11px] text-slate-700">{report?.agency_name} · Intelligence Platform</p>
+          </div>
         </div>
 
       </main>

@@ -62,5 +62,59 @@ async def draft_section(section_id: str, summary: dict) -> str:
     return resp.json()["content"][0]["text"].strip()
 
 
+async def ask_report(question: str, report: dict) -> str:
+    """Free-form EMS analytics Q&A grounded in the agency report data."""
+    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY is not set.")
+
+    m   = report.get("key_metrics") or {}
+    rt  = (report.get("modules") or {}).get("response_times") or {}
+    sf  = (report.get("modules") or {}).get("staffing") or {}
+    up  = (report.get("modules") or {}).get("unit_performance") or {}
+    mn  = (report.get("modules") or {}).get("municipality") or {}
+    fc  = (report.get("modules") or {}).get("forecasting") or {}
+
+    context = json.dumps({
+        "agency":           report.get("agency_name"),
+        "date_range":       f"{m.get('date_range_start')} – {m.get('date_range_end')}",
+        "total_calls":      m.get("total_calls"),
+        "p90_response_s":   (rt.get("total_response") or {}).get("p90"),
+        "median_response_s":(rt.get("total_response") or {}).get("median"),
+        "nfpa_compliant":   (rt.get("nfpa_1710") or {}).get("compliant"),
+        "nfpa_pct":         (rt.get("nfpa_1710") or {}).get("pct_within_target"),
+        "units":            {k: {"calls": v.get("calls"), "p90_s": v.get("response_p90")}
+                             for k, v in (up.get("units") or {}).items()},
+        "municipalities":   {k: {"calls": v.get("calls"), "p90_s": v.get("response_p90")}
+                             for k, v in (mn.get("municipalities") or {}).items()},
+        "overtime_pct":     sf.get("overtime_pct"),
+        "attrition_risk":   (fc.get("attrition_risk") or {}).get("risk_level"),
+        "call_trend":       (fc.get("call_volume_forecast") or {}).get("trend_direction"),
+        "trend_slope":      (fc.get("call_volume_forecast") or {}).get("trend_slope"),
+    }, default=str)
+
+    payload = {
+        "model":      _ANTHROPIC_MODEL,
+        "max_tokens": 400,
+        "system": (
+            "You are an expert EMS operations analyst for a SaaS analytics platform. "
+            "Answer the question concisely and specifically, grounding every claim in the "
+            "provided agency data. Give actionable leadership recommendations when relevant. "
+            "Use plain prose. Maximum 120 words."
+        ),
+        "messages": [{"role": "user", "content": f"Agency data:\n{context}\n\nQuestion: {question}"}],
+    }
+    headers = {
+        "x-api-key":         api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type":      "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(_ANTHROPIC_URL, json=payload, headers=headers)
+        resp.raise_for_status()
+    return resp.json()["content"][0]["text"].strip()
+
+
 def is_drafting_available() -> bool:
     return bool(os.getenv("ANTHROPIC_API_KEY", "").strip())
