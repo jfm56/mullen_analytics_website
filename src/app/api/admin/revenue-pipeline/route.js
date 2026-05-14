@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Supabase env vars not configured');
+  return createClient(url, key);
+}
 
 // Helper function to get authenticated user
 async function getAuthenticatedUser(request) {
@@ -14,14 +16,15 @@ async function getAuthenticatedUser(request) {
   }
 
   const token = authHeader.slice(7);
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  const admin = getSupabaseAdmin();
+  const { data: { user }, error } = await admin.auth.getUser(token);
   
   if (error || !user) {
     return null;
   }
 
   // Verify user is admin
-  const { data: profile } = await supabaseAdmin
+  const { data: profile } = await admin
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -42,7 +45,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: deals, error } = await supabaseAdmin
+    const { data: deals, error } = await getSupabaseAdmin()
       .from('revenue_pipeline')
       .select(`
         *,
@@ -77,7 +80,7 @@ export async function POST(request) {
 
     const dealData = await request.json();
 
-    const { data: deal, error } = await supabaseAdmin
+    const { data: deal, error } = await getSupabaseAdmin()
       .from('revenue_pipeline')
       .insert({
         client_id: dealData.client_id,
