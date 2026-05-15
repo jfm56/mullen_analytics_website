@@ -85,7 +85,55 @@ def get_tier_config(tier: str) -> Dict[str, Any]:
 #     """Trigger pipeline runs for all agencies due for their monthly report."""
 #     ...
 
+
+# ---------------------------------------------------------------------------
+# SECURITY WARNING — multi-agency comparison
+# ---------------------------------------------------------------------------
+# Before is_feature_enabled("multi_agency") is wired to any data endpoint:
+#
+#   1. Every query MUST filter by agency_id IN (list of agencies the requesting
+#      user is entitled to).  A missing WHERE clause leaks one customer's
+#      incidents/staffing data to another customer.  This is a HIPAA/data-
+#      confidentiality issue, not just a product bug.
+#
+#   2. The entitlement list must be derived from AgencyMembership rows for the
+#      current user, NOT from a client-supplied parameter.
+#
+#   3. Before merging: add tests/test_isolation.py covers this.  Run it and
+#      extend it for every new cross-agency endpoint.
+# ---------------------------------------------------------------------------
 # TODO (SaaS v2): Implement multi-agency comparison aggregation
-# def build_comparison_report(agency_ids: list[str], db: Session) -> dict:
-#     """Aggregate key metrics across multiple agencies for comparison dashboard."""
+# def build_comparison_report(agency_ids: list[str], user_id: str, db: Session) -> dict:
+#     """Aggregate key metrics across agencies the user is entitled to see.
+#
+#     NEVER accept agency_ids from the client directly.  Derive them from DB:
+#         allowed = {m.agency_id for m in db.query(AgencyMembership)
+#                    .filter(AgencyMembership.user_id == user_id)}
+#         safe_ids = [aid for aid in agency_ids if aid in allowed]
+#     """
 #     ...
+
+
+# ---------------------------------------------------------------------------
+# SECURITY WARNING — Stripe webhooks
+# ---------------------------------------------------------------------------
+# Before wiring Stripe plan-change webhooks:
+#
+#   1. IDEMPOTENCY IS NON-NEGOTIABLE.  Stripe retries on 5xx.  Without dedup,
+#      a transient DB error causes double-grant of a subscription tier.
+#      Implement a processed_webhooks table: (event_id PK, received_at).
+#      At handler entry: INSERT ... ON CONFLICT DO NOTHING; if 0 rows inserted,
+#      return 200 immediately.
+#
+#   2. Verify the webhook signature via stripe.Webhook.construct_event() before
+#      touching any DB state.  An unsigned POST to the webhook URL can forge
+#      tier upgrades.
+#
+#   3. Handle checkout.session.completed AND customer.subscription.deleted
+#      (downgrade path).  A subscription that lapses must revert the tier;
+#      otherwise former customers retain Predictive/Enterprise features.
+# ---------------------------------------------------------------------------
+# TODO (SaaS v2): Implement Stripe webhook handler
+# def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session) -> None:
+#     ...
+

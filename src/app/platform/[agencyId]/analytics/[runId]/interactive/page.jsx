@@ -28,8 +28,10 @@ function med(arr) { return pctile(arr, 0.5); }
 // ── Inline chart components ───────────────────────────────────────────────────
 
 function BarChart({ data, accentColor = '#3b82f6', maxBars = 20, activeKey, onSelect }) {
-  if (!data || data.length === 0) return <p className="text-xs text-slate-500 italic py-4">No data</p>;
+  if (!data || data.length === 0) return <p className="text-xs text-slate-500 italic py-4">No data in selected range</p>;
   const sliced  = data.slice(0, maxBars);
+  const allZero = sliced.every(d => d.v === 0);
+  if (allZero) return <p className="text-xs text-slate-500 italic py-4">No data in selected range</p>;
   const maxVal  = Math.max(...sliced.map(d => d.v), 1);
   const cellW   = 100 / sliced.length;
   return (
@@ -56,9 +58,10 @@ function BarChart({ data, accentColor = '#3b82f6', maxBars = 20, activeKey, onSe
 }
 
 function LineChart({ data, color = '#3b82f6', height = 140 }) {
-  if (!data || data.length < 2) return <p className="text-xs text-slate-500 italic py-4">Not enough data</p>;
+  if (!data || data.length < 2) return <p className="text-xs text-slate-500 italic py-4">Not enough data in selected range</p>;
   const W = 500; const H = height - 24;
-  const vals   = data.map(d => d.v);
+  const vals   = data.map(d => d.v).filter(v => Number.isFinite(v));
+  if (vals.length < 2) return <p className="text-xs text-slate-500 italic py-4">Not enough data in selected range</p>;
   const maxVal = Math.max(...vals, 1);
   const minVal = Math.min(...vals, 0);
   const range  = maxVal - minVal || 1;
@@ -91,7 +94,12 @@ function HeatmapGrid({ matrix, days, hours }) {
   if (!matrix || matrix.length === 0) return (
     <p className="text-xs text-slate-500 italic py-4">No heatmap data — re-run the pipeline to generate it.</p>
   );
-  const maxVal = Math.max(...matrix.flat(), 1);
+  const flat   = matrix.flat();
+  const rawMax = flat.length ? Math.max(...flat) : 0;
+  if (rawMax === 0) return (
+    <p className="text-xs text-slate-500 italic py-4">No calls in this window — try a wider date range or clear filters.</p>
+  );
+  const maxVal = rawMax;
   function cellColor(v) {
     if (v === 0) return '#0a111e';
     const t = v / maxVal;

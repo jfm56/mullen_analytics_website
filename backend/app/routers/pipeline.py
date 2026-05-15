@@ -292,8 +292,20 @@ async def update_analytics_config(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
-    """Merge partial config updates into the agency analytics config."""
+    """Merge partial config updates into the agency analytics config.
+
+    ADMIN-ONLY.  Agency users are intentionally blocked: a member who can loosen
+    NFPA targets could make a non-compliant dashboard appear compliant.  Only
+    Mullen staff (role='admin') may adjust compliance thresholds.
+    """
     agency = _assert_access(db, agency_id, current_user)
+
+    profile = get_user_profile(db, str(current_user.id))
+    if not profile or profile.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Modifying analytics config requires Mullen admin role",
+        )
 
     existing = dict(agency.analytics_config or {})
     if body.risk_score:
