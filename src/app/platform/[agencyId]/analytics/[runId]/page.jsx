@@ -58,7 +58,6 @@ function DarkBarChart({ data, maxBars = 12, accent = '#3b82f6', activeKey, onSel
             <div className="flex-1 h-6 bg-slate-800/80 rounded overflow-hidden relative">
               <div className="h-full rounded transition-all"
                 style={{ width: `${(val / max) * 100}%`, background: isDimmed ? `${accent}40` : accent }} />
-              <span className="absolute right-2 top-1 text-xs text-slate-200 font-medium">{((val / max) * 100).toFixed(0)}%</span>
             </div>
             <span className={`text-sm w-16 text-right shrink-0 font-bold transition-colors tabular-nums ${isActive ? 'text-white' : 'text-slate-200'}`}>{val.toLocaleString()}</span>
           </div>
@@ -154,26 +153,19 @@ function SectionLabel({ title, sub, badge }) {
 }
 
 // ── RISK SCORE ────────────────────────────────────────────────────────────────
-function calcRiskScore(stats, avgCalls) {
-  let score = 0;
-  const p90  = stats.response_p90;
-  const calls = stats.calls ?? 0;
-  const util  = stats.utilisation_hours;
-  if (p90 != null) {
-    if (p90 > 600) score += 40;
-    else if (p90 > 480) score += 32;
-    else if (p90 > 360) score += 22;
-    else if (p90 > 300) score += 14;
-  }
-  if (p90 != null && p90 > 300) score += 20;
-  if (avgCalls > 0 && calls > 0) {
-    const r = calls / avgCalls;
-    if (r > 2.0) score += 20; else if (r > 1.5) score += 13; else if (r > 1.2) score += 7;
-  }
-  if (util != null) {
-    if (util > 100) score += 20; else if (util > 70) score += 12; else if (util > 40) score += 5;
-  }
-  return Math.min(100, Math.max(0, score));
+// Composite 0–100 score (100 = worst). Three components:
+//   50 pts — P90 excess over NFPA 5:00 target  = min(50, (p90-300)/300 × 50)
+//   30 pts — Utilisation burden                 = min(30, util_hours/200 × 30)
+//   20 pts — Call volume load                   = min(20, calls/400 × 20)
+// Severity bands: 0–40 LOW · 41–60 MODERATE · 61–80 HIGH · 81–100 CRITICAL
+function calcRiskScore(stats) {
+  const p90   = stats.response_p90 ?? null;
+  const calls = stats.calls        ?? 0;
+  const util  = stats.utilisation_hours ?? 0;
+  const p90Component  = p90 != null ? Math.min(50, (Math.max(0, p90 - 300) / 300) * 50) : 0;
+  const utilComponent = Math.min(30, (util / 200) * 30);
+  const volComponent  = Math.min(20, (calls / 400) * 20);
+  return Math.min(100, Math.round(p90Component + utilComponent + volComponent));
 }
 
 // ── SORTABLE UNIT TABLE ───────────────────────────────────────────────────────
@@ -181,21 +173,16 @@ function UnitTable({ up, filterUnit }) {
   const [sortKey, setSortKey] = useState('risk');
   const [sortDir, setSortDir] = useState('desc');
 
-  const avgCalls = useMemo(() => {
-    const vals = Object.values(up.units || {}).map(s => s.calls ?? 0).filter(v => v > 0);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  }, [up.units]);
-
   const entries = useMemo(() => {
     const sk = sortKey === 'nfpa' ? 'response_p90' : sortKey;
-    let rows = Object.entries(up.units || {}).map(([u, s]) => [u, { ...s, risk: calcRiskScore(s, avgCalls) }]);
+    let rows = Object.entries(up.units || {}).map(([u, s]) => [u, { ...s, risk: calcRiskScore(s) }]);
     if (filterUnit) rows = rows.filter(([u]) => u === filterUnit);
     return rows.sort((a, b) => {
       const va = a[1][sk] ?? (sortDir === 'desc' ? -Infinity : Infinity);
       const vb = b[1][sk] ?? (sortDir === 'desc' ? -Infinity : Infinity);
       return sortDir === 'desc' ? vb - va : va - vb;
     });
-  }, [up.units, sortKey, sortDir, avgCalls, filterUnit]);
+  }, [up.units, sortKey, sortDir, filterUnit]);
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
@@ -204,7 +191,7 @@ function UnitTable({ up, filterUnit }) {
 
   const cols = [
     { key: 'unit',              label: 'Unit',       sortable: false },
-    { key: 'risk',              label: 'Risk Score',  sortable: true  },
+    { key: 'risk',              label: 'Risk Score',  sortable: true, tooltip: 'Composite 0–100: 50% P90 excess over NFPA target, 30% utilisation, 20% call volume. Bands: 0–40 LOW · 41–60 MODERATE · 61–80 HIGH · 81–100 CRITICAL'  },
     { key: 'calls',             label: 'Calls',       sortable: true  },
     { key: 'response_median',   label: 'Median RT',   sortable: true  },
     { key: 'response_p90',      label: 'P90 RT',      sortable: true  },
@@ -226,8 +213,9 @@ function UnitTable({ up, filterUnit }) {
                     ${col.sortable ? 'cursor-pointer hover:text-slate-200' : ''}
                     ${active ? 'text-blue-400' : 'text-slate-400'}`}
                   onClick={() => col.sortable && toggleSort(sk)}
+                  title={col.tooltip ?? undefined}
                 >
-                  {col.label}{col.sortable && active && <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                  {col.label}{col.tooltip && <span className="ml-1 text-slate-600 cursor-help">ⓘ</span>}{col.sortable && active && <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>}
                 </th>
               );
             })}
@@ -238,8 +226,8 @@ function UnitTable({ up, filterUnit }) {
             const failing  = s.response_p90 != null && s.response_p90 > 300;
             const critical = s.response_p90 != null && s.response_p90 > 480;
             const risk     = s.risk ?? 0;
-            const riskColor    = risk >= 70 ? 'text-red-400'    : risk >= 40 ? 'text-amber-400'    : 'text-emerald-400';
-            const riskBarColor = risk >= 70 ? 'bg-red-500'      : risk >= 40 ? 'bg-amber-500'      : 'bg-emerald-500';
+            const riskColor    = risk >= 81 ? 'text-red-400' : risk >= 61 ? 'text-orange-400' : risk >= 41 ? 'text-amber-400' : 'text-emerald-400';
+            const riskBarColor = risk >= 81 ? 'bg-red-500'   : risk >= 61 ? 'bg-orange-500'  : risk >= 41 ? 'bg-amber-500'  : 'bg-emerald-500';
             return (
               <tr key={unit} className={`border-b border-white/5 last:border-0 transition-colors hover:bg-white/3
                 ${critical ? 'bg-red-500/8' : failing ? 'bg-amber-500/5' : entries.indexOf(entries.find(e => e[0] === unit)) % 2 === 0 ? 'bg-white/[0.02]' : ''}`}>
@@ -363,7 +351,6 @@ function buildActions(report) {
         wmu ? `Address coverage gaps in ${wmu[0]} (P90: ${fmtSec(wmu[1].response_p90)})` : 'Review geographic post positioning',
         'Evaluate peak-demand hours vs. on-duty unit availability',
       ],
-      impact: 'Optimized deployment typically yields +12–20% compliance improvement within 60 days.',
       tier: null,
     });
   }
@@ -380,7 +367,6 @@ function buildActions(report) {
         'Analyze call density vs. post positioning for all failing units',
         riskUnits.length > 2 ? 'Consider adding supplemental unit during peak demand windows' : 'Review mutual aid trigger thresholds',
       ],
-      impact: 'Resolving top-unit delays typically reduces agency-wide P90 by 30–90 seconds.',
       tier: null,
     });
   }
@@ -395,7 +381,6 @@ function buildActions(report) {
         'Implement mandatory overtime ceiling for current quarter',
         'Cross-train per-diem roster to absorb coverage gaps',
       ],
-      impact: 'Reducing to 15% overtime: estimated 25–35% reduction in OT labor cost.',
       tier: null,
     });
   }
@@ -411,7 +396,6 @@ function buildActions(report) {
         'Benchmark compensation against regional EMS market rates',
         'Initiate hiring pipeline 60–90 days ahead of projected vacancies',
       ],
-      impact: 'Proactive retention reduces replacement cost by $45,000–$85,000 per position.',
       tier: 'Predictive',
     });
   }
@@ -428,7 +412,6 @@ function buildActions(report) {
         'Present capacity investment case to board before next budget cycle',
         'Evaluate station and post placement for growing demand zones',
       ],
-      impact: `Proactive staffing for +${annual} annual calls prevents NFPA compliance degradation.`,
       tier: 'Predictive',
     });
   }
@@ -467,10 +450,6 @@ function ActionCard({ action }) {
             </li>
           ))}
         </ul>
-      </div>
-      <div className="bg-black/20 rounded-xl px-5 py-4 border border-white/8">
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Projected Impact</p>
-        <p className="text-base text-emerald-300 leading-relaxed font-medium">{action.impact}</p>
       </div>
     </div>
   );
@@ -607,12 +586,10 @@ function AiAssistant({ agencyId, runId }) {
   const [asked,    setAsked]    = useState('');
 
   const presets = [
-    'What should leadership prioritize this month?',
-    'Which unit is at highest operational risk?',
-    'Which municipality is driving response time failures?',
-    'Are we heading toward a staffing crisis?',
-    'How can we improve NFPA compliance?',
-    'What is driving our overtime rate?',
+    'Which unit has the highest P90 response time?',
+    'Which day of the week has the most calls?',
+    'Which incident type accounts for the largest share of calls?',
+    'What is our NFPA 1710 compliance rate by phase?',
   ];
 
   async function ask(q) {
@@ -639,7 +616,7 @@ function AiAssistant({ agencyId, runId }) {
             <h2 className="text-2xl font-bold text-white">Executive AI Assistant</h2>
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-violet-500/25 text-violet-300 border border-violet-500/40 uppercase tracking-widest">Predictive</span>
           </div>
-          <p className="text-base text-slate-300">Ask anything about your agency's operational data — powered by Claude AI</p>
+          <p className="text-base text-slate-300">Ask descriptive questions about your agency's operational data — powered by Claude AI</p>
         </div>
       </div>
       <p className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-3">Example questions</p>
@@ -669,7 +646,10 @@ function AiAssistant({ agencyId, runId }) {
           {asked && <p className="text-xs text-violet-400 font-bold mb-3 uppercase tracking-widest">Q: {asked}</p>}
           {loading
             ? <div className="flex items-center gap-3 text-base text-slate-300"><div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /> Analyzing operational data…</div>
-            : <p className="text-base text-white leading-relaxed font-medium">{answer}</p>
+            : <>
+                <p className="text-xs text-slate-500 italic mb-3 pb-3 border-b border-white/8">This response describes patterns in your data. It does not constitute operational advice.</p>
+                <p className="text-base text-white leading-relaxed font-medium">{answer}</p>
+              </>
           }
         </div>
       )}
@@ -731,8 +711,10 @@ export default function AnalyticsPage() {
   const p90Val     = totalResp.p90;
   const p90Status  = !nfpaValid ? 'neutral' : nfpa.compliant ? 'good' : p90Val > 480 ? 'critical' : 'warning';
   const pctStatus  = !nfpaValid ? 'neutral' : (nfpa.pct_within_target ?? 0) >= 90 ? 'good' : (nfpa.pct_within_target ?? 0) >= 70 ? 'warning' : 'critical';
-  const failUnits  = Object.values(up.units || {}).filter(s => s.response_p90 != null && s.response_p90 > 300).length;
-  const totalUnits = Object.keys(up.units || {}).length;
+  // Only count units with ≥20 calls to avoid skewing denominator with sparse data
+  const qualifiedUnits = Object.values(up.units || {}).filter(s => (s.calls ?? 0) >= 20);
+  const failUnits  = qualifiedUnits.filter(s => s.response_p90 != null && s.response_p90 > 300).length;
+  const totalUnits = qualifiedUnits.length;
 
   const filteredMunis = useMemo(() => {
     const entries = Object.entries(report?.modules?.municipality?.municipalities || {});
@@ -841,16 +823,18 @@ export default function AnalyticsPage() {
               insight={failUnits === 0 ? 'All units within target' : `${failUnits} unit${failUnits > 1 ? 's' : ''} need attention`} />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-5">
-            <KpiCard label="Median Response" value={m.median_response_fmt ?? fmtSec(totalResp.median)} sub="50th percentile" />
-            <KpiCard label="Mean Response"   value={m.avg_total_response_fmt ?? fmtSec(totalResp.mean)} sub="Average" />
+            <KpiCard label="Response — Median (P50)" value={m.median_response_fmt ?? fmtSec(totalResp.median)} sub="50th percentile of total response" />
+            <KpiCard label="Response — Mean (avg)"   value={m.avg_total_response_fmt ?? fmtSec(totalResp.mean)} sub="Arithmetic mean of total response" />
             <KpiCard label="Data Coverage"
               value={dq?.total_rows_raw > 0 ? `${Math.round((dq.total_rows_clean / Math.max(dq.total_rows_raw, 1)) * 100)}%` : '—'}
               sub={`${dq?.total_rows_clean?.toLocaleString() ?? 0} / ${dq?.total_rows_raw?.toLocaleString() ?? 0} clean`}
               status={dq?.total_rows_raw > 0 && (dq.total_rows_clean / dq.total_rows_raw) > 0.9 ? 'good' : 'warning'} />
-            <KpiCard label="Call Trend"
-              value={fc.call_volume_forecast?.trend_direction ?? '—'}
-              sub={fc.call_volume_forecast?.trend_slope != null ? `${fc.call_volume_forecast.trend_slope > 0 ? '+' : ''}${fc.call_volume_forecast.trend_slope} calls/day` : 'No forecast'}
-              status={fc.call_volume_forecast?.trend_direction === 'increasing' ? 'warning' : 'neutral'} />
+            {fc.call_volume_forecast?.trend_direction && fc.call_volume_forecast.trend_direction !== '—' && !fc.call_volume_forecast?.error && (
+              <KpiCard label="Call Trend"
+                value={fc.call_volume_forecast.trend_direction}
+                sub={fc.call_volume_forecast.trend_slope != null ? `${fc.call_volume_forecast.trend_slope > 0 ? '+' : ''}${fc.call_volume_forecast.trend_slope} calls/day` : null}
+                status={fc.call_volume_forecast.trend_direction === 'increasing' ? 'warning' : 'neutral'} />
+            )}
           </div>
         </div>
 
@@ -865,11 +849,12 @@ export default function AnalyticsPage() {
             <SectionLabel title="Response Time Analysis" sub="Phase-by-phase breakdown · medians unless noted" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Phase Intervals</p>
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Phase Intervals (medians)</p>
                 <RtRow label="Call Processing  (call → dispatch)"     value={callProc.median}  target={64} />
                 <RtRow label="Turnout          (dispatch → en route)" value={turnout.median}   target={60} />
                 <RtRow label="Travel           (en route → on scene)" value={travel.median}    target={240} />
                 <RtRow label="Total Response   (call → on scene)"     value={totalResp.median} target={300} isKey />
+                <p className="text-xs text-slate-500 mt-3 leading-relaxed">Each median is computed independently on calls with valid timestamps for that phase. Subsets differ — phase medians do not sum to total response median.</p>
               </div>
               <div>
                 <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Total Response Distribution</p>
