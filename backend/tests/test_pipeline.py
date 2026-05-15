@@ -10,6 +10,7 @@ import csv
 import json
 import os
 import tempfile
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -439,21 +440,25 @@ class TestMunicipality:
 # ---------------------------------------------------------------------------
 
 class TestForecasting:
-    def _large_dispatch(self, tmp_path, n: int = 60) -> str:
-        """Generate dispatch rows across 5 months for meaningful trend fitting."""
+    def _large_dispatch(self, tmp_path, n: int = 300) -> str:
+        """Generate n dispatch rows on sequential days starting 2023-01-01.
+
+        n must exceed _MIN_TRAIN_DAYS + _TEST_DAYS (120 + 90 = 210) so that
+        _forecast_call_volume can proceed past the insufficient-data guard.
+        The default of 300 provides a comfortable 90-day margin.
+        """
         path = str(tmp_path / "dispatch_fc.csv")
+        base = datetime(2023, 1, 1, 10, 0, 0)
         rows = []
         for i in range(n):
-            month = (i % 5) + 1
-            day   = (i % 28) + 1
-            hour  = i % 24
+            dt = base + timedelta(days=i)
             rows.append({
                 "incident_number": f"INC-{i:04d}",
-                "call_date":       f"2024-{month:02d}-{day:02d} {hour:02d}:00:00",
-                "dispatch_time":   f"2024-{month:02d}-{day:02d} {hour:02d}:02:00",
-                "en_route_time":   f"2024-{month:02d}-{day:02d} {hour:02d}:03:00",
-                "on_scene_time":   f"2024-{month:02d}-{day:02d} {hour:02d}:08:00",
-                "clear_time":      f"2024-{month:02d}-{day:02d} {hour:02d}:28:00",
+                "call_date":       dt.strftime("%Y-%m-%d %H:%M:%S"),
+                "dispatch_time":   (dt + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S"),
+                "en_route_time":   (dt + timedelta(minutes=3)).strftime("%Y-%m-%d %H:%M:%S"),
+                "on_scene_time":   (dt + timedelta(minutes=8)).strftime("%Y-%m-%d %H:%M:%S"),
+                "clear_time":      (dt + timedelta(minutes=28)).strftime("%Y-%m-%d %H:%M:%S"),
                 "incident_type":   "EMS",
                 "priority":        "P1",
                 "unit_id":         "MED-1",
@@ -482,10 +487,10 @@ class TestForecasting:
         assert fcast["trend_direction"] in ("increasing", "decreasing", "stable")
 
     def test_historical_matches_input(self, tmp_path):
-        path = self._large_dispatch(tmp_path, n=60)
+        path = self._large_dispatch(tmp_path, n=300)
         summary = forecasting.run([{"upload_path": path}], str(tmp_path / "out"))
         historical = summary["call_volume_forecast"]["historical"]
-        assert sum(historical.values()) == 60
+        assert sum(historical.values()) == 300
 
     def test_output_json_written(self, tmp_path):
         path = self._large_dispatch(tmp_path)
@@ -557,7 +562,7 @@ class TestReport:
         with open(rpt_path, encoding="utf-8") as fh:
             data = json.load(fh)
         assert data["agency_id"] == "test-agency"
-        assert data["schema_version"] == "1.0"
+        assert data["schema_version"] == "1.1"
 
     def test_key_metrics_present(self, tmp_path):
         val_r, cv_r, rt_r = self._make_modules(tmp_path)
