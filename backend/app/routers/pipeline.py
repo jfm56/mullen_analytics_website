@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database import get_db
 from ..models.agency import Agency, AgencyMembership, PipelineRun
+from ..services.pipeline.report import DEFAULT_ANALYTICS_CONFIG
 from ..models.user import User
 from ..schemas.agency import PipelineRunResponse
 from ..services.audit import log_action
@@ -111,6 +112,7 @@ async def trigger_pipeline(
         storage_root=settings.data_storage_root,
         triggered_by=str(current_user.id),
         column_map=(body.column_map if body else {}),
+        analytics_config=agency.analytics_config or {},
     )
 
     return run
@@ -215,3 +217,101 @@ async def get_trends(
         })
 
     return {"agency_id": agency_id, "points": points}
+
+
+@router.get("/{agency_id}/pipeline/runs/{run_id}/heatmap")
+async def get_heatmap(
+    agency_id: str,
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Return the hour × day call volume heatmap for the interactive dashboard.
+    Reads pre-computed heatmap from call_volume_summary.json written by the pipeline.
+    Falls back to an empty matrix if the run pre-dates heatmap support.
+    """
+    _assert_access(db, agency_id, current_user)
+    run = db.query(PipelineRun).filter(
+        PipelineRun.id        == run_id,
+        PipelineRun.agency_id == agency_id,
+    ).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+    if run.status != "completed" or not run.output_path:
+        raise HTTPException(status_code=404, detail="Run not yet completed")
+
+    cv_path = Path(run.output_path) / "call_volume_summary.json"
+    if not cv_path.exists():
+        raise HTTPException(status_code=404, detail="Call volume summary not found")
+
+    try:
+        with open(cv_path, "r", encoding="utf-8") as fh:
+            cv = json.load(fh)
+    except (json.JSONDecodeError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=500, detail=f"Could not read call volume data: {exc}") from exc
+
+    heatmap = cv.get("heatmap")
+    if not heatmap:
+        # Pre-heatmap run: return empty matrix so the frontend renders gracefully
+        heatmap = {
+            "days":   ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "hours":  list(range(24)),
+            "matrix": [[0] * 24 for _ in range(7)],
+            "note":   "Re-run the pipeline to generate heatmap data.",
+        }
+
+    return _sanitize(heatmap)
+
+
+class AnalyticsConfigUpdate(BaseModel):
+    risk_score: Dict[str, Any] = {}
+    staffing: Dict[str, Any] = {}
+
+
+@router.get("/{agency_id}/analytics-config")
+async def get_analytics_config(
+    agency_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """Return the effective analytics config (agency overrides merged with defaults)."""
+    agency = _assert_access(db, agency_id, current_user)
+    overrides = agency.analytics_config or {}
+    effective: Dict[str, Any] = {}
+    for key, defaults in DEFAULT_ANALYTICS_CONFIG.items():
+        effective[key] = {**defaults, **overrides.get(key, {})}
+    return {"agency_id": agency_id, "config": effective, "has_overrides": bool(overrides)}
+
+
+@router.patch("/{agency_id}/analytics-config")
+async def update_analytics_config(
+    agency_id: str,
+    body: AnalyticsConfigUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """Merge partial config updates into the agency analytics config."""
+    agency = _assert_access(db, agency_id, current_user)
+
+    existing = dict(agency.analytics_config or {})
+    if body.risk_score:
+        existing.setdefault("risk_score", {}).update(body.risk_score)
+    if body.staffing:
+        existing.setdefault("staffing", {}).update(body.staffing)
+
+    agency.analytics_config = existing
+    db.commit()
+
+    log_action(
+        db,
+        action="analytics_config_updated",
+        user_id=str(current_user.id),
+        agency_id=agency_id,
+        resource_type="agency",
+        resource_id=agency_id,
+        details={"updated_keys": list(body.model_dump(exclude_none=True).keys())},
+        ip_address=request.client.host if request.client else None,
+    )
+    return {"agency_id": agency_id, "config": existing}

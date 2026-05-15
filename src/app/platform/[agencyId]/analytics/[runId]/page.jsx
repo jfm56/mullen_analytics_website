@@ -1069,11 +1069,16 @@ export default function AnalyticsPage() {
             {fc.attrition_risk.indicators?.length === 0 && (
               <p className="text-base text-emerald-300 ml-14 font-medium">No significant attrition risk indicators detected.</p>
             )}
+            {staffingCoreValid && sf.tenure_data_available === false && (
+              <div className="mt-4 rounded-lg bg-slate-800/50 border border-slate-600/30 px-4 py-3">
+                <p className="text-xs text-slate-400">ℹ Attrition risk is limited because roster tenure data was not available. Upload a roster file with hire dates to improve this analysis.</p>
+              </div>
+            )}
           </div>
           ) : (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
-            <p className="text-sm font-bold text-amber-300 mb-1">⚠ Attrition Risk — Staffing Validation Required</p>
-            <p className="text-sm text-amber-200/80">Attrition risk analysis is not shown because no staffing file passed validation. Resolve the issues below, then re-run the pipeline.</p>
+            <p className="text-sm font-bold text-amber-300 mb-1">⚠ Attrition Risk Unavailable</p>
+            <p className="text-sm text-amber-200/80">Staffing analytics are unavailable because a valid staffing/roster file was not uploaded. Re-run the pipeline after uploading a valid file.</p>
           </div>
           )
         )}
@@ -1126,8 +1131,8 @@ export default function AnalyticsPage() {
             <div className="flex items-start gap-3 mb-4">
               <span className="text-xl shrink-0">🛑</span>
               <div>
-                <p className="text-base font-bold text-white">Staffing data validation failed</p>
-                <p className="text-sm text-slate-300 mt-1">Staffing analytics are not shown because no staffing file passed validation. Metrics computed from unvalidated data cannot be trusted.</p>
+                <p className="text-base font-bold text-white">Staffing Analytics Unavailable</p>
+                <p className="text-sm text-slate-300 mt-1">Staffing analytics are unavailable because a valid staffing/roster file was not uploaded. Upload a valid staffing or roster CSV/XLSX and re-run the pipeline.</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -1138,7 +1143,7 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-4">Fix the column issues above and re-run the pipeline to enable staffing analytics.</p>
+            <p className="text-xs text-slate-500 mt-4">Ensure the file has columns: employee_id (or Badge Number), date, shift, and hours. Then re-run the pipeline.</p>
           </div>
           )
         )}

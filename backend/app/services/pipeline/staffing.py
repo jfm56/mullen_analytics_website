@@ -34,16 +34,17 @@ def _analyze(df: pd.DataFrame) -> Dict[str, Any]:
     hours_col = resolve(df, "hours",        "staffing")
 
     result: Dict[str, Any] = {
-        "total_records":       int(len(df)),
-        "unique_employees":    0,
-        "by_shift":            {},
-        "by_position":         {},
-        "by_date":             {},
-        "overtime_records":    0,
-        "overtime_pct":        0.0,
-        "avg_hours_per_shift": None,
-        "staffing_gaps":       [],
-        "warnings":            [],
+        "total_records":        int(len(df)),
+        "unique_employees":     0,
+        "by_shift":             {},
+        "by_position":          {},
+        "by_date":              {},
+        "overtime_records":     0,
+        "overtime_pct":         0.0,
+        "avg_hours_per_shift":  None,
+        "staffing_gaps":        [],
+        "tenure_data_available": False,
+        "warnings":             [],
     }
 
     if emp_col:
@@ -75,6 +76,10 @@ def _analyze(df: pd.DataFrame) -> Dict[str, Any]:
                 )
 
     if date_col:
+        # If the resolved date column is hire_date or start_date, this is a roster
+        # file with tenure data, not a timekeeping file with shift dates.
+        if date_col in ("hire_date", "start_date"):
+            result["tenure_data_available"] = True
         try:
             dates = pd.to_datetime(df[date_col], errors="coerce")
             by_date = dates.dt.to_period("M").astype(str).value_counts().sort_index()

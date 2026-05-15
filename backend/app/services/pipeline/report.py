@@ -34,6 +34,21 @@ def _fmt_seconds(s: Any) -> str:
         return "—"
 
 
+# Default analytics configuration used when no agency-specific config is provided.
+# TODO (SaaS v2): load from agency.analytics_config DB column via runner.execute().
+DEFAULT_ANALYTICS_CONFIG: Dict[str, Any] = {
+    "risk_score": {
+        "utilization_hours_max": 200,   # hrs/unit/month → 30 risk pts
+        "volume_ceiling": 400,          # calls/unit → 20 risk pts
+        "nfpa_target_seconds": 300,     # 5 min = NFPA 1710 BLS target
+    },
+    "staffing": {
+        "min_crew_per_unit": 2,
+        "overtime_threshold_hours": 12.0,
+    },
+}
+
+
 def build(
     agency_id: str,
     agency_name: str,
@@ -47,6 +62,7 @@ def build(
     unit_performance: Optional[Dict[str, Any]] = None,
     municipality: Optional[Dict[str, Any]] = None,
     forecasting: Optional[Dict[str, Any]] = None,
+    analytics_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Assemble and persist the executive report."""
 
@@ -166,6 +182,12 @@ def build(
             "test_days":          fcast_data.get("test_days"),
         }
 
+    # Merge provided config over defaults (shallow merge per sub-key)
+    effective_config: Dict[str, Any] = {}
+    for key, defaults in DEFAULT_ANALYTICS_CONFIG.items():
+        overrides = (analytics_config or {}).get(key, {})
+        effective_config[key] = {**defaults, **overrides}
+
     report = {
         "schema_version":    "1.1",
         "generated_at":      datetime.now(timezone.utc).isoformat(),
@@ -176,6 +198,7 @@ def build(
         "highlights":        highlights,
         "chart_flags":       chart_flags,
         "quality_warnings":  dq_warnings,
+        "analytics_config":  effective_config,
         "model_explanation": model_explanation,
         "modules": {
             "data_quality":    dq,

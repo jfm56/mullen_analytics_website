@@ -20,6 +20,10 @@ class Agency(Base):
     contact_name      = Column(String(255), nullable=True)
     agency_type       = Column(String(100), nullable=True)
     state             = Column(String(50), nullable=True)
+    # Per-agency analytics configuration (risk score thresholds, NFPA targets, etc.)
+    # See report.DEFAULT_ANALYTICS_CONFIG for the schema and defaults.
+    analytics_config  = Column(JSON, nullable=True)
+    # TODO (SaaS v2): add subscription_features (JSON) for per-agency feature flags
     created_at        = Column(DateTime, default=datetime.utcnow)
     updated_at        = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

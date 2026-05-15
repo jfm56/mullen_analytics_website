@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -179,6 +180,54 @@ async def inspect_file(
         return inspect_columns(record.upload_path)
     except Exception as exc:  # pylint: disable=broad-exception-caught
         raise HTTPException(status_code=500, detail=f"Failed to inspect file: {exc}") from exc
+
+
+class FileTypeUpdate(BaseModel):
+    file_type: str
+
+
+@router.patch("/{agency_id}/files/{file_id}", response_model=AgencyFileResponse)
+async def reclassify_file(
+    agency_id: str,
+    file_id: str,
+    body: FileTypeUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Reclassify the file_type of an uploaded file (e.g. staffing → other for payroll reports)."""
+    _assert_access(db, agency_id, current_user)
+
+    if body.file_type not in VALID_FILE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file_type. Must be one of: {', '.join(VALID_FILE_TYPES)}",
+        )
+
+    record = db.query(AgencyFile).filter(
+        AgencyFile.id        == file_id,
+        AgencyFile.agency_id == agency_id,
+    ).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    old_type = record.file_type
+    record.file_type = body.file_type
+    db.commit()
+    db.refresh(record)
+
+    log_action(
+        db,
+        action="file_reclassified",
+        user_id=str(current_user.id),
+        agency_id=agency_id,
+        resource_type="agency_file",
+        resource_id=file_id,
+        details={"original_filename": record.original_filename,
+                 "old_file_type": old_type, "new_file_type": body.file_type},
+        ip_address=request.client.host if request.client else None,
+    )
+    return record
 
 
 @router.delete("/{agency_id}/files/{file_id}")

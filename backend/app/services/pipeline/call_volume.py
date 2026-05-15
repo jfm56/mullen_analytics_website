@@ -118,6 +118,26 @@ def analyze_dispatch(
             if not by_hour.empty:
                 result["busiest_hour"] = int(by_hour.idxmax())
 
+    # ── Hour × Day heatmap ───────────────────────────────────────────────────
+    if "_hour" in df.columns and "_day_of_week" in df.columns:
+        hm = df[["_day_of_week", "_hour"]].dropna()
+        if not hm.empty:
+            cross = hm.groupby(["_day_of_week", "_hour"]).size().unstack(fill_value=0)
+            matrix = []
+            for dow in range(7):
+                row = []
+                for h in range(24):
+                    try:
+                        row.append(int(cross.at[dow, h]))
+                    except KeyError:
+                        row.append(0)
+                matrix.append(row)
+            result["heatmap"] = {
+                "days":   ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                "hours":  list(range(24)),
+                "matrix": matrix,
+            }
+
     # ── Category breakdowns ───────────────────────────────────────────────
     df_n = normalize_cols(df) if not any(c.startswith("_") for c in df.columns) else df
 

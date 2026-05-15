@@ -22,6 +22,24 @@ from . import (
 
 logger = logging.getLogger(__name__)
 
+# ── Payroll filename heuristic ────────────────────────────────────────────────
+# Files classified as 'staffing' but whose name matches these terms are
+# aggregate payroll reports, not per-row timekeeping/roster files.
+# They are logged as warnings and excluded from the staffing module.
+_PAYROLL_INDICATORS = frozenset([
+    "payroll", "pay_roll", "wages", "compensation", "salary", "w-2", "w2",
+])
+
+
+def _is_payroll_filename(filename: str) -> bool:
+    """Return True if the filename strongly suggests an aggregate payroll report."""
+    name = filename.lower()
+    return any(ind in name for ind in _PAYROLL_INDICATORS)
+
+
+# TODO (SaaS v2): Move TIER_MODULES to a subscription-aware FeatureGate service.
+# Each tier should map to a set of enabled features, allow per-agency overrides,
+# and enforce limits (e.g. max run frequency, max file size).
 TIER_MODULES = {
     "essential":   ["data_quality", "validator", "call_volume", "response_times", "report"],
     "operational": ["data_quality", "validator", "call_volume", "response_times", "staffing",
@@ -70,6 +88,7 @@ def execute(
     storage_root: str,
     triggered_by: Optional[str] = None,
     column_map: Optional[Dict[str, str]] = None,
+    analytics_config: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Main pipeline entry point — intended to be called from a BackgroundTask.
@@ -91,8 +110,24 @@ def execute(
     modules = TIER_MODULES.get(subscription_tier, TIER_MODULES["essential"])
 
     try:
-        all_files    = _get_files(db, agency_id)
-        staffing_files  = [f for f in all_files if f["file_type"] == "staffing"]
+        all_files = _get_files(db, agency_id)
+
+        # Route payroll-named files away from the staffing module
+        payroll_routed = [
+            f for f in all_files
+            if f["file_type"] == "staffing" and _is_payroll_filename(f["original_filename"])
+        ]
+        for pf in payroll_routed:
+            logger.warning(
+                "[pipeline:%s] '%s' (file_type=staffing) looks like a payroll report — "
+                "excluded from staffing analysis. Reclassify to file_type='payroll' or 'other'.",
+                run_id[:8], pf["original_filename"],
+            )
+
+        staffing_files = [
+            f for f in all_files
+            if f["file_type"] == "staffing" and not _is_payroll_filename(f["original_filename"])
+        ]
         dispatch_files = [f for f in all_files if f["file_type"] == "dispatch"]
 
         validation_result   = {}
@@ -187,6 +222,7 @@ def execute(
                 unit_performance=unit_perf_result,
                 municipality=municipality_result,
                 forecasting=forecast_result,
+                analytics_config=analytics_config or {},
                 output_dir=processed_dir,
             )
 
