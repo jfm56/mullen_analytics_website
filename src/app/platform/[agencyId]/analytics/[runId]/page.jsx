@@ -716,6 +716,11 @@ export default function AnalyticsPage() {
   const failUnits  = qualifiedUnits.filter(s => s.response_p90 != null && s.response_p90 > 300).length;
   const totalUnits = qualifiedUnits.length;
 
+  // ── Staffing validation gate ───────────────────────────────────────────────
+  const staffingFileResults = (val.results || []).filter(r => r.file_type === 'staffing');
+  const staffingCoreValid   = staffingFileResults.some(r => r.passed);
+  const staffingFailedFiles = staffingFileResults.filter(r => !r.passed && r.warnings?.length > 0);
+
   const filteredMunis = useMemo(() => {
     const entries = Object.entries(report?.modules?.municipality?.municipalities || {});
     return filters.muni ? entries.filter(([name]) => name === filters.muni) : entries;
@@ -1043,8 +1048,9 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {/* ── ATTRITION RISK ──────────────────────────────────────────── */}
+        {/* ── ATTRITION RISK ───────────────────────────────────────── */}
         {fc.attrition_risk?.risk_level && (
+          staffingCoreValid ? (
           <div className={`rounded-xl border p-6 ${
             fc.attrition_risk.risk_level === 'high'   ? 'border-red-500/30 bg-red-500/5' :
             fc.attrition_risk.risk_level === 'medium' ? 'border-amber-500/30 bg-amber-500/5' :
@@ -1064,38 +1070,77 @@ export default function AnalyticsPage() {
               <p className="text-base text-emerald-300 ml-14 font-medium">No significant attrition risk indicators detected.</p>
             )}
           </div>
+          ) : (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
+            <p className="text-sm font-bold text-amber-300 mb-1">⚠ Attrition Risk — Staffing Validation Required</p>
+            <p className="text-sm text-amber-200/80">Attrition risk analysis is not shown because no staffing file passed validation. Resolve the issues below, then re-run the pipeline.</p>
+          </div>
+          )
         )}
 
         {/* ── AI MODEL EXPLANATION ────────────────────────────────────── */}
         {me?.model_name && <ModelExplanationCard explanation={me} />}
 
-        {/* ── STAFFING ────────────────────────────────────────────────── */}
-        {sf.unique_employees > 0 && (
-          <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
-            <SectionLabel title="Staffing Overview" sub={`${sf.total_records} records · ${sf.unique_employees} unique staff`} badge="Operational" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-              {[
-                { label: 'Unique Staff',  value: sf.unique_employees,              color: 'text-white' },
-                { label: 'Avg Hrs/Shift', value: sf.avg_hours_per_shift ?? '—',    color: 'text-white' },
-                { label: 'Overtime Rate', value: `${sf.overtime_pct ?? 0}%`,        color: sf.overtime_pct > 20 ? 'text-red-400' : 'text-white' },
-                { label: 'Gap Days',      value: sf.staffing_gaps?.length ?? 0,     color: (sf.staffing_gaps?.length ?? 0) > 0 ? 'text-amber-400' : 'text-emerald-400' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="bg-slate-800/50 rounded-lg px-4 py-3 text-center">
-                  <p className={`text-3xl font-bold ${color}`}>{value}</p>
-                  <p className="text-sm text-slate-400 mt-1">{label}</p>
+        {/* ── STAFFING ──────────────────────────────────────────────── */}
+        {staffingFileResults.length > 0 && (
+          staffingCoreValid ? (
+          sf.unique_employees > 0 && (
+            <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
+              <SectionLabel title="Staffing Overview" sub={`${sf.total_records?.toLocaleString()} records · ${sf.unique_employees} unique staff`} badge="Operational" />
+              {staffingFailedFiles.length > 0 && (
+                <div className="mb-5 rounded-lg bg-amber-500/8 border border-amber-500/20 px-4 py-3 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Partial validation — {staffingFailedFiles.length} file{staffingFailedFiles.length > 1 ? 's' : ''} could not be validated</p>
+                  {staffingFailedFiles.map(r => (
+                    <p key={r.file_id} className="text-xs text-amber-200/80">
+                      <span className="font-semibold">{r.original_filename}</span>: {r.warnings?.[0]}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                {[
+                  { label: 'Unique Staff',  value: sf.unique_employees,              color: 'text-white' },
+                  { label: 'Avg Hrs/Shift', value: sf.avg_hours_per_shift ?? '—',    color: 'text-white' },
+                  { label: 'Overtime Rate', value: `${sf.overtime_pct ?? 0}%`,        color: sf.overtime_pct > 20 ? 'text-red-400' : 'text-white' },
+                  { label: 'Gap Days',      value: sf.staffing_gaps?.length ?? 0,     color: (sf.staffing_gaps?.length ?? 0) > 0 ? 'text-amber-400' : 'text-emerald-400' },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-slate-800/50 rounded-lg px-4 py-3 text-center">
+                    <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                    <p className="text-sm text-slate-400 mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+              {Object.keys(sf.by_shift || {}).length > 0 && (
+                <div className="mb-5">
+                  <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">By Shift</p>
+                  <DarkBarChart data={sf.by_shift} maxBars={6} accent="#8b5cf6" />
+                </div>
+              )}
+              {(sf.warnings || []).map((w, i) => (
+                <p key={i} className="text-sm text-amber-300 mt-2 flex items-start gap-2"><span>⚠</span> {w}</p>
+              ))}
+            </div>
+          )
+          ) : (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-xl shrink-0">🛑</span>
+              <div>
+                <p className="text-base font-bold text-white">Staffing data validation failed</p>
+                <p className="text-sm text-slate-300 mt-1">Staffing analytics are not shown because no staffing file passed validation. Metrics computed from unvalidated data cannot be trusted.</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {staffingFailedFiles.map(r => (
+                <div key={r.file_id} className="rounded-lg bg-black/20 px-4 py-3">
+                  <p className="text-sm font-bold text-slate-200 mb-1">{r.original_filename}</p>
+                  {r.warnings?.map((w, i) => <p key={i} className="text-sm text-red-300">⚠ {w}</p>)}
                 </div>
               ))}
             </div>
-            {Object.keys(sf.by_shift || {}).length > 0 && (
-              <div className="mb-5">
-                <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">By Shift</p>
-                <DarkBarChart data={sf.by_shift} maxBars={6} accent="#8b5cf6" />
-              </div>
-            )}
-            {(sf.warnings || []).map((w, i) => (
-              <p key={i} className="text-sm text-amber-300 mt-2 flex items-start gap-2"><span>⚠</span> {w}</p>
-            ))}
+            <p className="text-xs text-slate-500 mt-4">Fix the column issues above and re-run the pipeline to enable staffing analytics.</p>
           </div>
+          )
         )}
 
         {/* ── DATA QUALITY ────────────────────────────────────────────── */}

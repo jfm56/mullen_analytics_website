@@ -16,13 +16,15 @@ from .columns import normalize_cols, resolve, DISPATCH_COLUMNS, STAFFING_COLUMNS
 logger = logging.getLogger(__name__)
 
 REQUIRED_BY_TYPE: Dict[str, List[str]] = {
-    "dispatch": ["incident_number", "date_created", "incident_type", "unit_id"],
-    "staffing": ["employee_id", "date"],
+    "dispatch":    ["incident_number", "date_created", "incident_type", "unit_id"],
+    # Rosters lack shift dates; schedule/timekeeping files have both.
+    # Require only employee_id so both sub-types pass.
+    "staffing":    ["employee_id"],
     "termination": ["employee_id", "name"],
-    "payroll": ["employee_id", "hours"],
-    "mutual_aid": ["incident_number", "date_created"],
-    "population": [],
-    "other": [],
+    "payroll":     ["employee_id", "hours"],
+    "mutual_aid":  ["incident_number", "date_created"],
+    "population":  [],
+    "other":       [],
 }
 
 
@@ -88,6 +90,24 @@ def validate_file(file_record: Dict[str, Any]) -> Dict[str, Any]:
     df = _load_file(path)
     if df is None:
         result["warnings"].append(f"Could not load file: {fname}")
+        return result
+
+    # ── Aggregate-report detection ────────────────────────────────────────
+    # Excel payroll summaries and report exports arrive with all-unnamed
+    # columns (e.g. "Unnamed: 0" … "Unnamed: 19") because the real header
+    # is buried in row 1 or is a merged cell.  These cannot be processed
+    # as per-row data files.
+    unnamed_count = sum(1 for c in df.columns if str(c).strip().lower().startswith("unnamed"))
+    if len(df.columns) > 0 and unnamed_count / len(df.columns) > 0.7:
+        result["warnings"].append(
+            "File appears to be an aggregate report or export summary "
+            "(column headers not detected). "
+            "Only per-row data files (one row per shift / employee) are supported. "
+            "Re-export as a flat CSV with column headers in row 1."
+        )
+        result["passed"] = False
+        result["rows"] = int(len(df))
+        result["columns"] = int(len(df.columns))
         return result
 
     df = normalize_cols(df)

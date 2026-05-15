@@ -95,7 +95,8 @@ DISPATCH_COLUMNS: Dict[str, List[str]] = {
 STAFFING_COLUMNS: Dict[str, List[str]] = {
     "employee_id": [
         "employee_id", "emp_id", "staff_id",
-        "employee_number", "badge", "id",
+        "employee_number", "badge", "badge_number", "staff_number",
+        "employee_no", "emp_no", "id",
     ],
     "name": [
         "name", "employee_name", "full_name",
@@ -106,7 +107,7 @@ STAFFING_COLUMNS: Dict[str, List[str]] = {
         "position", "rank", "title", "job_title",
         "classification",
     ],
-    "date": ["date", "work_date", "shift_date"],
+    "date": ["date", "work_date", "shift_date", "hire_date", "start_date"],
     "hours": ["hours", "hours_worked", "scheduled_hours"],
 }
 
