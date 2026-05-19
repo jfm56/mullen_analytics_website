@@ -66,6 +66,7 @@ function DarkBarChart({ data, maxBars = 12, accent = '#3b82f6', activeKey, onSel
       {activeKey && onSelect && (
         <p className="text-sm text-blue-400 text-right mt-2 cursor-pointer hover:text-blue-300 font-medium" onClick={() => onSelect('')}>✕ Clear filter</p>
       )}
+      <p className="text-xs text-slate-600 mt-2 text-right italic">Bar width = share of maximum. Count shown right.</p>
     </div>
   );
 }
@@ -191,7 +192,7 @@ function UnitTable({ up, filterUnit }) {
 
   const cols = [
     { key: 'unit',              label: 'Unit',       sortable: false },
-    { key: 'risk',              label: 'Risk Score',  sortable: true, tooltip: 'Composite 0–100: 50% P90 excess over NFPA target, 30% utilisation, 20% call volume. Bands: 0–40 LOW · 41–60 MODERATE · 61–80 HIGH · 81–100 CRITICAL'  },
+    { key: 'risk',              label: 'Risk Score',  sortable: true, tooltip: 'Composite operational risk (0–100, higher = worse). Formula: 50 pts P90 excess over 5:00 target [min(50,(p90−300)/300×50)] + 30 pts utilisation burden [min(30,util_hrs/200×30)] + 20 pts call volume load [min(20,calls/400×20)]. Bands: CRITICAL 81–100 · HIGH 61–80 · MODERATE 41–60 · LOW 0–40. Source: notebooks/staffing_termination_prediction.ipynb'  },
     { key: 'calls',             label: 'Calls',       sortable: true  },
     { key: 'response_median',   label: 'Median RT',   sortable: true  },
     { key: 'response_p90',      label: 'P90 RT',      sortable: true  },
@@ -215,7 +216,7 @@ function UnitTable({ up, filterUnit }) {
                   onClick={() => col.sortable && toggleSort(sk)}
                   title={col.tooltip ?? undefined}
                 >
-                  {col.label}{col.tooltip && <span className="ml-1 text-slate-600 cursor-help">ⓘ</span>}{col.sortable && active && <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                  {col.label}{col.tooltip && <span className="ml-1.5 text-blue-400/70 cursor-help hover:text-blue-300 transition-colors">ⓘ</span>}{col.sortable && active && <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>}
                 </th>
               );
             })}
@@ -823,9 +824,9 @@ export default function AnalyticsPage() {
               benchmark="≥ 90% required" status={pctStatus} large
               insight={nfpaValid ? `${nfpa.compliant ? 'Meets' : 'Fails'} NFPA 1710 BLS standard` : 'Insufficient RT data'} />
             <KpiCard label="Units at Risk" value={totalUnits > 0 ? `${failUnits} / ${totalUnits}` : '—'}
-              sub="Exceeding NFPA P90 target" large
+              sub={`Exceeding NFPA P90 · ${totalUnits} units evaluated (≥20 calls)`} large
               status={failUnits === 0 ? 'good' : failUnits / Math.max(totalUnits, 1) > 0.4 ? 'critical' : 'warning'}
-              insight={failUnits === 0 ? 'All units within target' : `${failUnits} unit${failUnits > 1 ? 's' : ''} need attention`} />
+              insight={failUnits === 0 ? 'All units within target' : `${failUnits} of ${totalUnits} evaluated units exceed target`} />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-5">
             <KpiCard label="Response — Median (P50)" value={m.median_response_fmt ?? fmtSec(totalResp.median)} sub="50th percentile of total response" />
@@ -950,7 +951,7 @@ export default function AnalyticsPage() {
         {up.total_units > 0 && (
           <div className="rounded-xl border border-[#1e3050] bg-[#0d1627] p-6">
             <SectionLabel title="Unit Performance — Risk-Ranked"
-              sub={`${up.total_units} units · ${failUnits} failing NFPA P90 · sorted by risk score · click headers to re-sort`}
+              sub={`${totalUnits} units evaluated (≥20 calls) · ${failUnits} failing NFPA P90 · sorted by risk score · click headers to re-sort`}
               badge="Operational" />
             {filters.unit && (
               <div className="mb-4 flex items-center gap-2">

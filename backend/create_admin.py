@@ -11,7 +11,7 @@ os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost:
 from app.database import SessionLocal
 from app.services.auth import hash_password, create_user_with_profile
 
-email    = sys.argv[1] if len(sys.argv) > 1 else "admin@mullen.local"
+email    = sys.argv[1] if len(sys.argv) > 1 else "admin@mullenanalytics.com"
 password = sys.argv[2] if len(sys.argv) > 2 else "admin123"
 
 db = SessionLocal()
