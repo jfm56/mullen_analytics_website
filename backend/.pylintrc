@@ -1,0 +1,45 @@
+[MASTER]
+ignore=venv,migrations,tests
+
+[FORMAT]
+max-line-length=120
+
+[MESSAGES CONTROL]
+disable=
+    C0114,
+    C0115,
+    C0116,
+    R0903,
+    R0801,
+    W0611,
+    E0401,
+    C0301,
+    W0212,
+    R0913,
+    W0107,
+    C0103,
+    C0303,
+    C0411,
+    R0917,
+    W0718,
+    W0511,
+    R1705,
+    W0613,
+    R0914,
+    R0912,
+    R0915,
+    W0612,
+    E1102,
+    E0601,
+    W0404,
+    C0415,
+    W0621,
+    W0707,
+    W0640,
+    R0911
+
+[DESIGN]
+max-args=10
+
+[REPORTS]
+fail-under=7.0
