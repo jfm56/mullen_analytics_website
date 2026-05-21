@@ -297,6 +297,42 @@ export const projects = {
   async getMyProjects() {
     return apiFetch('/api/projects/my/projects');
   },
+
+  /**
+   * List documents for a project (admin only)
+   */
+  async listDocuments(projectId, includeArchived = false) {
+    return apiFetch(`/api/projects/${projectId}/documents?include_archived=${includeArchived}`);
+  },
+
+  /**
+   * List invoices for a project (admin only)
+   */
+  async listInvoices(projectId) {
+    return apiFetch(`/api/projects/${projectId}/invoices`);
+  },
+};
+
+/**
+ * Clients API — /api/clients/{client_id}/projects
+ */
+export const clients = {
+  /**
+   * List projects for a client (admin sees all, client sees own)
+   */
+  async listProjects(clientId, includeArchived = false) {
+    return apiFetch(`/api/clients/${clientId}/projects?include_archived=${includeArchived}`);
+  },
+
+  /**
+   * Create a project for a client (admin only)
+   */
+  async createProject(clientId, projectData) {
+    return apiFetch(`/api/clients/${clientId}/projects`, {
+      method: 'POST',
+      body: JSON.stringify(projectData),
+    });
+  },
 };
 
 /**
@@ -332,6 +368,26 @@ export const documents = {
     return apiFetch(`/api/documents/${documentId}`);
   },
   
+  /**
+   * Upload a file for a client (admin only, multipart)
+   */
+  async upload(clientId, file, opts = {}) {
+    const fd = new FormData();
+    fd.append('client_id', clientId);
+    fd.append('title', opts.title || file.name);
+    fd.append('document_type', opts.document_type || 'deliverable');
+    fd.append('visibility', opts.visibility || 'client_visible');
+    if (opts.description) fd.append('description', opts.description);
+    fd.append('file', file);
+    const proxyEndpoint = '/api/proxy/documents/upload';
+    const res = await fetch(proxyEndpoint, { method: 'POST', credentials: 'include', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    return res.json();
+  },
+
   /**
    * Create a new document record (admin only)
    */
@@ -527,6 +583,7 @@ export default {
   users,
   messages,
   projects,
+  clients,
   documents,
   impersonation,
   invoices,

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { projects } from '@/lib/api';
 
-const PROJECT_STATUSES = ['active', 'completed', 'on_hold', 'archived'];
+const PROJECT_STATUSES = ['PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'];
 const PROJECT_PHASES = ['discovery', 'planning', 'execution', 'review', 'completed'];
 
 export default function ClientProjectsTab({ clientId, projects: projectList, onRefresh }) {
@@ -14,11 +15,12 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'active',
+    status: 'ACTIVE',
     phase: 'discovery',
     start_date: '',
     deadline: '',
     contract_value: '',
+    budget_cents: '',
     tableau_embed_html: '',
     tableau_open_url: '',
   });
@@ -27,11 +29,12 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
     setFormData({
       name: '',
       description: '',
-      status: 'active',
+      status: 'ACTIVE',
       phase: 'discovery',
       start_date: '',
       deadline: '',
       contract_value: '',
+      budget_cents: '',
       tableau_embed_html: '',
       tableau_open_url: '',
     });
@@ -49,6 +52,7 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
       start_date: project.start_date ? project.start_date.split('T')[0] : '',
       deadline: project.deadline ? project.deadline.split('T')[0] : '',
       contract_value: project.contract_value || '',
+      budget_cents: project.budget_cents ? (project.budget_cents / 100).toFixed(2) : '',
       tableau_embed_html: project.tableau_embed_html || '',
       tableau_open_url: project.tableau_open_url || '',
     });
@@ -71,8 +75,10 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
         ...formData,
         client_id: clientId,
         contract_value: formData.contract_value ? parseFloat(formData.contract_value) : 0,
+        budget_cents: formData.budget_cents ? Math.round(parseFloat(formData.budget_cents) * 100) : null,
         start_date: formData.start_date || null,
         deadline: formData.deadline || null,
+        end_date: formData.deadline || null,
       };
 
       if (editingProject) {
@@ -213,6 +219,17 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
                 />
               </div>
               <div>
+                <label className="block text-xs text-gray-600 mb-1">Budget ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.budget_cents}
+                  onChange={(e) => setFormData({ ...formData, budget_cents: e.target.value })}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
                 <label className="block text-xs text-gray-600 mb-1">Dashboard URL</label>
                 <input
                   type="url"
@@ -270,9 +287,11 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-sm font-semibold">{project.name}</h3>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                      project.status === 'active' ? 'bg-green-100 text-green-800' :
-                      project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                      project.status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' :
+                      project.status === 'ACTIVE' || project.status === 'active' ? 'bg-green-100 text-green-800' :
+                      project.status === 'COMPLETED' || project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      project.status === 'ON_HOLD' || project.status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' :
+                      project.status === 'PLANNING' ? 'bg-purple-100 text-purple-800' :
+                      project.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {project.status}
@@ -303,6 +322,12 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <Link
+                    href={`/admin/projects/${project.id}`}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Details
+                  </Link>
                   <button
                     onClick={() => handleEdit(project)}
                     className="text-xs text-gray-500 hover:text-gray-700"

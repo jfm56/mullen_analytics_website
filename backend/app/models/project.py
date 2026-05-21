@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Numeric
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Numeric, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -27,6 +27,10 @@ class Project(Base):
     
     # Financials
     contract_value = Column(Numeric(12, 2), default=0)
+    budget_cents = Column(Integer, nullable=True)
+
+    # end_date per spec (deadline already exists for backward compat)
+    end_date = Column(DateTime, nullable=True)
     
     # Dashboard embed (per-project dashboards)
     tableau_embed_html = Column(Text, nullable=True)

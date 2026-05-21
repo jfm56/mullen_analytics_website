@@ -98,7 +98,7 @@ def test_admin_can_create_client(client, db):
     login(client, admin_email)
 
     new_email = f"newclient_{uuid.uuid4().hex[:6]}@test.com"
-    resp = client.post("/api/users/create", json={
+    resp = client.post("/api/users/", json={
         "email": new_email,
         "password": "Secure123!",
         "full_name": "Test Client",
@@ -287,3 +287,134 @@ def test_payment_link_stores_url_not_card_data(client, db):
     forbidden = {"card_number", "cvv", "routing_number", "account_number", "bank_account"}
     overlap = forbidden & set(invoice_columns)
     assert not overlap, f"Invoice model must never store: {overlap}"
+
+
+# ---------------------------------------------------------------------------
+# Projects feature tests
+# ---------------------------------------------------------------------------
+
+from app.models.project import Project
+
+
+# 8. Admin can create a project for a client
+def test_admin_can_create_project(client, db):
+    _, admin_email = make_admin(db, "proj_create_admin")
+    target_client, _ = make_client(db, "proj_create_client")
+
+    login(client, admin_email)
+    resp = client.post(f"/api/clients/{target_client.id}/projects", json={
+        "name": "Q3 Analytics Rollout",
+        "description": "Full pipeline build",
+        "status": "PLANNING",
+        "budget_cents": 500000,
+    })
+    assert resp.status_code in (200, 201), f"Admin project create failed: {resp.text}"
+    body = resp.json()
+    assert body["name"] == "Q3 Analytics Rollout"
+    assert body["client_id"] == str(target_client.id)
+    logout(client)
+
+
+# 9. Client can view only their own projects
+def test_client_can_view_own_projects(client, db):
+    target_client, client_email = make_client(db, "proj_view_own")
+    project = Project(
+        client_id=target_client.id,
+        name="Own Project",
+        status="ACTIVE",
+        phase="discovery",
+    )
+    db.add(project)
+    db.commit()
+
+    login(client, client_email, "Client123!")
+    resp = client.get(f"/api/clients/{target_client.id}/projects")
+    assert resp.status_code == 200, f"Client should see own projects: {resp.text}"
+    names = [p["name"] for p in resp.json()]
+    assert "Own Project" in names
+    logout(client)
+
+
+# 10. Client cannot access another client's project via /clients/{id}/projects
+def test_client_cannot_access_other_clients_projects(client, db):
+    client_a, _ = make_client(db, "proj_iso_a")
+    client_b, email_b = make_client(db, "proj_iso_b")
+
+    login(client, email_b, "Client123!")
+    resp = client.get(f"/api/clients/{client_a.id}/projects")
+    assert resp.status_code == 403, f"Client B should not see Client A's projects. Got: {resp.status_code}"
+    logout(client)
+
+
+# 11. Documents can be linked to a project
+def test_documents_linked_to_project(client, db, tmp_path):
+    _, admin_email = make_admin(db, "proj_doc_admin")
+    target_client, _ = make_client(db, "proj_doc_client")
+
+    project = Project(
+        client_id=target_client.id,
+        name="Doc-Linked Project",
+        status="ACTIVE",
+        phase="execution",
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+
+    test_file = tmp_path / "linked.pdf"
+    test_file.write_bytes(b"%PDF-1.4 linked content")
+
+    doc = Document(
+        client_id=target_client.id,
+        project_id=project.id,
+        uploaded_by=target_client.id,
+        title="Linked Doc",
+        original_filename="linked.pdf",
+        storage_path=str(test_file),
+        visibility="client_visible",
+        size_bytes=len(b"%PDF-1.4 linked content"),
+    )
+    db.add(doc)
+    db.commit()
+
+    login(client, admin_email)
+    resp = client.get(f"/api/projects/{project.id}/documents")
+    assert resp.status_code == 200, f"Admin project docs failed: {resp.text}"
+    ids = [d["id"] for d in resp.json()]
+    assert str(doc.id) in ids, "Linked document should appear in project docs list"
+    logout(client)
+
+
+# 12. Invoices can be linked to a project
+def test_invoices_linked_to_project(client, db):
+    _, admin_email = make_admin(db, "proj_inv_admin")
+    target_client, _ = make_client(db, "proj_inv_client")
+
+    project = Project(
+        client_id=target_client.id,
+        name="Invoice-Linked Project",
+        status="ACTIVE",
+        phase="execution",
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+
+    invoice = Invoice(
+        client_id=target_client.id,
+        project_id=project.id,
+        number="INV-PROJ-001",
+        description="Milestone 1",
+        amount_due=100000,
+        currency="USD",
+        status="pending",
+    )
+    db.add(invoice)
+    db.commit()
+
+    login(client, admin_email)
+    resp = client.get(f"/api/projects/{project.id}/invoices")
+    assert resp.status_code == 200, f"Admin project invoices failed: {resp.text}"
+    ids = [i["id"] for i in resp.json()]
+    assert str(invoice.id) in ids, "Linked invoice should appear in project invoices list"
+    logout(client)

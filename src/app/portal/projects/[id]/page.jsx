@@ -386,9 +386,7 @@ export default function ProjectDetailPage() {
                     {documents.map((doc) => (
                       <a
                         key={doc.id}
-                        href={doc.storage_path}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`/api/proxy/documents/${doc.id}/download`}
                         className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
                         <svg className="w-10 h-10 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -18,15 +18,21 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 # Pydantic Schemas
 # ============================================================================
 
+PROJECT_STATUSES = {"PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED",
+                    "active", "completed", "on_hold", "archived"}  # accept both cases
+
+
 class ProjectCreate(BaseModel):
     client_id: UUID
     name: str
     description: Optional[str] = None
-    status: Optional[str] = "active"
+    status: Optional[str] = "ACTIVE"
     phase: Optional[str] = "discovery"
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     contract_value: Optional[Decimal] = 0
+    budget_cents: Optional[int] = None
     tableau_embed_html: Optional[str] = None
     tableau_embed_type: Optional[str] = "dashboard"
     tableau_open_url: Optional[str] = None
@@ -39,8 +45,10 @@ class ProjectUpdate(BaseModel):
     phase: Optional[str] = None
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     contract_value: Optional[Decimal] = None
+    budget_cents: Optional[int] = None
     tableau_embed_html: Optional[str] = None
     tableau_embed_type: Optional[str] = None
     tableau_open_url: Optional[str] = None
@@ -55,8 +63,10 @@ class ProjectResponse(BaseModel):
     phase: str
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     contract_value: Optional[Decimal] = None
+    budget_cents: Optional[int] = None
     tableau_embed_html: Optional[str] = None
     tableau_embed_type: Optional[str] = None
     tableau_open_url: Optional[str] = None
@@ -133,8 +143,10 @@ async def create_project(
         status=project_data.status,
         phase=project_data.phase,
         start_date=project_data.start_date,
-        deadline=project_data.deadline,
+        deadline=project_data.deadline or project_data.end_date,
+        end_date=project_data.end_date or project_data.deadline,
         contract_value=project_data.contract_value,
+        budget_cents=project_data.budget_cents,
         tableau_embed_html=project_data.tableau_embed_html,
         tableau_embed_type=project_data.tableau_embed_type,
         tableau_open_url=project_data.tableau_open_url,
@@ -182,8 +194,14 @@ async def update_project(
         raise HTTPException(status_code=404, detail="Project not found")
     
     update_data = updates.model_dump(exclude_unset=True)
+    # Keep deadline and end_date in sync
+    if "end_date" in update_data and "deadline" not in update_data:
+        update_data["deadline"] = update_data["end_date"]
+    if "deadline" in update_data and "end_date" not in update_data:
+        update_data["end_date"] = update_data["deadline"]
     for field, value in update_data.items():
-        setattr(project, field, value)
+        if hasattr(project, field):
+            setattr(project, field, value)
     
     project.updated_at = datetime.utcnow()
     db.commit()
@@ -337,3 +355,46 @@ async def generate_project_report(
         message="Report generated successfully",
         document_id=report_doc.id
     )
+
+
+# ============================================================================
+# Admin: project-scoped document and invoice lists
+# ============================================================================
+
+@router.get("/{project_id}/documents")
+async def list_project_documents(
+    project_id: UUID,
+    include_archived: bool = False,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """List all documents for a project (admin only)."""
+    from ..models.document import Document
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    query = db.query(Document).filter(Document.project_id == project_id)
+    if not include_archived:
+        query = query.filter(Document.archived_at.is_(None))
+    return query.order_by(Document.created_at.desc()).all()
+
+
+@router.get("/{project_id}/invoices")
+async def list_project_invoices(
+    project_id: UUID,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """List all invoices for a project (admin only)."""
+    from ..models.invoice import Invoice
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    return db.query(Invoice).filter(
+        Invoice.project_id == project_id,
+        Invoice.archived_at.is_(None),
+    ).order_by(Invoice.created_at.desc()).all()
