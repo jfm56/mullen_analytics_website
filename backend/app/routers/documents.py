@@ -1,15 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
+from pathlib import Path
+import uuid as uuid_lib
+import shutil
+import os
 
 from ..database import get_db
 from ..models.document import Document
 from ..models.project import Project
 from ..models.user import User
+from ..config import get_settings
+from ..services.audit import log_action
 from .auth import get_current_user, require_admin
+
+settings = get_settings()
+
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+    ".csv", ".txt", ".png", ".jpg", ".jpeg", ".zip",
+}
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -293,19 +308,136 @@ async def get_project_documents(
     db: Session = Depends(get_db),
 ):
     """Get documents for a specific project (client portal)."""
-    # Verify project belongs to user
     project = db.query(Project).filter(
         Project.id == project_id,
         Project.client_id == current_user.id
     ).first()
-    
+
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     documents = db.query(Document).filter(
         Document.project_id == project_id,
         Document.visibility == "client_visible",
         Document.archived_at.is_(None)
     ).order_by(Document.created_at.desc()).all()
-    
+
     return documents
+
+
+# ============================================================================
+# File Upload (Admin) — multipart, writes to local disk
+# ============================================================================
+
+@router.post("/upload", response_model=DocumentResponse)
+async def upload_document(
+    request: Request,
+    client_id: UUID = Form(...),
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    document_type: str = Form("deliverable"),
+    visibility: str = Form("client_visible"),
+    file: UploadFile = File(...),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Upload a file for a client and create a document record (admin only)."""
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type '{ext}' not allowed. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds the 50 MB limit")
+
+    storage_dir = Path(settings.data_storage_root) / "clients" / str(client_id) / "documents"
+    storage_dir.mkdir(parents=True, exist_ok=True)
+
+    stored_name = f"{uuid_lib.uuid4().hex}{ext}"
+    storage_path = storage_dir / stored_name
+
+    with open(storage_path, "wb") as f:
+        f.write(contents)
+
+    document = Document(
+        client_id=client_id,
+        uploaded_by=admin.id,
+        title=title,
+        description=description,
+        original_filename=file.filename or stored_name,
+        storage_path=str(storage_path),
+        content_type=file.content_type,
+        size_bytes=len(contents),
+        document_type=document_type,
+        visibility=visibility,
+    )
+
+    db.add(document)
+    db.commit()
+    db.refresh(document)
+
+    log_action(
+        db,
+        action="document_upload",
+        user_id=str(admin.id),
+        resource_type="document",
+        resource_id=str(document.id),
+        details={"filename": file.filename, "client_id": str(client_id), "size_bytes": len(contents)},
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return document
+
+
+# ============================================================================
+# File Download — admin sees all, client sees only own visible docs
+# ============================================================================
+
+@router.get("/{document_id}/download")
+async def download_document(
+    document_id: UUID,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Download a document file. Clients can only download their own visible documents."""
+    from ..models.user import Profile
+
+    profile = db.query(Profile).filter(Profile.id == current_user.id).first()
+    is_admin = profile and profile.role == "admin"
+
+    if is_admin:
+        document = db.query(Document).filter(Document.id == document_id).first()
+    else:
+        document = db.query(Document).filter(
+            Document.id == document_id,
+            Document.client_id == current_user.id,
+            Document.visibility == "client_visible",
+            Document.archived_at.is_(None),
+        ).first()
+
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
+
+    file_path = Path(document.storage_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on server")
+
+    log_action(
+        db,
+        action="document_download",
+        user_id=str(current_user.id),
+        resource_type="document",
+        resource_id=str(document.id),
+        details={"filename": document.original_filename, "client_id": str(document.client_id)},
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return FileResponse(
+        path=str(file_path),
+        filename=document.original_filename,
+        media_type=document.content_type or "application/octet-stream",
+    )

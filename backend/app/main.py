@@ -5,7 +5,7 @@ from .config import get_settings
 from .database import engine, Base
 from .routers import auth, users, messages, profiles, invoices, uploads, tasks
 from .routers import projects, documents, impersonation, reports, dashboard_refresh, quickbooks
-from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder
+from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder, payments
 from .services.storage import ensure_storage_root
 
 settings = get_settings()
@@ -56,6 +56,7 @@ app.include_router(pipeline.router,     prefix="/api")
 app.include_router(incidents.router,       prefix="/api")
 app.include_router(report_builder.router,  prefix="/api")
 app.include_router(admin.router,           prefix="/api")
+app.include_router(payments.router)
 
 
 @app.on_event("startup")

@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     # EMS Platform storage root (D: drive)
     data_storage_root: str = r"D:\MullenAnalytics\ClientData"
 
+    # Stripe
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_publishable_key: str = ""
+
     # App
     app_url: str = "http://localhost:3000"
     api_url: str = "http://localhost:8000"
