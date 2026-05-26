@@ -49,7 +49,6 @@ def override_get_db():
 def setup_test_db():
     Base.metadata.create_all(bind=test_engine)
     yield
-    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture(scope="module")
