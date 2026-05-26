@@ -136,4 +136,3 @@ def get_tier_config(tier: str) -> Dict[str, Any]:
 # TODO (SaaS v2): Implement Stripe webhook handler
 # def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session) -> None:
 #     ...
-
