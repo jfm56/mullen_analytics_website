@@ -23,6 +23,8 @@ class UploadCreate(BaseModel):
 
 
 class UploadUpdate(BaseModel):
+    client_id: Optional[UUID] = None
+    project_id: Optional[UUID] = None
     status: Optional[str] = None
     notes: Optional[str] = None
     processed_at: Optional[datetime] = None

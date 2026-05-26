@@ -27,12 +27,13 @@ async function apiFetch(endpoint, options = {}) {
   
   // Handle common error cases
   if (response.status === 401) {
-    // Session expired or not authenticated
-    // Redirect to login if not already there
+    const errBody = await response.json().catch(() => ({}));
+    const errMsg = errBody.detail || errBody.message || 'Not authenticated';
+    // Session expired or not authenticated — redirect to login if not already there
     if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
       window.location.href = '/portal/login';
     }
-    throw new Error('Not authenticated');
+    throw new Error(errMsg);
   }
   
   if (response.status === 403) {
@@ -571,6 +572,97 @@ export const reports = {
 };
 
 /**
+ * Data uploads API
+ */
+export const dataUploads = {
+  list: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.client_id) q.set('client_id', params.client_id);
+    if (params.project_id) q.set('project_id', params.project_id);
+    return apiFetch(`/api/data/uploads?${q}`);
+  },
+  get: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}`),
+  delete: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}`, { method: 'DELETE' }),
+  clean: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}/clean`, { method: 'POST' }),
+  getCleaningResults: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}/cleaning-results`),
+  upload: (formData) =>
+    fetch('/api/proxy/data/uploads', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    }).then(async (r) => {
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.detail || `Upload failed: ${r.status}`);
+      }
+      return r.json();
+    }),
+  downloadOriginalUrl: (uploadId) => `/api/proxy/data/uploads/${uploadId}/download-original`,
+  downloadCleanedUrl: (uploadId) => `/api/proxy/data/uploads/${uploadId}/download-cleaned`,
+  getDashboard: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}/dashboard`),
+  getClientDashboard: (clientId, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.project_id) q.set('project_id', params.project_id);
+    if (params.upload_id) q.set('upload_id', params.upload_id);
+    return apiFetch(`/api/data/clients/${clientId}/dashboard?${q}`);
+  },
+  getProjectDashboard: (projectId) => apiFetch(`/api/data/projects/${projectId}/dashboard`),
+};
+
+/**
+ * Column Mapping API
+ */
+export const columnMapping = {
+  get: (uploadId) =>
+    apiFetch(`/api/data/uploads/${uploadId}/column-mapping`),
+  autoDetect: (uploadId) =>
+    apiFetch(`/api/data/uploads/${uploadId}/column-mapping/autodetect`, { method: 'POST' }),
+  save: (uploadId, mapping) =>
+    apiFetch(`/api/data/uploads/${uploadId}/column-mapping`, { method: 'PATCH', body: JSON.stringify({ mapping }) }),
+  reset: (uploadId) =>
+    apiFetch(`/api/data/uploads/${uploadId}/column-mapping`, { method: 'DELETE' }),
+  preview: (uploadId, mapping) =>
+    apiFetch(`/api/data/uploads/${uploadId}/preview-metrics`, { method: 'POST', body: JSON.stringify({ mapping }) }),
+};
+
+/**
+ * Dashboard Filter + Compare API
+ */
+export const dashboardFilter = {
+  getFilterOptions: (uploadId) =>
+    apiFetch(`/api/data/uploads/${uploadId}/filter-options`),
+  filter: (uploadId, body) =>
+    apiFetch(`/api/data/uploads/${uploadId}/dashboard/filter`, { method: 'POST', body: JSON.stringify(body) }),
+  compare: (uploadId, body) =>
+    apiFetch(`/api/data/uploads/${uploadId}/dashboard/compare`, { method: 'POST', body: JSON.stringify(body) }),
+  getColumnSettings: (uploadId) =>
+    apiFetch(`/api/data/uploads/${uploadId}/columns/settings`),
+  patchColumnSettings: (uploadId, patches) =>
+    apiFetch(`/api/data/uploads/${uploadId}/columns/settings`, { method: 'PATCH', body: JSON.stringify(patches) }),
+  bulkIgnore: (uploadId, body) =>
+    apiFetch(`/api/data/uploads/${uploadId}/columns/bulk-ignore`, { method: 'POST', body: JSON.stringify(body) }),
+  restoreColumns: (uploadId, body) =>
+    apiFetch(`/api/data/uploads/${uploadId}/columns/restore`, { method: 'POST', body: JSON.stringify(body) }),
+};
+
+/**
+ * Data Explorer API
+ */
+export const dataExplorer = {
+  getProfile: (uploadId, refresh = false) =>
+    apiFetch(`/api/data/uploads/${uploadId}/profile${refresh ? '?refresh=true' : ''}`),
+  getColumns: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}/columns`),
+  getPreview: (uploadId, limit = 100, offset = 0) =>
+    apiFetch(`/api/data/uploads/${uploadId}/preview?limit=${limit}&offset=${offset}`),
+  getFilterOptions: (uploadId, column) =>
+    apiFetch(`/api/data/uploads/${uploadId}/filters/${encodeURIComponent(column)}`),
+  query: (uploadId, body) =>
+    apiFetch(`/api/data/uploads/${uploadId}/query`, { method: 'POST', body: JSON.stringify(body) }),
+  getChartData: (uploadId, body) =>
+    apiFetch(`/api/data/uploads/${uploadId}/chart-data`, { method: 'POST', body: JSON.stringify(body) }),
+};
+
+/**
  * Generic API fetch for other endpoints
  */
 export { apiFetch };
@@ -589,5 +681,9 @@ export default {
   invoices,
   uploads,
   reports,
+  dataUploads,
+  dataExplorer,
+  dashboardFilter,
+  columnMapping,
   fetch: apiFetch,
 };
