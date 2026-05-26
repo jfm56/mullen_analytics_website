@@ -10,6 +10,7 @@ Portal security tests — verifies all spec requirements:
 """
 
 import io
+import os
 import uuid
 import pytest
 from fastapi.testclient import TestClient
@@ -27,7 +28,10 @@ from app.models.document import Document
 # Test database setup (separate DB from production)
 # ---------------------------------------------------------------------------
 
-TEST_DB_URL = "postgresql://postgres:postgres@localhost:5432/mullen_analytics_test"
+TEST_DB_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/mullen_analytics_test",
+)
 
 test_engine = create_engine(TEST_DB_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
