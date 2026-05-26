@@ -487,6 +487,12 @@ export default function AdminPage() {
           >
             Clients
           </button>
+          <a
+            href="/admin/data"
+            className="pb-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-400"
+          >
+            Data Uploads
+          </a>
         </nav>
       </div>
       {activeTab === 'home' && (
@@ -590,6 +596,12 @@ export default function AdminPage() {
               >
                 Manage Clients
               </button>
+              <a
+                href="/admin/data"
+                className="text-xs px-3 py-2 border rounded-md hover:bg-gray-50 inline-flex items-center gap-1"
+              >
+                📊 Data Uploads
+              </a>
             </div>
           </div>
         </>

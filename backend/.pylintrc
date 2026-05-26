@@ -36,7 +36,9 @@ disable=
     W0621,
     W0707,
     W0640,
-    R0911
+    R0911,
+    C0302,
+    C0121
 
 [DESIGN]
 max-args=10

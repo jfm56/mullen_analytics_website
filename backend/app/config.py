@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     # EMS Platform storage root (D: drive)
     data_storage_root: str = r"D:\MullenAnalytics\ClientData"
 
+    # Data uploads
+    data_uploads_root: str = r"D:\MullenAnalytics\DataUploads"
+    max_upload_size_mb: int = 100
+
     # Stripe
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""

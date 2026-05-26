@@ -1,173 +1,139 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/api';
+import { auth, dataUploads } from '@/lib/api';
+import EMSDashboard from '@/components/EMSDashboard';
 
 const API_URL = '/api/proxy';
+
+const STATUS_COLORS = {
+  UPLOADED: 'bg-blue-100 text-blue-800',
+  CLEANING: 'bg-yellow-100 text-yellow-800',
+  CLEANED:  'bg-green-100 text-green-800',
+  FAILED:   'bg-red-100 text-red-800',
+};
 
 export default function PortalUploadsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [status, setStatus] = useState('');
-  const [uploadingFile, setUploadingFile] = useState(false);
   const [uploads, setUploads] = useState([]);
-  const [loadingUploads, setLoadingUploads] = useState(false);
-  const [uploadSettings, setUploadSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [cleaningId, setCleaningId] = useState(null);
+  const [selectedResult, setSelectedResult] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [form, setForm] = useState({ notes: '', file: null });
+  const [dashboard, setDashboard] = useState(null);  // { upload, metrics, generatedAt }
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+
+  const loadUploads = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/data/uploads`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to load uploads');
+      setUploads(await res.json());
+    } catch (e) {
+      setError(e.message);
+    }
+  }, []);
 
   useEffect(() => {
     const init = async () => {
       try {
         const session = await auth.getSession();
-        
-        if (!session.authenticated) {
-          router.replace('/portal/login');
-          return;
-        }
-        
+        if (!session.authenticated) { router.replace('/portal/login'); return; }
         setUser(session.user);
-        
-        // Load upload settings from profile
-        const profile = session.profile;
-        setUploadSettings({
-          upload_enabled: profile?.upload_enabled || false,
-          allowed_file_types: profile?.allowed_file_types || 'csv,xlsx,json,pdf',
-          max_upload_mb: profile?.max_upload_mb || 50,
-        });
-        
-        if (profile?.upload_enabled) {
-          await loadUploads(session.user.id);
-        }
-
-        // Load unread count
+        await loadUploads();
         try {
-          const { count } = await fetch(`${API_URL}/messages/unread-count`, {
-            credentials: 'include',
-          }).then(r => r.json());
+          const { count } = await fetch(`${API_URL}/messages/unread-count`, { credentials: 'include' }).then(r => r.json());
           setUnreadMessages(count || 0);
-        } catch (e) {}
-      } catch (err) {
+        } catch {}
+      } catch {
         router.replace('/portal/login');
+      } finally {
+        setLoading(false);
       }
     };
-
     init();
-  }, [router]);
+  }, [router, loadUploads]);
 
-  const loadUploads = async (clientId) => {
-    try {
-      setLoadingUploads(true);
-      // TODO: Replace with FastAPI endpoint when ready
-      const res = await fetch(`${API_URL}/uploads/`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to load uploads');
-      setUploads(json || []);
-    } catch (e) {
-      setStatus(e.message || 'Failed to load uploads');
-    } finally {
-      setLoadingUploads(false);
-    }
-  };
-
-  const handleFileUpload = async (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
-    if (!selectedFile || !user) return;
-    setStatus('');
-    setUploadingFile(true);
-
+    setError(''); setSuccess('');
+    if (!form.file) { setError('Please select a CSV file.'); return; }
+    const fd = new FormData();
+    fd.append('file', form.file);
+    if (form.notes) fd.append('notes', form.notes);
+    fd.append('source_system', 'EMSCHARTS');
+    setUploading(true);
     try {
-      // TODO: Implement file upload via FastAPI when storage endpoints are ready
-      // For now, show a message that uploads are temporarily unavailable
-      setStatus('File uploads are being migrated. Please try again shortly.');
-      setUploadingFile(false);
-      return;
-
-      /* Original S3 upload flow - will be restored with FastAPI storage endpoints
-      // Step 1: Get presigned URL
-      const presignRes = await fetch(`${API_URL}/api/uploads/presign`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: selectedFile.name,
-          content_type: selectedFile.type,
-          size_bytes: selectedFile.size,
-        }),
-      });
-
-      const presignJson = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignJson.detail || 'Failed to get upload URL');
-
-      // Step 2: Upload to S3
-      const formData = new FormData();
-      Object.entries(presignJson.upload.fields).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      formData.append('file', selectedFile);
-
-      const uploadRes = await fetch(presignJson.upload.url, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error('Failed to upload file to storage');
-      }
-
-      // Step 3: Refresh uploads list
-      await loadUploads(user.id);
-      setSelectedFile(null);
-      setStatus('File uploaded successfully!');
-      
-      // Reset file input
-      const fileInput = document.getElementById('file-upload-input');
-      if (fileInput) fileInput.value = '';
-      */
+      const res = await fetch(`${API_URL}/data/uploads`, { method: 'POST', credentials: 'include', body: fd });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Upload failed'); }
+      setSuccess('Upload successful!');
+      setForm({ notes: '', file: null });
+      document.getElementById('csv-file-input').value = '';
+      await loadUploads();
     } catch (e) {
-      setStatus(e.message || 'Failed to upload file');
+      setError(e.message);
     } finally {
-      setUploadingFile(false);
+      setUploading(false);
     }
   };
 
-  const handleDownload = async (uploadId, filename) => {
+  const handleClean = async (uploadId) => {
+    setError(''); setSuccess('');
+    setCleaningId(uploadId);
     try {
-      // TODO: Implement download via FastAPI when storage endpoints are ready
-      const res = await fetch(`${API_URL}/api/uploads/${encodeURIComponent(uploadId)}/download`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to get download URL');
-
-      // Open download URL in new tab
-      window.open(json.url, '_blank');
+      const res = await fetch(`${API_URL}/data/uploads/${uploadId}/clean`, { method: 'POST', credentials: 'include' });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Cleaning failed'); }
+      setSuccess('Cleaning complete!');
+      await loadUploads();
     } catch (e) {
-      setStatus(e.message || 'Failed to download file');
+      setError(e.message);
+    } finally {
+      setCleaningId(null);
     }
   };
 
-  if (!user) {
-    return (
-      <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">Checking your session...</div>
-    );
-  }
+  const handleDelete = async (uploadId) => {
+    if (!confirm('Delete this upload and all associated files?')) return;
+    setError('');
+    try {
+      await fetch(`${API_URL}/data/uploads/${uploadId}`, { method: 'DELETE', credentials: 'include' });
+      await loadUploads();
+    } catch (e) { setError(e.message); }
+  };
+
+  const handleViewResults = async (upload) => {
+    try {
+      const res = await fetch(`${API_URL}/data/uploads/${upload.id}/cleaning-results`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to load results');
+      setSelectedResult({ upload, results: await res.json() });
+    } catch (e) { setError(e.message); }
+  };
+
+  const handleViewDashboard = async (upload) => {
+    setError('');
+    setDashboardLoading(true);
+    try {
+      const data = await dataUploads.getDashboard(upload.id);
+      setDashboard({ upload, metrics: data.metrics, generatedAt: data.generated_at });
+      setTimeout(() => document.getElementById('ems-dashboard-panel')?.scrollIntoView({ behavior: 'smooth' }), 100);
+    } catch (e) { setError(e.message || 'Failed to load dashboard'); }
+    finally { setDashboardLoading(false); }
+  };
+
+  if (loading) return <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">Loading…</div>;
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-4">
+    <div className="max-w-5xl mx-auto py-12 px-4 safe-bottom-content">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Upload data</h1>
           <p className="text-gray-600 text-sm mt-1">
-            Upload CSVs, exports, or other files for analysis. Files are stored securely in AWS S3.
+            Upload your EMSCharts CSV exports for cleaning and analysis.
           </p>
         </div>
       </div>
@@ -212,99 +178,198 @@ export default function PortalUploadsPage() {
         </nav>
       </div>
 
-      {!uploadSettings?.upload_enabled ? (
-        <div className="border rounded-lg p-6 bg-amber-50 border-amber-200">
-          <p className="text-sm text-amber-800">
-            File uploads are not currently enabled for your account. Please contact us if you need to upload data.
-          </p>
+      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}
+      {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{success}</div>}
+
+      {/* Upload Form */}
+      <div className="bg-white border rounded-lg p-6 mb-6 shadow-sm">
+        <h2 className="text-base font-semibold mb-4">Upload EMSCharts CSV</h2>
+        <form onSubmit={handleUpload} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <input
+              type="text"
+              placeholder="e.g. Q1 2025 export"
+              value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">CSV File *</label>
+            <input
+              id="csv-file-input"
+              type="file"
+              accept=".csv"
+              onChange={e => setForm(f => ({ ...f, file: e.target.files[0] || null }))}
+              className="w-full text-sm"
+            />
+            <p className="text-xs text-gray-400 mt-1">Only .csv files · Max 100 MB · Source: EMSCharts</p>
+          </div>
+          <button
+            type="submit"
+            disabled={uploading}
+            className="bg-[var(--brand-primary)] hover:opacity-90 disabled:opacity-50 text-white px-5 py-2 rounded text-sm font-medium"
+          >
+            {uploading ? 'Uploading…' : 'Upload CSV'}
+          </button>
+        </form>
+      </div>
+
+      {/* Uploads list */}
+      <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b bg-gray-50">
+          <h2 className="text-sm font-semibold text-gray-700">My Uploads ({uploads.length})</h2>
         </div>
-      ) : (
-        <>
-          <form onSubmit={handleFileUpload} className="space-y-4 border rounded-lg p-6 bg-white mb-6">
+        {uploads.length === 0 ? (
+          <div className="p-8 text-center text-gray-400 text-sm">No uploads yet. Upload your first EMSCharts CSV above.</div>
+        ) : (
+          <div className="divide-y">
+            {uploads.map(u => (
+              <div key={u.id} className="p-4 hover:bg-gray-50">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{u.original_filename}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {(u.file_size / 1024).toFixed(1)} KB
+                      {u.notes && ` · ${u.notes}`}
+                      {u.created_at && ` · ${new Date(u.created_at).toLocaleDateString()}`}
+                    </p>
+                    {u.row_count_original != null && (
+                      <p className="text-xs text-gray-500 mt-0.5">{u.row_count_original} rows → {u.row_count_cleaned ?? '?'} cleaned</p>
+                    )}
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${STATUS_COLORS[u.upload_status] || 'bg-gray-100 text-gray-700'}`}>
+                    {u.upload_status}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <a href={`${API_URL}/data/uploads/${u.id}/download-original`} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded">
+                    Download Original
+                  </a>
+                  {u.upload_status === 'CLEANED' && (
+                    <>
+                      <a href={`${API_URL}/data/uploads/${u.id}/download-cleaned`} className="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded">
+                        Download Cleaned
+                      </a>
+                      <button onClick={() => handleViewResults(u)} className="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded">
+                        View Summary
+                      </button>
+                      <button
+                        onClick={() => handleViewDashboard(u)}
+                        disabled={dashboardLoading}
+                        className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded disabled:opacity-50 font-medium"
+                      >
+                        {dashboardLoading && dashboard?.upload?.id === u.id ? 'Loading…' : '📊 Dashboard'}
+                      </button>
+                      <a
+                        href={`/portal/data-explorer/${u.id}`}
+                        className="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1 rounded font-medium"
+                      >
+                        🔍 Explore
+                      </a>
+                    </>
+                  )}
+                  {(u.upload_status === 'UPLOADED' || u.upload_status === 'FAILED') && (
+                    <button
+                      onClick={() => handleClean(u.id)}
+                      disabled={cleaningId === u.id}
+                      className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1 rounded disabled:opacity-50"
+                    >
+                      {cleaningId === u.id ? 'Cleaning…' : 'Run Cleaning'}
+                    </button>
+                  )}
+                  <button onClick={() => handleDelete(u.id)} className="text-xs bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1 rounded">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Cleaning Results Modal */}
+      {selectedResult && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold">Cleaning Summary</h3>
+                <button onClick={() => setSelectedResult(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+              </div>
+              <p className="text-sm text-gray-500 mb-5 truncate">{selectedResult.upload.original_filename}</p>
+              {selectedResult.results.length === 0 ? (
+                <p className="text-sm text-gray-400">No cleaning results available.</p>
+              ) : selectedResult.results.map(r => (
+                <div key={r.id} className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: 'Original Rows', value: selectedResult.upload.row_count_original ?? '—', cls: 'bg-gray-50' },
+                      { label: 'Cleaned Rows',  value: selectedResult.upload.row_count_cleaned ?? '—',  cls: 'bg-green-50 text-green-700' },
+                      { label: 'Duplicates',    value: r.duplicate_rows_count, cls: 'bg-yellow-50 text-yellow-700' },
+                      { label: 'Empty Removed', value: r.removed_rows_count,   cls: 'bg-red-50 text-red-700' },
+                    ].map(s => (
+                      <div key={s.label} className={`${s.cls} rounded-lg p-3 text-center`}>
+                        <div className="text-2xl font-bold">{s.value}</div>
+                        <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {r.cleaning_notes && <div className="bg-blue-50 rounded p-3 text-xs text-blue-800">{r.cleaning_notes}</div>}
+                  {r.missing_values_summary && Object.keys(r.missing_values_summary).length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Missing Values by Column</h4>
+                      <div className="border rounded overflow-hidden max-h-56 overflow-y-auto">
+                        <table className="w-full text-xs">
+                          <thead className="bg-gray-50 sticky top-0"><tr>
+                            <th className="px-3 py-2 text-left font-medium text-gray-600">Column</th>
+                            <th className="px-3 py-2 text-right font-medium text-gray-600">Missing</th>
+                          </tr></thead>
+                          <tbody className="divide-y">
+                            {Object.entries(r.missing_values_summary).sort((a,b)=>b[1]-a[1]).map(([col,cnt]) => (
+                              <tr key={col} className="hover:bg-gray-50">
+                                <td className="px-3 py-2 font-mono text-gray-700">{col}</td>
+                                <td className="px-3 py-2 text-right text-red-600 font-medium">{cnt}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex justify-end pt-2">
+                    <a href={`${API_URL}/data/uploads/${selectedResult.upload.id}/download-cleaned`} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
+                      Download Cleaned CSV
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Dashboard Panel */}
+      {dashboard && (
+        <div id="ems-dashboard-panel" className="mt-6 bg-white border rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select file to upload
-              </label>
-              <input
-                id="file-upload-input"
-                type="file"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="w-full text-sm border rounded-md px-3 py-2"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Allowed types: {uploadSettings?.allowed_file_types || 'csv,xlsx,json,pdf'} • 
-                Max size: {uploadSettings?.max_upload_mb || 50}MB
-              </p>
+              <h2 className="text-lg font-bold text-gray-900">📊 EMS Analytics Dashboard</h2>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">{dashboard.upload.original_filename}</p>
             </div>
             <button
-              type="submit"
-              disabled={uploadingFile || !selectedFile}
-              className="px-4 py-2 text-sm rounded-md bg-[var(--brand-primary)] text-white disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--brand-primary-dark,#1d3d73)]"
-            >
-              {uploadingFile ? 'Uploading...' : 'Upload file'}
-            </button>
-            {status && (
-              <p className={`text-sm mt-2 ${status.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-                {status}
-              </p>
-            )}
-          </form>
-
-          <div className="border rounded-lg bg-white p-6">
-            <h2 className="text-lg font-semibold mb-4">Your Uploaded Files</h2>
-            {loadingUploads ? (
-              <p className="text-sm text-gray-600">Loading uploads...</p>
-            ) : uploads.length === 0 ? (
-              <p className="text-sm text-gray-600">No files uploaded yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                      <th className="px-4 py-2 font-medium">Filename</th>
-                      <th className="px-4 py-2 font-medium">Size</th>
-                      <th className="px-4 py-2 font-medium">Uploaded</th>
-                      <th className="px-4 py-2 font-medium">Status</th>
-                      <th className="px-4 py-2 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {uploads.map((upload) => (
-                      <tr key={upload.id}>
-                        <td className="px-4 py-3 text-gray-800">{upload.original_filename}</td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {(upload.size_bytes / 1024 / 1024).toFixed(2)} MB
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {new Date(upload.uploaded_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            upload.status === 'done' ? 'bg-green-50 text-green-700' :
-                            upload.status === 'error' ? 'bg-red-50 text-red-700' :
-                            upload.status === 'processing' ? 'bg-blue-50 text-blue-700' :
-                            'bg-gray-50 text-gray-700'
-                          }`}>
-                            {upload.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(upload.id, upload.original_filename)}
-                            className="px-3 py-1 border rounded-md text-xs bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
-                          >
-                            Download
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+              onClick={() => setDashboard(null)}
+              className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            >×</button>
           </div>
-        </>
+          <EMSDashboard
+            metrics={dashboard.metrics}
+            generatedAt={dashboard.generatedAt}
+            uploadId={dashboard.upload?.id}
+            onRefresh={() => handleViewDashboard(dashboard.upload)}
+          />
+        </div>
       )}
     </div>
   );

@@ -135,3 +135,40 @@ a {
 a:hover {
   color: var(--brand-secondary);
 }
+
+/* ── Layout height helpers ───────────────────────────────────────────────── */
+:root {
+  --navbar-h: 64px;
+}
+
+/* Full-screen app pages inside the root Navbar+Footer layout.
+   Use .app-page-height instead of h-screen so content doesn't overflow below
+   the viewport bottom. */
+.app-page-height {
+  height: calc(100vh - var(--navbar-h));
+  max-height: calc(100vh - var(--navbar-h));
+}
+
+/* ── Safe bottom clearance ───────────────────────────────────────────────── */
+/* Keeps the last content row clear of the fixed ChatWidget (~68 px from bottom). */
+.safe-bottom-content {
+  padding-bottom: max(140px, env(safe-area-inset-bottom, 0px));
+}
+
+/* Inline dashboard panels that need internal scroll + safe bottom */
+.dashboard-scroll-container {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-bottom: 140px;
+}
+
+/* ── Chart wrappers ──────────────────────────────────────────────────────── */
+.chart-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding-right: 2rem;
+}
+
+.chart-wrapper svg {
+  overflow: visible;
+}

@@ -50,3 +50,4 @@ class Project(Base):
     uploads = relationship("Upload", back_populates="project")
     invoices = relationship("Invoice", back_populates="project")
     tasks = relationship("EnhancedTask", back_populates="project")
+    data_uploads = relationship("DataUpload", back_populates="project")

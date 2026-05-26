@@ -41,10 +41,7 @@ def override_get_db():
         db.close()
 
 
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
     Base.metadata.create_all(bind=test_engine)
     yield
@@ -60,7 +57,9 @@ def db():
 
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(app, raise_server_exceptions=True)
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app, raise_server_exceptions=True)
+    app.dependency_overrides.pop(get_db, None)
 
 
 # ---------------------------------------------------------------------------

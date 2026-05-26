@@ -56,7 +56,10 @@ if _HAS_DB:
     def create_test_tables():
         Base.metadata.create_all(bind=_engine)
         yield
-        Base.metadata.drop_all(bind=_engine)
+        # NOTE: intentionally NOT calling drop_all here.
+        # conftest._engine points to the app's DATABASE_URL which may be the
+        # production DB.  Dropping it would wipe live data.  Each test module
+        # that needs teardown manages its own isolated test engine.
 
     @pytest.fixture()
     def db(create_test_tables):  # noqa: F811 – intentional shadow

@@ -9,6 +9,7 @@ import os
 os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/mullen_analytics")
 
 from app.database import SessionLocal
+from app.models import data_upload  # noqa: F401 – registers DataUpload with mapper
 from app.services.auth import hash_password, create_user_with_profile
 
 email    = sys.argv[1] if len(sys.argv) > 1 else "admin@mullenanalytics.com"
