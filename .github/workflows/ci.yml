@@ -28,6 +28,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_mullen_analytics
       DATA_STORAGE_ROOT: /tmp/mullen_test_storage
+      DATA_UPLOADS_ROOT: /tmp/mullen_test_uploads
       SESSION_COOKIE_SECURE: "false"
       SECRET_KEY: ci-test-secret-key-not-for-production
 

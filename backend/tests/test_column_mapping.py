@@ -15,6 +15,7 @@ Tests:
 """
 
 import io
+import os
 import uuid
 import pytest
 
@@ -26,7 +27,10 @@ from app.main import app
 from app.database import get_db, Base
 from app.services.auth import create_user_with_profile
 
-TEST_DB_URL = "postgresql://postgres:postgres@localhost:5432/mullen_analytics_test"
+TEST_DB_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/mullen_analytics_test",
+)
 test_engine = create_engine(TEST_DB_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
