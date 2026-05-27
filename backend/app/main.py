@@ -12,9 +12,6 @@ from .services.storage import ensure_storage_root
 
 settings = get_settings()
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title="Mullen Analytics API",
     description="Backend API for Mullen Analytics Client Portal",
@@ -65,6 +62,11 @@ app.include_router(data_router.router,     prefix="/api")
 
 @app.on_event("startup")
 async def on_startup():
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).error("DB create_all failed: %s", exc)
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)
 
