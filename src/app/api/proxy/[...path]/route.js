@@ -2,6 +2,7 @@
  * API Proxy to FastAPI backend
  * This solves cross-origin cookie issues by proxying requests through Next.js
  */
+import { NextResponse } from 'next/server';
 
 const API_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
@@ -68,27 +69,24 @@ async function proxyRequest(request, path, method) {
     // Get response body
     const data = await response.text();
     
-    // Create response with same status
-    const proxyResponse = new Response(data, {
+    // Build response using NextResponse for reliable header handling
+    const proxyResponse = new NextResponse(data, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': response.headers.get('content-type') || 'application/json' },
     });
     
-    // Forward Set-Cookie headers from backend
-    const setCookie = response.headers.get('set-cookie');
-    if (setCookie) {
-      proxyResponse.headers.set('Set-Cookie', setCookie);
+    // Forward all Set-Cookie headers from backend (handles multiple cookies)
+    const setCookies = response.headers.getSetCookie
+      ? response.headers.getSetCookie()
+      : [response.headers.get('set-cookie')].filter(Boolean);
+    for (const cookie of setCookies) {
+      proxyResponse.headers.append('Set-Cookie', cookie);
     }
     
     return proxyResponse;
   } catch (error) {
     console.error('Proxy error:', error);
-    return new Response(JSON.stringify({ error: 'Proxy error' }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return NextResponse.json({ error: 'Proxy error' }, { status: 502 });
   }
 }
