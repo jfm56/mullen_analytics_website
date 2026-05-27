@@ -78,11 +78,15 @@ async function proxyRequest(request, path, method) {
     let response = await fetch(url, { ...options, redirect: 'manual' });
     console.log(`[proxy] initial status=${response.status}`);
 
-    // Manually follow 307/308 redirects while preserving all headers (esp. Cookie)
+    // Manually follow 307/308 redirects while preserving all headers (esp. Cookie).
+    // Build a fresh Headers instance to avoid any Node.js consumed-header edge case.
     if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
       const redirectUrl = response.headers.get('location');
-      console.log(`[proxy] following redirect to ${redirectUrl}`);
-      response = await fetch(redirectUrl, options);
+      const cookieVal = headers.get('Cookie');
+      const redirectHeaders = new Headers();
+      if (cookieVal) redirectHeaders.set('Cookie', cookieVal);
+      console.log(`[proxy] following redirect to ${redirectUrl} | cookie=${cookieVal ? 'present' : 'MISSING'}`);
+      response = await fetch(redirectUrl, { method, headers: redirectHeaders });
       console.log(`[proxy] redirect status=${response.status}`);
     }
 
