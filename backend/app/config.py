@@ -34,11 +34,8 @@ class Settings(BaseSettings):
     # Password Reset
     password_reset_expire_hours: int = 1
     
-    # Email
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
+    # Email (Resend HTTP API — Railway blocks SMTP ports)
+    resend_api_key: str = ""
     smtp_from_email: str = "noreply@mullenanalytics.com"
     smtp_from_name: str = "Mullen Analytics"
     
