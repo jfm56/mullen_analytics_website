@@ -39,6 +39,7 @@ export default function AdminPage() {
     clientsNeedingOutreach: [],
   });
   const [loadingDashboard, setLoadingDashboard] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -290,13 +291,12 @@ export default function AdminPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.detail || 'Failed to invite user');
 
-      // Show temporary password to admin
-      if (json.temporary_password) {
-        alert(`User created! Temporary password: ${json.temporary_password}\n\nPlease share this with the user securely.`);
-      }
       setProfiles((prev) => [...prev, json]);
       setInviteForm({ email: '', role: 'client', full_name: '' });
       setShowInviteModal(false);
+      setError('');
+      setSuccessMessage(`Account created for ${json.email}. A setup email has been sent.`);
+      setTimeout(() => setSuccessMessage(''), 6000);
     } catch (e) {
       setError(e.message || 'Failed to invite user');
     } finally {
@@ -435,6 +435,11 @@ export default function AdminPage() {
         </button>
       </div>
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+      {successMessage && (
+        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-4">
+          {successMessage}
+        </p>
+      )}
       <div className="mb-4 border-b border-gray-200">
         <nav className="flex gap-4 text-xs">
           <button
