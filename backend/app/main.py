@@ -62,11 +62,16 @@ app.include_router(data_router.router,     prefix="/api")
 
 @app.on_event("startup")
 async def on_startup():
+    import logging, os
+    log = logging.getLogger(__name__)
+    raw_url = os.environ.get("DATABASE_URL", "<NOT SET>")
+    masked = raw_url[:40] + "..." if len(raw_url) > 40 else raw_url
+    log.info("DATABASE_URL env var: %s", masked)
     try:
         Base.metadata.create_all(bind=engine)
+        log.info("DB create_all succeeded")
     except Exception as exc:  # noqa: BLE001
-        import logging
-        logging.getLogger(__name__).error("DB create_all failed: %s", exc)
+        log.error("DB create_all failed: %s", exc)
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)
 
