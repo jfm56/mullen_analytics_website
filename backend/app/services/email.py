@@ -25,7 +25,7 @@ async def send_email(to_email: str, subject: str, html_body: str) -> bool:
             port=settings.smtp_port,
             username=settings.smtp_user,
             password=settings.smtp_password,
-            start_tls=True,
+            use_tls=True,
         )
         print(f"[Email] Sent '{subject}' to {to_email}")
         return True
