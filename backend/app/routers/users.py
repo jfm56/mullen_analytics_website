@@ -7,7 +7,7 @@ from datetime import datetime
 import secrets
 
 from ..database import get_db
-from ..models.user import User, Profile, Session, PasswordResetToken
+from ..models.user import User, Profile, Session as UserSession, PasswordResetToken
 from ..models.message import Message
 from ..models.project import Project
 from ..models.task import EnhancedTask
@@ -230,7 +230,7 @@ async def delete_user(
     db.query(Project).filter(Project.client_id == user_id).delete(synchronize_session=False)
     db.query(Message).filter(Message.user_id == user_id).delete(synchronize_session=False)
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
-    db.query(Session).filter(Session.user_id == user_id).delete(synchronize_session=False)
+    db.query(UserSession).filter(UserSession.user_id == user_id).delete(synchronize_session=False)
     db.query(Profile).filter(Profile.id == user_id).delete(synchronize_session=False)
     db.delete(user)
     db.commit()
