@@ -146,7 +146,7 @@ export default function PortalHomePage() {
                 This is your private workspace for your project with Mullen Analytics.
                 You can share files, see progress, review results, and communicate with our team here.
               </p>
-              <p className="text-gray-600 text-sm mt-4 font-medium">
+              <p className="text-gray-600 text-sm mt-4 font-medium" suppressHydrationWarning>
                 Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>

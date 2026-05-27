@@ -125,7 +125,7 @@ export default function Footer() {
           className="pt-8 flex flex-col md:flex-row items-center justify-between gap-3"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <p className="text-xs" style={{ color: '#1E3A58' }}>
+          <p className="text-xs" style={{ color: '#1E3A58' }} suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Mullen Analytics &amp; AI Consulting. All rights reserved.
           </p>
           <p className="text-xs" style={{ color: '#1E3A58' }}>
