@@ -32,7 +32,12 @@ export async function DELETE(request, { params }) {
 }
 
 async function proxyRequest(request, path, method) {
-  const url = `${API_URL}/api/${path}`;
+  // Preserve original URL path (incl. trailing slash) and query string.
+  // Using params.path.join('/') strips the trailing slash, which causes FastAPI
+  // to 307-redirect and Node fetch re-issues the request without the Cookie header → 401.
+  const originalUrl = new URL(request.url);
+  const backendPath = originalUrl.pathname.replace(/^\/api\/proxy\//, '');
+  const url = `${API_URL}/api/${backendPath}${originalUrl.search}`;
   
   const headers = new Headers();
 

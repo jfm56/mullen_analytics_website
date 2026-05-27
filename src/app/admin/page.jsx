@@ -41,7 +41,9 @@ export default function AdminPage() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     const init = async () => {
+      if (!mounted) return;
       setLoading(true);
       setError('');
       
@@ -49,6 +51,7 @@ export default function AdminPage() {
         // Use FastAPI auth instead of Supabase
         const session = await auth.getSession();
 
+        if (!mounted) return;
         if (!session.authenticated) {
           setAllowed(false);
           setLoading(false);
@@ -132,7 +135,9 @@ export default function AdminPage() {
     };
 
     init();
-  }, [router]);
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refreshAdminMessages = async () => {
     try {
