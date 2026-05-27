@@ -10,7 +10,7 @@ from ..database import get_db
 from ..models.user import User, Profile, Session, PasswordResetToken
 from ..models.message import Message
 from ..models.project import Project
-from ..models.task import Task
+from ..models.task import EnhancedTask
 from ..models.invoice import Invoice
 from ..models.document import Document
 from ..services.auth import hash_password, create_password_reset_token
@@ -226,7 +226,7 @@ async def delete_user(
     # Order matters: deepest dependents first, auth records last.
     db.query(Document).filter(Document.client_id == user_id).delete(synchronize_session=False)
     db.query(Invoice).filter(Invoice.client_id == user_id).delete(synchronize_session=False)
-    db.query(Task).filter(Task.client_id == user_id).delete(synchronize_session=False)
+    db.query(EnhancedTask).filter(EnhancedTask.client_id == user_id).delete(synchronize_session=False)
     db.query(Project).filter(Project.client_id == user_id).delete(synchronize_session=False)
     db.query(Message).filter(Message.user_id == user_id).delete(synchronize_session=False)
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
