@@ -72,11 +72,18 @@ async function proxyRequest(request, path, method) {
     // Use redirect: 'manual' so we can re-issue with Cookie on FastAPI 307 redirects.
     // Node.js fetch silently drops the Cookie header when auto-following redirects,
     // which causes the backend to return 401 on protected endpoints.
+    const hasCookie = !!headers.get('Cookie');
+    console.log(`[proxy] ${method} ${url} | cookie=${hasCookie ? 'present' : 'MISSING'}`);
+
     let response = await fetch(url, { ...options, redirect: 'manual' });
+    console.log(`[proxy] initial status=${response.status}`);
 
     // Manually follow 307/308 redirects while preserving all headers (esp. Cookie)
     if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
-      response = await fetch(response.headers.get('location'), options);
+      const redirectUrl = response.headers.get('location');
+      console.log(`[proxy] following redirect to ${redirectUrl}`);
+      response = await fetch(redirectUrl, options);
+      console.log(`[proxy] redirect status=${response.status}`);
     }
 
     // Get response body
