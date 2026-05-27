@@ -8,7 +8,7 @@ import secrets
 
 from ..database import get_db
 from ..models.user import User, Profile
-from ..services.auth import hash_password
+from ..services.auth import hash_password, create_password_reset_token
 from ..services.email import send_invite_email
 from .auth import get_current_user, require_admin
 
@@ -263,10 +263,13 @@ async def create_user(
     db.commit()
     db.refresh(new_profile)
 
+    setup_token = create_password_reset_token(db, str(user_id))
+
     await send_invite_email(
         to_email=new_profile.email,
         full_name=new_profile.full_name,
         temporary_password=temp_password,
+        setup_token=setup_token,
     )
     
     return UserCreateResponse(

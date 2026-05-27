@@ -16,6 +16,7 @@ from ..services.auth import (
     delete_session, get_user_profile,
     create_password_reset_token, use_password_reset_token,
 )
+from ..services.email import send_password_reset_email
 from ..models.user import User, Profile
 
 settings = get_settings()
@@ -162,11 +163,10 @@ async def request_password_reset(
     
     # Create reset token
     raw_token = create_password_reset_token(db, str(user.id))
-    
-    # TODO: Send email with reset link
-    # For now, log the token (remove in production)
-    reset_url = f"{settings.app_url}/portal/reset-password?token={raw_token}"
-    print(f"Password reset URL for {data.email}: {reset_url}")
+
+    profile = db.query(Profile).filter_by(id=user.id).first()
+    full_name = profile.full_name if profile else None
+    await send_password_reset_email(to_email=data.email, full_name=full_name, reset_token=raw_token)
     
     return PasswordResetResponse(
         success=True,
