@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from functools import lru_cache
 import os
 
@@ -13,6 +14,13 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql://localhost:5432/mullen_analytics"
     database_pool_size: int = 10
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def fix_postgres_url(cls, v: str) -> str:
+        if isinstance(v, str) and v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
+        return v
     
     # Auth
     secret_key: str = "change-this-in-production-use-openssl-rand-hex-32"
