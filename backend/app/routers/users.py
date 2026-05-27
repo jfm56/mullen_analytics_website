@@ -7,7 +7,12 @@ from datetime import datetime
 import secrets
 
 from ..database import get_db
-from ..models.user import User, Profile
+from ..models.user import User, Profile, Session, PasswordResetToken
+from ..models.message import Message
+from ..models.project import Project
+from ..models.task import Task
+from ..models.invoice import Invoice
+from ..models.document import Document
 from ..services.auth import hash_password, create_password_reset_token
 from ..services.email import send_invite_email
 from .auth import get_current_user, require_admin
@@ -217,6 +222,16 @@ async def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Delete FK-constrained child records before removing the user row.
+    # Order matters: deepest dependents first, auth records last.
+    db.query(Document).filter(Document.client_id == user_id).delete(synchronize_session=False)
+    db.query(Invoice).filter(Invoice.client_id == user_id).delete(synchronize_session=False)
+    db.query(Task).filter(Task.client_id == user_id).delete(synchronize_session=False)
+    db.query(Project).filter(Project.client_id == user_id).delete(synchronize_session=False)
+    db.query(Message).filter(Message.user_id == user_id).delete(synchronize_session=False)
+    db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
+    db.query(Session).filter(Session.user_id == user_id).delete(synchronize_session=False)
+    db.query(Profile).filter(Profile.id == user_id).delete(synchronize_session=False)
     db.delete(user)
     db.commit()
 
