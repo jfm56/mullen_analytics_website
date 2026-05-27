@@ -86,19 +86,23 @@ async function proxyRequest(request, path, method) {
       // Force HTTPS — Railway's internal proxy may produce http:// Location headers
       const redirectUrl = rawRedirect.replace(/^http:\/\//, 'https://');
       const cookieVal = headers.get('Cookie');
+      const contentTypeVal = headers.get('Content-Type');
       const redirectHeaders = new Headers();
       if (cookieVal) redirectHeaders.set('Cookie', cookieVal);
+      if (contentTypeVal) redirectHeaders.set('Content-Type', contentTypeVal);
       console.log(`[proxy] following redirect to ${redirectUrl} | cookie=${cookieVal ? 'present' : 'MISSING'}`);
-      // Use redirect:'manual' again so any further redirect also preserves Cookie
-      response = await fetch(redirectUrl, { method, headers: redirectHeaders, redirect: 'manual' });
+      // Use redirect:'manual' again so any further redirect also preserves Cookie.
+      // Pass options.body so POST/PATCH/PUT bodies survive the redirect.
+      response = await fetch(redirectUrl, { method, headers: redirectHeaders, body: options.body, redirect: 'manual' });
       console.log(`[proxy] redirect status=${response.status}`);
       // Handle one more level of redirect (e.g. http->https became another 307/308)
       if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
         const finalUrl = response.headers.get('location').replace(/^http:\/\//, 'https://');
         const finalHeaders = new Headers();
         if (cookieVal) finalHeaders.set('Cookie', cookieVal);
+        if (contentTypeVal) finalHeaders.set('Content-Type', contentTypeVal);
         console.log(`[proxy] second redirect to ${finalUrl}`);
-        response = await fetch(finalUrl, { method, headers: finalHeaders });
+        response = await fetch(finalUrl, { method, headers: finalHeaders, body: options.body });
         console.log(`[proxy] final status=${response.status}`);
       }
     }
