@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -5,8 +6,14 @@ from .config import get_settings
 
 settings = get_settings()
 
+def _get_database_url() -> str:
+    url = os.environ.get("DATABASE_URL") or settings.database_url
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return url
+
 engine = create_engine(
-    settings.database_url,
+    _get_database_url(),
     pool_size=settings.database_pool_size,
     pool_pre_ping=True,
 )
