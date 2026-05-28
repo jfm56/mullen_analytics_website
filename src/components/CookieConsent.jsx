@@ -40,12 +40,8 @@ export default function CookieConsent() {
         cursor: 'pointer',
       }}
       expires={365}
-      onAccept={() => {
-        console.log('Cookie consent accepted');
-      }}
-      onDecline={() => {
-        console.log('Cookie consent declined');
-      }}
+      onAccept={() => {}}
+      onDecline={() => {}}
     >
       <span style={{ fontSize: '14px', color: '#FFFFFF' }}>
         We use cookies to enhance your browsing experience and analyze site traffic. 
