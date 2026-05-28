@@ -20,6 +20,7 @@ export default function PortalUploadsPage() {
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState(''); // '', 'uploading', 'cleaning', 'done'
   const [cleaningId, setCleaningId] = useState(null);
   const [selectedResult, setSelectedResult] = useState(null);
   const [error, setError] = useState('');
@@ -68,17 +69,30 @@ export default function PortalUploadsPage() {
     if (form.notes) fd.append('notes', form.notes);
     fd.append('source_system', 'EMSCHARTS');
     setUploading(true);
+    setProcessingStatus('uploading');
     try {
       const res = await fetch(`${API_URL}/data/uploads`, { method: 'POST', credentials: 'include', body: fd });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Upload failed'); }
-      setSuccess('Upload successful!');
+      const upload = await res.json();
       setForm({ notes: '', file: null });
       document.getElementById('csv-file-input').value = '';
       await loadUploads();
+
+      // Auto-run cleaning
+      setProcessingStatus('cleaning');
+      const cleanRes = await fetch(`${API_URL}/data/uploads/${upload.id}/clean`, { method: 'POST', credentials: 'include' });
+      if (!cleanRes.ok) { const e = await cleanRes.json(); throw new Error(e.detail || 'Cleaning failed'); }
+      await loadUploads();
+
+      // Auto-open dashboard
+      setProcessingStatus('done');
+      setSuccess('Your data is ready!');
+      await handleViewDashboard(upload);
     } catch (e) {
       setError(e.message);
     } finally {
       setUploading(false);
+      setProcessingStatus('');
     }
   };
 
@@ -211,8 +225,28 @@ export default function PortalUploadsPage() {
             disabled={uploading}
             className="bg-[var(--brand-primary)] hover:opacity-90 disabled:opacity-50 text-white px-5 py-2 rounded text-sm font-medium"
           >
-            {uploading ? 'Uploading…' : 'Upload CSV'}
+            {processingStatus === 'uploading' ? '⬆ Uploading…'
+              : processingStatus === 'cleaning' ? '⚙ Processing data…'
+              : processingStatus === 'done' ? '✓ Building dashboard…'
+              : 'Upload & Generate Dashboard'}
           </button>
+          {processingStatus && (
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex gap-1">
+                {['uploading', 'cleaning', 'done'].map((step, i) => (
+                  <div key={step} className={`h-1.5 w-8 rounded-full transition-all duration-500 ${
+                    ['uploading', 'cleaning', 'done'].indexOf(processingStatus) >= i
+                      ? 'bg-[var(--brand-primary)]' : 'bg-gray-200'
+                  }`} />
+                ))}
+              </div>
+              <span className="text-xs text-gray-500">
+                {processingStatus === 'uploading' ? 'Step 1 of 3 — Uploading file'
+                  : processingStatus === 'cleaning' ? 'Step 2 of 3 — Cleaning & analyzing data'
+                  : 'Step 3 of 3 — Generating dashboard'}
+              </span>
+            </div>
+          )}
         </form>
       </div>
 
