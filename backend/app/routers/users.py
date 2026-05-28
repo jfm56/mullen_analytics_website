@@ -14,7 +14,7 @@ from ..models.task import EnhancedTask
 from ..models.invoice import Invoice
 from ..models.document import Document
 from ..models.upload import Upload
-from ..models.data_upload import DataUpload, EMSDashboardMetrics, DataProfile, AnalyticsColumnSettings, EMSColumnMapping
+from ..models.data_upload import DataUpload, DataCleaningResult, EMSDashboardMetrics, DataProfile, AnalyticsColumnSettings, EMSColumnMapping
 from ..models.agency import AgencyMembership
 from ..models.impersonation import ImpersonationLog
 from ..services.auth import hash_password, create_password_reset_token
@@ -240,6 +240,7 @@ async def delete_user(
         db.query(AnalyticsColumnSettings).filter(AnalyticsColumnSettings.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
         db.query(DataProfile).filter(DataProfile.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
         db.query(EMSDashboardMetrics).filter(EMSDashboardMetrics.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
+        db.query(DataCleaningResult).filter(DataCleaningResult.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
     db.query(DataUpload).filter(
         (DataUpload.client_id == user_id) | (DataUpload.uploaded_by_user_id == user_id)
     ).delete(synchronize_session=False)
