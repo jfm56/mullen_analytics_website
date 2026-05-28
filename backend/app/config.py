@@ -34,8 +34,8 @@ class Settings(BaseSettings):
     # Password Reset
     password_reset_expire_hours: int = 1
     
-    # Email (Resend HTTP API — Railway blocks outbound SMTP)
-    resend_api_key: str = ""
+    # Email (SendGrid HTTP API)
+    sendgrid_api_key: str = ""
     smtp_from_email: str = "noreply@mullenanalytics.com"
     smtp_from_name: str = "Mullen Analytics"
     

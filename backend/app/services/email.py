@@ -5,25 +5,24 @@ settings = get_settings()
 
 
 async def send_email(to_email: str, subject: str, html_body: str) -> bool:
-    """Send an email via Resend HTTP API. Returns True on success."""
-    api_key = getattr(settings, "resend_api_key", None)
-    from_addr = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    """Send an email via SendGrid HTTP API. Returns True on success."""
+    api_key = getattr(settings, "sendgrid_api_key", None)
 
     if not api_key or not settings.smtp_from_email:
         print(f"[Email] Not configured. Would have sent to {to_email}: {subject}")
         return False
 
     payload = {
-        "from": from_addr,
-        "to": [to_email],
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": settings.smtp_from_email, "name": settings.smtp_from_name},
         "subject": subject,
-        "html": html_body,
+        "content": [{"type": "text/html", "value": html_body}],
     }
 
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "https://api.resend.com/emails",
+                "https://api.sendgrid.com/v3/mail/send",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json=payload,
                 timeout=15,
