@@ -168,7 +168,7 @@ export default function AdminClientDetailPage() {
   const handleStartImpersonation = async () => {
     try {
       await impersonation.start(clientId);
-      router.push('/portal/projects');
+      router.push('/portal');
     } catch (e) {
       setError(e.message || 'Failed to start impersonation');
     }
