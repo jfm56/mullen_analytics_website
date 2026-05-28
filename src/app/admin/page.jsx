@@ -1205,7 +1205,7 @@ export default function AdminPage() {
                                 credentials: 'include',
                                 body: JSON.stringify({ client_id: client.id }),
                               });
-                              router.push('/portal/projects');
+                              router.push('/portal');
                             } catch (e) {
                               setError('Failed to start impersonation');
                             }
