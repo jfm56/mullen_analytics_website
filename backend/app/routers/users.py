@@ -298,7 +298,7 @@ async def create_user(
     # Create user
     new_user = User(
         id=user_id,
-        email=user_data.email,
+        email=user_data.email.lower(),
         password_hash=hash_password(temp_password),
     )
     db.add(new_user)
@@ -306,7 +306,7 @@ async def create_user(
     # Create profile
     new_profile = Profile(
         id=user_id,
-        email=user_data.email,
+        email=user_data.email.lower(),
         role=user_data.role,
         full_name=user_data.full_name,
         company=user_data.company,
