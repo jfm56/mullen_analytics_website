@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 import secrets
+import asyncio
 
 from ..database import get_db
 from ..models.user import User, Profile, Session as UserSession, PasswordResetToken
@@ -311,12 +312,21 @@ async def create_user(
 
     setup_token = create_password_reset_token(db, str(user_id))
 
-    await send_invite_email(
-        to_email=new_profile.email,
-        full_name=new_profile.full_name,
-        temporary_password=temp_password,
-        setup_token=setup_token,
-    )
+    async def _send_invite():
+        try:
+            await asyncio.wait_for(
+                send_invite_email(
+                    to_email=new_profile.email,
+                    full_name=new_profile.full_name,
+                    temporary_password=temp_password,
+                    setup_token=setup_token,
+                ),
+                timeout=10.0,
+            )
+        except Exception as e:
+            print(f"[Email] Invite email failed (non-blocking): {e}")
+
+    asyncio.create_task(_send_invite())
     
     return UserCreateResponse(
         id=new_profile.id,
