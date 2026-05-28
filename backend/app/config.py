@@ -34,9 +34,10 @@ class Settings(BaseSettings):
     # Password Reset
     password_reset_expire_hours: int = 1
     
-    # Email (Resend HTTP API — Railway blocks SMTP ports)
-    resend_api_key: str = ""
-    smtp_from_email: str = "noreply@mullenanalytics.com"
+    # Email (Gmail SMTP)
+    gmail_user: str = ""
+    gmail_app_password: str = ""
+    smtp_from_email: str = ""
     smtp_from_name: str = "Mullen Analytics"
     
     # Storage
@@ -55,7 +56,7 @@ class Settings(BaseSettings):
     data_uploads_root: str = r"D:\MullenAnalytics\DataUploads"
     max_upload_size_mb: int = 100
 
-    # Stripe
+    # Stripe (unused — billing via QuickBooks)
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_publishable_key: str = ""

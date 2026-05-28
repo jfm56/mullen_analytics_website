@@ -1,34 +1,36 @@
-import httpx
+import aiosmtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from ..config import get_settings
 
 settings = get_settings()
 
 
 async def send_email(to_email: str, subject: str, html_body: str) -> bool:
-    """Send an email via Resend HTTP API. Returns True on success."""
-    api_key = getattr(settings, "resend_api_key", None)
-    from_addr = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    """Send an email via Gmail SMTP. Returns True on success."""
+    gmail_user = settings.gmail_user
+    gmail_password = settings.gmail_app_password
+    from_email = settings.smtp_from_email or gmail_user
 
-    if not api_key or not settings.smtp_from_email:
+    if not gmail_user or not gmail_password:
         print(f"[Email] Not configured. Would have sent to {to_email}: {subject}")
         return False
 
-    payload = {
-        "from": from_addr,
-        "to": [to_email],
-        "subject": subject,
-        "html": html_body,
-    }
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{settings.smtp_from_name} <{from_email}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_body, "html"))
 
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=15,
-            )
-        response.raise_for_status()
+        await aiosmtplib.send(
+            msg,
+            hostname="smtp.gmail.com",
+            port=587,
+            start_tls=True,
+            username=gmail_user,
+            password=gmail_password,
+        )
         print(f"[Email] Sent '{subject}' to {to_email}")
         return True
     except Exception as e:

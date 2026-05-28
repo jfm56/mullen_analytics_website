@@ -13,6 +13,10 @@ from ..models.project import Project
 from ..models.task import EnhancedTask
 from ..models.invoice import Invoice
 from ..models.document import Document
+from ..models.upload import Upload
+from ..models.data_upload import DataUpload, EMSDashboardMetrics, DataProfile, AnalyticsColumnSettings, EMSColumnMapping
+from ..models.agency import AgencyMembership
+from ..models.impersonation import ImpersonationLog
 from ..services.auth import hash_password, create_password_reset_token
 from ..services.email import send_invite_email
 from .auth import get_current_user, require_admin
@@ -224,6 +228,32 @@ async def delete_user(
 
     # Delete FK-constrained child records before removing the user row.
     # Order matters: deepest dependents first, auth records last.
+
+    # EMS data uploads and all dependent analytics records
+    upload_ids = [
+        r.id for r in db.query(DataUpload.id).filter(
+            (DataUpload.client_id == user_id) | (DataUpload.uploaded_by_user_id == user_id)
+        ).all()
+    ]
+    if upload_ids:
+        db.query(EMSColumnMapping).filter(EMSColumnMapping.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
+        db.query(AnalyticsColumnSettings).filter(AnalyticsColumnSettings.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
+        db.query(DataProfile).filter(DataProfile.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
+        db.query(EMSDashboardMetrics).filter(EMSDashboardMetrics.data_upload_id.in_(upload_ids)).delete(synchronize_session=False)
+    db.query(DataUpload).filter(
+        (DataUpload.client_id == user_id) | (DataUpload.uploaded_by_user_id == user_id)
+    ).delete(synchronize_session=False)
+
+    # Legacy uploads table
+    db.query(Upload).filter(Upload.client_id == user_id).delete(synchronize_session=False)
+
+    # Agency memberships and impersonation logs
+    db.query(AgencyMembership).filter(AgencyMembership.user_id == user_id).delete(synchronize_session=False)
+    db.query(ImpersonationLog).filter(
+        (ImpersonationLog.client_id == user_id) | (ImpersonationLog.admin_id == user_id)
+    ).delete(synchronize_session=False)
+
+    # Core client records
     db.query(Document).filter(Document.client_id == user_id).delete(synchronize_session=False)
     db.query(Invoice).filter(Invoice.client_id == user_id).delete(synchronize_session=False)
     db.query(EnhancedTask).filter(EnhancedTask.client_id == user_id).delete(synchronize_session=False)
