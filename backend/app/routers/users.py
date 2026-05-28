@@ -16,7 +16,8 @@ from ..models.invoice import Invoice
 from ..models.document import Document
 from ..models.upload import Upload
 from ..models.data_upload import DataUpload, DataCleaningResult, EMSDashboardMetrics, DataProfile, AnalyticsColumnSettings, EMSColumnMapping
-from ..models.agency import AgencyMembership
+from ..models.agency import AgencyMembership, AgencyFile, AuditLog
+from ..models.pipeline import RevenuePipeline
 from ..models.impersonation import ImpersonationLog
 from ..services.auth import hash_password, create_password_reset_token
 from ..services.email import send_invite_email
@@ -249,8 +250,13 @@ async def delete_user(
     # Legacy uploads table
     db.query(Upload).filter(Upload.client_id == user_id).delete(synchronize_session=False)
 
-    # Agency memberships and impersonation logs
+    # Agency files, memberships, audit logs
+    db.query(AgencyFile).filter(AgencyFile.uploaded_by == user_id).delete(synchronize_session=False)
     db.query(AgencyMembership).filter(AgencyMembership.user_id == user_id).delete(synchronize_session=False)
+    db.query(AuditLog).filter(AuditLog.user_id == user_id).update({"user_id": None}, synchronize_session=False)
+
+    # Null out nullable FK in revenue pipeline (preserve the deal record)
+    db.query(RevenuePipeline).filter(RevenuePipeline.client_id == user_id).update({"client_id": None}, synchronize_session=False)
     db.query(ImpersonationLog).filter(
         (ImpersonationLog.client_id == user_id) | (ImpersonationLog.admin_id == user_id)
     ).delete(synchronize_session=False)
