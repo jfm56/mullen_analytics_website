@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, Request, Cookie
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
+import asyncio
 
 from ..database import get_db
 from ..config import get_settings
@@ -166,7 +167,18 @@ async def request_password_reset(
 
     profile = db.query(Profile).filter_by(id=user.id).first()
     full_name = profile.full_name if profile else None
-    await send_password_reset_email(to_email=data.email, full_name=full_name, reset_token=raw_token)
+    email_to = data.email
+
+    async def _send_reset():
+        try:
+            await asyncio.wait_for(
+                send_password_reset_email(to_email=email_to, full_name=full_name, reset_token=raw_token),
+                timeout=10.0,
+            )
+        except Exception as e:
+            print(f"[Email] Password reset email failed (non-blocking): {e}")
+
+    asyncio.create_task(_send_reset())
     
     return PasswordResetResponse(
         success=True,
