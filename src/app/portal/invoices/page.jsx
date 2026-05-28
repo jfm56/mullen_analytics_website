@@ -12,7 +12,6 @@ export default function PortalInvoicesPage() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
 
   const loadInvoices = async () => {
     try {
@@ -106,7 +105,7 @@ export default function PortalInvoicesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Invoices</h1>
           <p className="text-gray-600 text-sm mt-1">
-            View your billing history and pay open invoices via Stripe.
+            View your billing history and download invoices.
           </p>
         </div>
       </div>
@@ -150,18 +149,6 @@ export default function PortalInvoicesPage() {
           </a>
         </nav>
       </div>
-      {billingPortalUrl && (
-        <div className="mb-4">
-          <a
-            href={billingPortalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-3 py-1.5 text-xs rounded-md border border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
-          >
-            Manage billing in Stripe
-          </a>
-        </div>
-      )}
       {invoices.length === 0 ? (
         <p className="text-sm text-gray-600">No invoices found yet.</p>
       ) : (
@@ -174,11 +161,6 @@ export default function PortalInvoicesPage() {
                   {inv.type === 'uploaded' && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                       PDF
-                    </span>
-                  )}
-                  {inv.type === 'stripe' && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                      Stripe
                     </span>
                   )}
                 </div>
@@ -195,17 +177,7 @@ export default function PortalInvoicesPage() {
                     {getStatusLabel(inv.status)}
                   </span>
                 </div>
-                {inv.type === 'stripe' && inv.hosted_invoice_url && (
-                  <a
-                    href={inv.hosted_invoice_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs px-3 py-1 rounded-md border text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
-                  >
-                    View &amp; pay
-                  </a>
-                )}
-                {inv.type === 'uploaded' && inv.file_url && (
+                {inv.file_url && (
                   <a
                     href={inv.file_url}
                     target="_blank"

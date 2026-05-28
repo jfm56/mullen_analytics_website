@@ -19,7 +19,6 @@ export default function PortalHomePage() {
   const [savingContact, setSavingContact] = useState(false);
   const [contactMessage, setContactMessage] = useState('');
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const billingPortalUrl = process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL;
 
   useEffect(() => {
     const checkSession = async () => {
