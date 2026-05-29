@@ -71,62 +71,41 @@ export default function AdminPage() {
         setAllowed(true);
         setMyProfile(callerProfile);
 
-        // Load users list via FastAPI proxy
-        try {
-          const res = await fetch('/api/proxy/users/', {
-            method: 'GET',
-            credentials: 'include',
-          });
-          const json = await res.json();
+        // Load users and messages in parallel
+        const [usersResult, messagesResult] = await Promise.allSettled([
+          fetch('/api/proxy/users/', { method: 'GET', credentials: 'include' }),
+          fetch('/api/proxy/messages/admin', { method: 'GET', credentials: 'include' }),
+        ]);
 
-          if (!res.ok) {
-            setError(json.detail || 'Failed to load users.');
-            setProfiles([]);
-          } else {
-            const others = (json || []).filter((p) => p.id !== callerProfile.id);
-            setProfiles(others);
+        if (usersResult.status === 'fulfilled') {
+          try {
+            const json = await usersResult.value.json();
+            if (usersResult.value.ok) {
+              setProfiles((json || []).filter((p) => p.id !== callerProfile.id));
+            } else {
+              setError(json.detail || 'Failed to load users.');
+            }
+          } catch (_) {
+            setError('Failed to load users.');
           }
-        } catch (e) {
+        } else {
           setError('Failed to load users.');
-          setProfiles([]);
         }
 
-        // Load admin messages via FastAPI proxy
-        try {
-          setLoadingAdminMessages(true);
-          const resMessages = await fetch('/api/proxy/messages/admin', {
-            method: 'GET',
-            credentials: 'include',
-          });
-          const jsonMessages = await resMessages.json();
-          if (resMessages.ok) {
-            setAdminMessages(jsonMessages || []);
-          }
-        } catch (e) {
-          // Silently fail
-        } finally {
-          setLoadingAdminMessages(false);
+        if (messagesResult.status === 'fulfilled') {
+          try {
+            const jsonMessages = await messagesResult.value.json();
+            if (messagesResult.value.ok) setAdminMessages(jsonMessages || []);
+          } catch (_) {}
         }
+        setLoadingAdminMessages(false);
 
-        // Load dashboard metrics (placeholder - will need FastAPI endpoint)
-        try {
-          setLoadingDashboard(true);
-          // TODO: Create FastAPI dashboard endpoint
-          setDashboard({
-            metrics: {
-              totalClients: 0,
-              activeProjects: 0,
-              unreadMessages: 0,
-              openTasks: 0,
-            },
-            tasksDueSoon: [],
-            clientsNeedingOutreach: [],
-          });
-        } catch (e) {
-          // Silently fail
-        } finally {
-          setLoadingDashboard(false);
-        }
+        setDashboard({
+          metrics: { totalClients: 0, activeProjects: 0, unreadMessages: 0, openTasks: 0 },
+          tasksDueSoon: [],
+          clientsNeedingOutreach: [],
+        });
+        setLoadingDashboard(false);
       } catch (err) {
         setAllowed(false);
         router.replace('/portal/login');
