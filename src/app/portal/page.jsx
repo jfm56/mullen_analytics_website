@@ -120,10 +120,46 @@ export default function PortalHomePage() {
 
   if (!user) return null;
 
-  const firstName = user.user_metadata?.first_name || user.email;
+  const firstName = profile?.full_name?.split(' ')[0] || user.user_metadata?.first_name || user.email;
 
   return (
-    <div className="max-w-5xl mx-auto py-16 px-4">
+    <div className="max-w-5xl mx-auto py-8 px-4">
+      {/* EMS Dashboard Status Card */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 mb-6 text-white shadow-md">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold">Welcome back, {firstName}</h1>
+            <p className="text-blue-100 text-sm mt-1">Your EMS analytics portal</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Link href="/portal/uploads"
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors border border-white/30">
+              📤 Upload CSV
+            </Link>
+            <Link href="/portal/dashboard"
+              className="px-4 py-2 bg-white text-blue-700 hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors">
+              📊 Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* EMS Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Upload CSV', sub: 'Add EMSCharts export', href: '/portal/uploads', icon: '📤', color: 'bg-blue-50 border-blue-200 text-blue-700' },
+          { label: 'Dashboard', sub: 'View analytics', href: '/portal/dashboard', icon: '📊', color: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+          { label: 'Explore Data', sub: 'Browse & filter dataset', href: '/portal/data-explorer', icon: '🔍', color: 'bg-purple-50 border-purple-200 text-purple-700' },
+          { label: 'Message Us', sub: 'Contact Mullen Analytics', href: '/portal/messages', icon: '💬', color: 'bg-green-50 border-green-200 text-green-700' },
+        ].map(a => (
+          <Link key={a.label} href={a.href} className={`flex flex-col p-4 border rounded-xl transition-colors hover:shadow-sm ${a.color}`}>
+            <span className="text-2xl mb-1">{a.icon}</span>
+            <span className="font-semibold text-sm">{a.label}</span>
+            <span className="text-xs opacity-75 mt-0.5">{a.sub}</span>
+          </Link>
+        ))}
+      </div>
+
       <div className="border rounded-lg bg-white p-8 mb-8 shadow-sm">
         <div className="flex items-start justify-between mb-8">
           <div className="flex items-center gap-6">

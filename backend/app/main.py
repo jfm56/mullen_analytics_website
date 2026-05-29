@@ -64,9 +64,19 @@ app.include_router(data_router.router,     prefix="/api")
 async def on_startup():
     import logging, os
     log = logging.getLogger(__name__)
+
+    if settings.environment == "local":
+        print("=" * 70)
+        print("WARNING: Running in LOCAL mode.")
+        print("Files are stored locally. No production data should be used.")
+        print(f"  DATA_UPLOADS_ROOT : {settings.data_uploads_root}")
+        print(f"  DATA_STORAGE_ROOT : {settings.data_storage_root}")
+        print("=" * 70)
+
     raw_url = os.environ.get("DATABASE_URL", "<NOT SET>")
     masked = raw_url[:40] + "..." if len(raw_url) > 40 else raw_url
     log.info("DATABASE_URL env var: %s", masked)
+    log.info("ENVIRONMENT: %s | STORAGE_BACKEND: %s", settings.environment, settings.storage_backend)
     try:
         Base.metadata.create_all(bind=engine)
         log.info("DB create_all succeeded")

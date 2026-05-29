@@ -49,3 +49,9 @@ backend/.coverage
 backend/.coverage.*
 backend/.pytest_cache/
 backend/htmlcov/
+
+# Local data storage (never commit uploaded files)
+backend/local_data/
+*.csv
+*.xlsx
+*.xls
