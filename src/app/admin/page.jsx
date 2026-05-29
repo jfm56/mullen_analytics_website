@@ -314,13 +314,18 @@ export default function AdminPage() {
         credentials: 'include',
       });
       if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.detail || 'Failed to delete user');
+        let message = `Server error (${res.status})`;
+        try {
+          const json = await res.json();
+          message = json.detail || message;
+        } catch (_) {}
+        throw new Error(message);
       }
       setProfiles((prev) => prev.filter((p) => p.id !== deleteUser.id));
       setDeleteUser(null);
     } catch (e) {
       setError(e.message || 'Failed to delete user');
+      setDeleteUser(null);
     } finally {
       setDeletingUser(false);
     }
