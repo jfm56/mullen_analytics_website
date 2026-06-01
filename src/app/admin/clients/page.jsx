@@ -115,7 +115,7 @@ export default function AdminClientsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
-                          href={`/admin/clients/${c.id}`}
+                          href={`/admin/clients/${c.id}?tab=ems`}
                           className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded font-medium"
                         >
                           Workspace

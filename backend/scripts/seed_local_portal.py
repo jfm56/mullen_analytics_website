@@ -53,9 +53,27 @@ db = SessionLocal()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Import models
+# Import ALL models so SQLAlchemy can resolve all relationships
 from app.database import Base
 from app.models.user import User, Profile
+from app.models.project import Project  # noqa
+from app.models.data_upload import DataUpload, DataCleaningResult, EMSDashboardMetrics  # noqa
+try:
+    from app.models.agency import Agency, AgencyFile, AuditLog, PipelineRun  # noqa
+except Exception:
+    pass
+try:
+    from app.models.invoice import Invoice  # noqa
+except Exception:
+    pass
+try:
+    from app.models.document import Document  # noqa
+except Exception:
+    pass
+try:
+    from app.models.message import Message  # noqa
+except Exception:
+    pass
 
 Base.metadata.create_all(bind=engine)
 

@@ -7,6 +7,7 @@ from .routers import auth, users, messages, profiles, invoices, uploads, tasks
 from .routers import projects, documents, impersonation, reports, dashboard_refresh, quickbooks
 from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder, payments, clients
 from .routers import data as data_router
+from .routers import settings as settings_router
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
 
@@ -58,6 +59,7 @@ app.include_router(admin.router,           prefix="/api")
 app.include_router(payments.router)
 app.include_router(clients.router,         prefix="/api")
 app.include_router(data_router.router,     prefix="/api")
+app.include_router(settings_router.router, prefix="/api")
 
 
 @app.on_event("startup")

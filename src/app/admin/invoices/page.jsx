@@ -10,7 +10,12 @@ export default function AdminInvoicesPage() {
 
   useEffect(() => {
     fetch('/api/proxy/invoices', { credentials: 'include' })
-      .then(r => r.json()).then(d => setInvoices(d || [])).catch(e => setError(e.message))
+      .then(async r => {
+        if (!r.ok) throw new Error(`Server error ${r.status}`);
+        const d = await r.json();
+        setInvoices(Array.isArray(d) ? d : []);
+      })
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 

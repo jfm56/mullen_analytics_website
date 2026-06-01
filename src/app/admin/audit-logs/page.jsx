@@ -10,7 +10,12 @@ export default function AdminAuditLogsPage() {
 
   useEffect(() => {
     fetch('/api/proxy/admin/audit-logs?limit=100', { credentials: 'include' })
-      .then(r => r.json()).then(setLogs).catch(e => setError(e.message))
+      .then(async r => {
+        if (!r.ok) throw new Error(`Server error ${r.status}`);
+        const d = await r.json();
+        setLogs(Array.isArray(d) ? d : []);
+      })
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -39,7 +44,9 @@ export default function AdminAuditLogsPage() {
                   <td className="px-4 py-2 text-xs font-mono text-gray-800">{l.action}</td>
                   <td className="px-4 py-2 text-xs text-gray-600">{l.user_id ? String(l.user_id).slice(0,8)+'…' : '—'}</td>
                   <td className="px-4 py-2 text-xs text-gray-600">{l.agency_id ? String(l.agency_id).slice(0,8)+'…' : '—'}</td>
-                  <td className="px-4 py-2 text-xs text-gray-500 max-w-xs truncate">{l.details || '—'}</td>
+                  <td className="px-4 py-2 text-xs text-gray-500 max-w-xs truncate">
+                    {l.details ? (typeof l.details === 'object' ? JSON.stringify(l.details) : l.details) : '—'}
+                  </td>
                   <td className="px-4 py-2 text-xs text-gray-400">{l.created_at ? new Date(l.created_at).toLocaleString() : '—'}</td>
                 </tr>
               ))}

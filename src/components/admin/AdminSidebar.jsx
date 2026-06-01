@@ -1,21 +1,25 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import {
+  LayoutDashboard, Users, Upload, BarChart2, Search,
+  Columns, MessageSquare, UserCog, FolderOpen, Receipt,
+  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 
 const NAV = [
-  { label: 'Home',          href: '/admin',                     icon: '🏠' },
-  { label: 'Clients',       href: '/admin/clients',             icon: '🏢' },
-  { label: 'Data Uploads',  href: '/admin/data',                icon: '📤' },
-  { label: 'Dashboards',    href: '/admin/dashboard',           icon: '📊' },
-  { label: 'Data Explorer', href: '/admin/data-explorer',       icon: '🔍' },
-  { label: 'Column Mapping',href: '/admin/column-mapping',      icon: '🗂️' },
-  { label: 'Messages',      href: '/admin/messages',            icon: '💬' },
-  { label: 'Users & Roles', href: '/admin/users',               icon: '👥' },
-  { label: 'Projects',      href: '/admin/projects',            icon: '📁' },
-  { label: 'Invoices',      href: '/admin/invoices',            icon: '💰' },
-  { label: 'Audit Logs',    href: '/admin/audit-logs',          icon: '📋' },
-  { label: 'Settings',      href: '/admin/settings',            icon: '⚙️' },
+  { label: 'Home',           href: '/admin',               Icon: LayoutDashboard },
+  { label: 'Clients',        href: '/admin/clients',        Icon: Users },
+  { label: 'Data Uploads',   href: '/admin/data',           Icon: Upload },
+  { label: 'Dashboards',     href: '/admin/dashboard',      Icon: BarChart2 },
+  { label: 'Data Explorer',  href: '/admin/data-explorer',  Icon: Search },
+  { label: 'Column Mapping', href: '/admin/column-mapping', Icon: Columns },
+  { label: 'Messages',       href: '/admin/messages',       Icon: MessageSquare },
+  { label: 'Users & Roles',  href: '/admin/users',          Icon: UserCog },
+  { label: 'Projects',       href: '/admin/projects',       Icon: FolderOpen },
+  { label: 'Invoices',       href: '/admin/invoices',       Icon: Receipt },
+  { label: 'Audit Logs',     href: '/admin/audit-logs',     Icon: ClipboardList },
+  { label: 'Settings',       href: '/admin/settings',       Icon: Settings },
 ];
 
 export default function AdminSidebar({ collapsed, onToggle }) {
@@ -28,56 +32,63 @@ export default function AdminSidebar({ collapsed, onToggle }) {
 
   return (
     <aside
-      className={`flex flex-col bg-gray-900 text-white transition-all duration-200 ${
-        collapsed ? 'w-14' : 'w-56'
+      style={{ backgroundColor: '#111827', color: '#ffffff' }}
+      className={`flex flex-col transition-all duration-200 ${
+        collapsed ? 'w-16' : 'w-60'
       } min-h-screen flex-shrink-0`}
     >
       {/* Logo / toggle */}
-      <div className="flex items-center justify-between px-3 py-4 border-b border-gray-700">
+      <div
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+        className={`flex items-center h-14 px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}
+      >
         {!collapsed && (
-          <span className="font-bold text-sm text-white tracking-tight truncate">
+          <span className="font-bold text-sm tracking-tight truncate">
             Mullen Analytics
           </span>
         )}
         <button
           onClick={onToggle}
-          className="p-1.5 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors ml-auto"
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+          className="p-1.5 rounded-md transition-colors hover:bg-white/10"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? '→' : '←'}
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-3 overflow-y-auto">
-        {NAV.map((item) => {
-          const active = isActive(item.href);
+      <nav className={`flex-1 py-2 overflow-y-auto px-2 space-y-0.5`}>
+        {NAV.map(({ label, href, Icon }) => {
+          const active = isActive(href);
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg text-sm transition-colors ${
-                active
-                  ? 'bg-blue-600 text-white font-medium'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-              }`}
+              key={href}
+              href={href}
+              title={collapsed ? label : undefined}
+              style={{
+                backgroundColor: active ? '#2563eb' : 'transparent',
+                color: '#ffffff',
+                opacity: active ? 1 : 0.75,
+              }}
+              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-100 hover:bg-white/10 ${collapsed ? 'justify-center' : ''}`}
             >
-              <span className="text-base flex-shrink-0 w-5 text-center">{item.icon}</span>
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              <Icon size={18} className="flex-shrink-0" />
+              {!collapsed && <span className="truncate">{label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-700 px-3 py-3">
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} className="px-2 py-3">
         <Link
           href="/portal"
-          className="flex items-center gap-3 px-2 py-2 rounded-lg text-xs text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
           title={collapsed ? 'Client Portal' : undefined}
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+          className={`flex items-center gap-3 px-2.5 py-2 rounded-lg text-xs transition-colors hover:bg-white/10 hover:opacity-100 ${collapsed ? 'justify-center' : ''}`}
         >
-          <span className="flex-shrink-0">↗</span>
+          <ExternalLink size={15} className="flex-shrink-0" />
           {!collapsed && <span>Client Portal</span>}
         </Link>
       </div>

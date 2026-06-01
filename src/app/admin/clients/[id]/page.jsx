@@ -11,6 +11,9 @@ import ClientDocumentsTab from '@/components/admin/ClientDocumentsTab';
 import ClientBillingTab from '@/components/admin/ClientBillingTab';
 import ClientActivityTab from '@/components/admin/ClientActivityTab';
 import ClientPortalViewTab from '@/components/admin/ClientPortalViewTab';
+import Link from 'next/link';
+import StatusBadge from '@/components/ui/StatusBadge';
+import PipelineStepper from '@/components/ui/PipelineStepper';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -19,6 +22,8 @@ const TABS = [
   { id: 'billing', label: 'Billing' },
   { id: 'activity', label: 'Activity' },
   { id: 'portal', label: 'Portal View' },
+  { id: 'ems', label: '📤 EMS Data' },
+  { id: 'dashboard', label: '📊 Dashboard' },
 ];
 
 export default function AdminClientDetailPage() {
@@ -38,6 +43,8 @@ export default function AdminClientDetailPage() {
   const [clientDocuments, setClientDocuments] = useState([]);
   const [clientInvoices, setClientInvoices] = useState([]);
   const [clientUploads, setClientUploads] = useState([]);
+  const [dashSummary, setDashSummary] = useState(null);
+  const [cleaningId, setCleaningId] = useState(null);
   const [activityLogs, setActivityLogs] = useState([]);
 
   // Load client data
@@ -94,6 +101,14 @@ export default function AdminClientDetailPage() {
       } catch (e) {
         console.error('Failed to load uploads:', e);
         setClientUploads([]);
+      }
+
+      // Load EMS dashboard summary
+      try {
+        const ds = await fetch(`/api/proxy/admin/clients/${clientId}/dashboard-summary`, { credentials: 'include' }).then(r => r.ok ? r.json() : null);
+        setDashSummary(ds);
+      } catch (e) {
+        console.error('Failed to load dashboard summary:', e);
       }
 
       // Load activity logs
@@ -331,6 +346,105 @@ export default function AdminClientDetailPage() {
           invoices={clientInvoices}
           onStartImpersonation={handleStartImpersonation}
         />
+      )}
+
+      {activeTab === 'ems' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">EMS Data Uploads</h3>
+            <Link href={`/admin/data?client=${clientId}`}
+              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700">
+              + Upload CSV
+            </Link>
+          </div>
+          {clientUploads.length === 0 ? (
+            <div className="bg-white border rounded-xl p-10 text-center text-gray-400 text-sm">
+              No uploads yet.
+              <Link href={`/admin/data?client=${clientId}`} className="block mt-2 text-blue-600 hover:underline">Upload first CSV →</Link>
+            </div>
+          ) : (
+            <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>{['File','Status','Rows','Uploaded','Actions'].map(h=>(
+                    <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {clientUploads.map(u => (
+                    <tr key={u.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-900 truncate max-w-xs">{u.original_filename || u.stored_filename}</p>
+                        {u.file_size ? <p className="text-xs text-gray-400">{(u.file_size/1024).toFixed(0)} KB</p> : null}
+                      </td>
+                      <td className="px-4 py-3"><StatusBadge status={u.upload_status} type="upload" /></td>
+                      <td className="px-4 py-3 text-xs text-gray-600">
+                        {u.row_count_original != null ? `${u.row_count_original} raw` : '—'}
+                        {u.row_count_cleaned != null && ` → ${u.row_count_cleaned} clean`}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1.5 flex-wrap">
+                          {u.upload_status === 'CLEANED' && (
+                            <>
+                              <Link href={`/admin/data-explorer/${u.id}`} className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200">🔍 Explore</Link>
+                            </>
+                          )}
+                          {(u.upload_status === 'UPLOADED' || u.upload_status === 'FAILED') && (
+                            <button
+                              onClick={async () => {
+                                setCleaningId(u.id);
+                                try {
+                                  await fetch(`/api/proxy/data/uploads/${u.id}/clean`, { method: 'POST', credentials: 'include' });
+                                  await refreshUploads();
+                                } catch(e) { console.error(e); }
+                                finally { setCleaningId(null); }
+                              }}
+                              disabled={cleaningId === u.id}
+                              className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 disabled:opacity-50"
+                            >{cleaningId === u.id ? '…' : '⚙ Clean'}</button>
+                          )}
+                          <a href={`/api/proxy/data/uploads/${u.id}/download-original`} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">↓ CSV</a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'dashboard' && (
+        <div>
+          {dashSummary?.has_dashboard ? (
+            <div className="bg-white border rounded-xl p-6 shadow-sm space-y-3">
+              <p className="text-sm text-gray-700">Dashboard ready — latest cleaned upload.</p>
+              <div className="flex gap-2">
+                <Link href={`/admin/data-explorer/${dashSummary.upload_id}`}
+                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+                  📊 Open Dashboard & Explorer
+                </Link>
+              </div>
+              {dashSummary.generated_at && (
+                <p className="text-xs text-gray-400">Generated {new Date(dashSummary.generated_at).toLocaleString()}</p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white border rounded-xl p-10 text-center shadow-sm">
+              <div className="text-4xl mb-3">📊</div>
+              <p className="text-gray-700 font-medium mb-1">No dashboard ready</p>
+              <p className="text-sm text-gray-500 mb-4">Upload and clean an EMSCharts CSV to generate analytics.</p>
+              <Link href={`/admin/data?client=${clientId}`}
+                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+                Upload CSV
+              </Link>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

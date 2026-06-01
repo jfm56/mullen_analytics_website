@@ -2,7 +2,7 @@
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-import ConditionalNavFooter from "@/components/ConditionalNavFooter";
+import { ConditionalNav, ConditionalFooter } from "@/components/ConditionalNavFooter";
 import ChatWidget from "@/components/ChatWidget";
 import CookieConsent from "@/components/CookieConsent";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -51,8 +51,9 @@ export default function RootLayout({ children }) {
           `}
         </Script>
         <ThemeProvider>
-          <ConditionalNavFooter />
+          <ConditionalNav />
           <main className="flex-1">{children}</main>
+          <ConditionalFooter />
           <ChatWidget />
           <CookieConsent />
         </ThemeProvider>

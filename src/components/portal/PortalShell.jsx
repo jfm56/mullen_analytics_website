@@ -13,6 +13,7 @@ const NAV = [
   { label: 'Reports',       href: '/portal/reports',        icon: '📄' },
   { label: 'Messages',      href: '/portal/messages',       icon: '💬' },
   { label: 'Invoices',      href: '/portal/invoices',       icon: '💰' },
+  { label: 'Settings',      href: '/portal/settings',       icon: '⚙️' },
 ];
 
 const BYPASS = ['/portal/login', '/portal/reset-password'];

@@ -10,7 +10,12 @@ export default function AdminMessagesPage() {
 
   useEffect(() => {
     fetch('/api/proxy/messages/admin', { credentials: 'include' })
-      .then(r => r.json()).then(d => setMessages(d || [])).catch(e => setError(e.message))
+      .then(async r => {
+        if (!r.ok) throw new Error(`Server error ${r.status}`);
+        const d = await r.json();
+        setMessages(Array.isArray(d) ? d : []);
+      })
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 

@@ -83,8 +83,9 @@ async function proxyRequest(request, path, method) {
     // header. We force https:// to avoid a second implicit http→https hop that drops Cookie.
     if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
       const rawRedirect = response.headers.get('location');
-      // Force HTTPS — Railway's internal proxy may produce http:// Location headers
-      const redirectUrl = rawRedirect.replace(/^http:\/\//, 'https://');
+      // Force HTTPS only for non-localhost — Railway emits http:// Location headers but localhost has no TLS
+      const isLocal = rawRedirect.includes('localhost') || rawRedirect.includes('127.0.0.1');
+      const redirectUrl = isLocal ? rawRedirect : rawRedirect.replace(/^http:\/\//, 'https://');
       const cookieVal = headers.get('Cookie');
       const contentTypeVal = headers.get('Content-Type');
       const redirectHeaders = new Headers();
