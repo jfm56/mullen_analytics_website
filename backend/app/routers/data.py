@@ -546,6 +546,64 @@ async def get_upload_predictive(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/geographic
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/geographic")
+async def get_upload_geographic(
+    upload_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Geographic analytics — call volume by township with map coordinates + trend."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_geographic_service import get_geographic_dashboard
+    return get_geographic_dashboard(upload, db)
+
+
+# ============================================================================
+# GET /api/data/uploads/{upload_id}/response-time-risk
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/response-time-risk")
+async def get_upload_response_time_risk(
+    upload_id: UUID,
+    target_minutes: float = 9.0,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Response-time risk — by weather, hour-of-day (traffic proxy), and township."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_response_time_service import get_response_time_risk
+    return get_response_time_risk(upload, db, target_minutes=target_minutes)
+
+
+# ============================================================================
+# GET /api/data/uploads/{upload_id}/mva-hotspots
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/mva-hotspots")
+async def get_upload_mva_hotspots(
+    upload_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Motor-vehicle-collision hotspots — by township, hour, weekday, and weather."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_mva_service import get_mva_hotspots
+    return get_mva_hotspots(upload, db)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 
