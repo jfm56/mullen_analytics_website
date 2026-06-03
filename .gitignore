@@ -49,3 +49,16 @@ backend/.coverage
 backend/.coverage.*
 backend/.pytest_cache/
 backend/htmlcov/
+
+# Local data storage (never commit uploaded files)
+backend/local_data/
+*.csv
+*.xlsx
+*.xls
+
+# claude code / editor tooling
+.claude/
+
+# backups & local dev server logs
+*.bak
+backend/_nextdev.log

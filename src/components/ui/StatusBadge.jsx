@@ -32,12 +32,29 @@ export default function StatusBadge({ status, type = 'client' }) {
 
     if (type === 'upload') {
       const styles = {
-        received: 'bg-blue-50 text-blue-700 border-blue-200',
-        validated: 'bg-green-50 text-green-700 border-green-200',
-        issue: 'bg-red-50 text-red-700 border-red-200',
-        processing: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-        done: 'bg-green-50 text-green-700 border-green-200',
-        error: 'bg-red-50 text-red-700 border-red-200',
+        received:         'bg-blue-50 text-blue-700 border-blue-200',
+        validated:        'bg-green-50 text-green-700 border-green-200',
+        issue:            'bg-red-50 text-red-700 border-red-200',
+        processing:       'bg-yellow-50 text-yellow-700 border-yellow-200',
+        done:             'bg-green-50 text-green-700 border-green-200',
+        error:            'bg-red-50 text-red-700 border-red-200',
+        UPLOADED:         'bg-blue-50 text-blue-700 border-blue-200',
+        CLEANING:         'bg-yellow-50 text-yellow-700 border-yellow-200',
+        CLEANED:          'bg-green-50 text-green-700 border-green-200',
+        FAILED:           'bg-red-50 text-red-700 border-red-200',
+        NEEDS_MAPPING:    'bg-amber-50 text-amber-700 border-amber-200',
+        DASHBOARD_READY:  'bg-emerald-50 text-emerald-700 border-emerald-200',
+      };
+      return styles[status] || 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+
+    if (type === 'feedback') {
+      const styles = {
+        open:      'bg-blue-50 text-blue-700 border-blue-200',
+        in_review: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        planned:   'bg-purple-50 text-purple-700 border-purple-200',
+        resolved:  'bg-green-50 text-green-700 border-green-200',
+        declined:  'bg-gray-50 text-gray-700 border-gray-200',
       };
       return styles[status] || 'bg-gray-50 text-gray-700 border-gray-200';
     }

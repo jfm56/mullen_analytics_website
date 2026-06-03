@@ -1,1212 +1,426 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  Users, Upload, BarChart2, MessageSquare, AlertTriangle,
+  CheckCircle2, RefreshCw, Database, Server, HardDrive,
+  Mail, Activity, Shield, Plus, Search, FileText, Clock,
+  XCircle, HelpCircle, Zap, ArrowRight,
+} from 'lucide-react';
 import { auth } from '@/lib/api';
+import MetricCard from '@/components/ui/MetricCard';
+import PipelineStepper from '@/components/ui/PipelineStepper';
+import StatusBadge from '@/components/ui/StatusBadge';
+import ErrorAlert from '@/components/ui/ErrorAlert';
+import { getAdminDashboardSummary } from '@/lib/api/adminDashboard';
 
-export default function AdminPage() {
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function HealthIcon({ status }) {
+  if (status === 'ok')      return <CheckCircle2 size={15} className="text-green-500" />;
+  if (status === 'warning') return <AlertTriangle size={15} className="text-amber-500" />;
+  if (status === 'error')   return <XCircle size={15} className="text-red-500" />;
+  return <HelpCircle size={15} className="text-gray-400" />;
+}
+
+function Panel({ title, action, children, className = '' }) {
+  return (
+    <div className={`bg-white border rounded-xl shadow-sm overflow-hidden ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b">
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function EmptyRow({ msg }) {
+  return <p className="text-sm text-gray-400 text-center py-4">{msg}</p>;
+}
+
+const EMPTY_SUMMARY = {
+  total_clients: 0, active_clients: 0, total_uploads: 0,
+  dashboards_ready: 0, failed_uploads: 0, unread_messages: 0,
+  open_tasks: 0, data_quality_warnings: 0,
+  recent_uploads: [], clients_needing_attention: [],
+  recent_messages: [], tasks_due_soon: [],
+  system_health: { backend: 'ok', database: 'ok', storage: 'unknown', email: 'unknown', analytics_pipeline: 'unknown', environment: 'local' },
+};
+
+// ── main component ────────────────────────────────────────────────────────────
+
+export default function AdminDashboardPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
-  const [profiles, setProfiles] = useState([]);
-  const [error, setError] = useState('');
-  const [myProfile, setMyProfile] = useState(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'profile' | 'users' | 'messages'
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [invitingUser, setInvitingUser] = useState(false);
-  const [inviteForm, setInviteForm] = useState({
-    email: '',
-    role: 'client',
-    full_name: '',
-  });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [confirmRoleChange, setConfirmRoleChange] = useState(null);
-  const [resetPasswordUser, setResetPasswordUser] = useState(null);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [deleteUser, setDeleteUser] = useState(null);
-  const [deletingUser, setDeletingUser] = useState(false);
-  const [editUser, setEditUser] = useState(null);
-  const [savingEdit, setSavingEdit] = useState(false);
-  const [adminMessages, setAdminMessages] = useState([]);
-  const [loadingAdminMessages, setLoadingAdminMessages] = useState(false);
-  const [compose, setCompose] = useState({ userId: '', subject: '', body: '' });
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [dashboard, setDashboard] = useState({
-    metrics: { totalClients: 0, activeProjects: 0, unreadMessages: 0, openTasks: 0 },
-    tasksDueSoon: [],
-    clientsNeedingOutreach: [],
-  });
-  const [loadingDashboard, setLoadingDashboard] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [authState, setAuthState] = useState('loading'); // loading | ok | denied
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState('');
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  const loadSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    setSummaryError('');
+    try {
+      const data = await getAdminDashboardSummary();
+      setSummary(data);
+      setLastRefreshed(new Date());
+    } catch (e) {
+      setSummaryError(e.message || 'Unable to load dashboard data.');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-    const init = async () => {
-      if (!mounted) return;
-      setLoading(true);
-      setError('');
-      
+    (async () => {
       try {
-        // Use FastAPI auth instead of Supabase
         const session = await auth.getSession();
-
         if (!mounted) return;
         if (!session.authenticated) {
-          setAllowed(false);
-          setLoading(false);
           router.replace('/portal/login');
           return;
         }
-
-        const callerProfile = session.profile;
-
-        if (!callerProfile || callerProfile.role !== 'admin') {
-          setAllowed(false);
-          setLoading(false);
+        if (!session.profile || session.profile.role !== 'admin') {
+          setAuthState('denied');
           return;
         }
-
-        setAllowed(true);
-        setMyProfile(callerProfile);
-
-        // Load users and messages in parallel
-        const [usersResult, messagesResult] = await Promise.allSettled([
-          fetch('/api/proxy/users/', { method: 'GET', credentials: 'include' }),
-          fetch('/api/proxy/messages/admin', { method: 'GET', credentials: 'include' }),
-        ]);
-
-        if (usersResult.status === 'fulfilled') {
-          try {
-            const json = await usersResult.value.json();
-            if (usersResult.value.ok) {
-              setProfiles((json || []).filter((p) => p.id !== callerProfile.id));
-            } else {
-              setError(json.detail || 'Failed to load users.');
-            }
-          } catch (_) {
-            setError('Failed to load users.');
-          }
-        } else {
-          setError('Failed to load users.');
-        }
-
-        if (messagesResult.status === 'fulfilled') {
-          try {
-            const jsonMessages = await messagesResult.value.json();
-            if (messagesResult.value.ok) setAdminMessages(jsonMessages || []);
-          } catch (_) {}
-        }
-        setLoadingAdminMessages(false);
-
-        setDashboard({
-          metrics: { totalClients: 0, activeProjects: 0, unreadMessages: 0, openTasks: 0 },
-          tasksDueSoon: [],
-          clientsNeedingOutreach: [],
-        });
-        setLoadingDashboard(false);
-      } catch (err) {
-        setAllowed(false);
+        setAuthState('ok');
+        loadSummary();
+      } catch {
         router.replace('/portal/login');
       }
-
-      setLoading(false);
-    };
-
-    init();
+    })();
     return () => { mounted = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, loadSummary]);
 
-  const refreshAdminMessages = async () => {
-    try {
-      setLoadingAdminMessages(true);
-      const res = await fetch('/api/proxy/messages/admin', {
-        method: 'GET',
-        credentials: 'include',
-      });
-      const json = await res.json();
-      if (res.ok) {
-        setAdminMessages(json || []);
-      }
-    } catch (e) {
-      // Silently fail
-    } finally {
-      setLoadingAdminMessages(false);
-    }
-  };
-
-  const sendAdminMessage = async () => {
-    if (!compose.userId || !compose.subject || !compose.body) {
-      setError('Client, subject, and body are required to send a message.');
-      return;
-    }
-    setError('');
-    setSendingMessage(true);
-    try {
-      const res = await fetch('/api/proxy/messages/admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          user_id: compose.userId,
-          subject: compose.subject,
-          body: compose.body,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to send message');
-
-      setCompose({ userId: '', subject: '', body: '' });
-      await refreshAdminMessages();
-    } catch (e) {
-      setError(e.message || 'Failed to send message');
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-
-  const updateAdminMessagesRead = async (ids, read) => {
-    if (!ids || ids.length === 0) return;
-    try {
-      // Mark messages as read/unread via FastAPI
-      for (const id of ids) {
-        await fetch(`/api/proxy/messages/${id}/read`, {
-          method: read ? 'POST' : 'DELETE',
-          credentials: 'include',
-        });
-      }
-      setAdminMessages((prev) =>
-        prev.map((m) => (ids.includes(m.id) ? { ...m, read_at: read ? new Date().toISOString() : null } : m))
-      );
-    } catch (e) {
-      setError(e.message || 'Failed to update messages');
-    }
-  };
-
-  const deleteAdminMessages = async (ids) => {
-    if (!ids || ids.length === 0) return;
-    try {
-      for (const id of ids) {
-        await fetch(`/api/proxy/messages/${id}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-      }
-      setAdminMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
-    } catch (e) {
-      setError(e.message || 'Failed to delete messages');
-    }
-  };
-
-  const updateRole = async (userId, role) => {
-    setError('');
-    try {
-      const res = await fetch(`/api/proxy/profiles/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ role }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to update role');
-
-      setProfiles((prev) =>
-        prev.map((p) => (p.id === userId ? { ...p, role: json.role } : p))
-      );
-    } catch (e) {
-      setError(e.message || 'Failed to update role');
-    }
-  };
-
-  const saveMyProfile = async () => {
-    if (!myProfile) return;
-    setError('');
-    setSavingProfile(true);
-    try {
-      const res = await fetch('/api/proxy/profiles/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          full_name: myProfile.full_name || null,
-          company: myProfile.company || null,
-          project_name: myProfile.project_name || null,
-        }),
-      });
-      const updated = await res.json();
-      if (!res.ok) throw new Error(updated.detail || 'Failed to update profile');
-
-      setMyProfile(updated);
-      setProfiles((prev) =>
-        prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
-      );
-    } catch (e) {
-      setError(e.message || 'Failed to update profile');
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const inviteUser = async () => {
-    if (!inviteForm.email) {
-      setError('Email is required to invite a user.');
-      return;
-    }
-    setError('');
-    setInvitingUser(true);
-    try {
-      const res = await fetch('/api/proxy/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: inviteForm.email,
-          full_name: inviteForm.full_name || null,
-          role: inviteForm.role === 'user' ? 'client' : inviteForm.role,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to invite user');
-
-      setProfiles((prev) => [...prev, json]);
-      setInviteForm({ email: '', role: 'client', full_name: '' });
-      setShowInviteModal(false);
-      setError('');
-      setSuccessMessage(`Account created for ${json.email}. A setup email has been sent.`);
-      setTimeout(() => setSuccessMessage(''), 6000);
-    } catch (e) {
-      setError(e.message || 'Failed to invite user');
-    } finally {
-      setInvitingUser(false);
-    }
-  };
-
-  const handleDeleteUser = async () => {
-    if (!deleteUser) return;
-    setDeletingUser(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/proxy/users/${deleteUser.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        let message = `Server error (${res.status})`;
-        try {
-          const json = await res.json();
-          message = json.detail || message;
-        } catch (_) {}
-        throw new Error(message);
-      }
-      setProfiles((prev) => prev.filter((p) => p.id !== deleteUser.id));
-      setDeleteUser(null);
-    } catch (e) {
-      setError(e.message || 'Failed to delete user');
-      setDeleteUser(null);
-    } finally {
-      setDeletingUser(false);
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editUser) return;
-    setSavingEdit(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/proxy/users/${editUser.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          full_name: editUser.full_name || null,
-          company: editUser.company || null,
-          role: editUser.role,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to update user');
-      setProfiles((prev) => prev.map((p) => p.id === json.id ? { ...p, ...json } : p));
-      setEditUser(null);
-    } catch (e) {
-      setError(e.message || 'Failed to update user');
-    } finally {
-      setSavingEdit(false);
-    }
-  };
-
-  const confirmAndUpdateRole = async (userId, newRole) => {
-    setError('');
-    try {
-      const res = await fetch(`/api/proxy/profiles/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ role: newRole }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || 'Failed to update role');
-
-      setProfiles((prev) =>
-        prev.map((p) => (p.id === userId ? { ...p, role: json.role } : p))
-      );
-      setConfirmRoleChange(null);
-    } catch (e) {
-      setError(e.message || 'Failed to update role');
-    }
-  };
-
-  const handleResetPassword = async (userEmail) => {
-    setError('');
-    setResettingPassword(true);
-    try {
-      const res = await fetch('/api/proxy/auth/request-password-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: userEmail }),
-      });
-      const json = await res.json();
-      
-      if (!res.ok) {
-        setError(json.detail || 'Failed to send reset email');
-      } else {
-        setError('');
-        alert(`Password reset email sent to ${userEmail}`);
-      }
-      setResetPasswordUser(null);
-    } catch (e) {
-      setError(e.message || 'Failed to send reset email');
-    } finally {
-      setResettingPassword(false);
-    }
-  };
-
-  if (loading) {
+  if (authState === 'loading') {
     return (
-      <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">Checking access...</div>
+      <div className="flex items-center justify-center h-64 text-sm text-gray-400">
+        <RefreshCw size={16} className="animate-spin mr-2" /> Checking access…
+      </div>
     );
   }
-
-  if (!allowed) {
+  if (authState === 'denied') {
     return (
       <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">
-        Not authorized.
+        Access denied. This page requires admin privileges.
       </div>
     );
   }
 
-  const handleLogout = async () => {
-    await auth.logout();
-    router.push('/portal/login');
-  };
+  const { system_health: health = {} } = summary;
+  const env = health.environment || 'local';
+  const isProd = env === 'production';
+
+  // Pipeline steps derived from summary data
+  const pipelineSteps = [
+    { label: 'Upload CSV',      sub: `${summary.total_uploads} total`,       status: summary.total_uploads > 0 ? 'done' : 'active' },
+    { label: 'Clean Data',      sub: `${summary.dashboards_ready} cleaned`,  status: summary.dashboards_ready > 0 ? 'done' : summary.total_uploads > 0 ? 'active' : 'pending' },
+    { label: 'Map Columns',     sub: summary.data_quality_warnings > 0 ? `${summary.data_quality_warnings} need mapping` : 'OK', status: summary.data_quality_warnings > 0 ? 'error' : summary.dashboards_ready > 0 ? 'done' : 'pending' },
+    { label: 'Compute Metrics', sub: `${summary.dashboards_ready} ready`,    status: summary.dashboards_ready > 0 ? 'done' : 'pending' },
+    { label: 'Dashboard',       sub: `${summary.dashboards_ready} available`,status: summary.dashboards_ready > 0 ? 'done' : 'pending' },
+    { label: 'Explorer',        sub: 'Data explorer',                         status: summary.dashboards_ready > 0 ? 'done' : 'pending' },
+  ];
+
+  const quickActions = [
+    { label: 'Upload EMSCharts CSV', href: '/admin/data',           primary: true,  Icon: Upload },
+    { label: 'Add New Client',       href: '/admin/clients',        primary: false, Icon: Plus },
+    { label: 'Invite User',          href: '/admin/users',          primary: false, Icon: Users },
+    { label: 'View Data Uploads',    href: '/admin/data',           primary: false, Icon: FileText },
+    { label: 'Dashboard Center',     href: '/admin/dashboard',      primary: false, Icon: BarChart2 },
+    { label: 'Data Explorer',        href: '/admin/data-explorer',  primary: false, Icon: Search },
+    { label: 'Column Mapping',       href: '/admin/column-mapping', primary: false, Icon: Activity },
+    { label: 'Messages',             href: '/admin/messages',       primary: false, Icon: MessageSquare },
+    { label: 'Settings',             href: '/admin/settings',       primary: false, Icon: Shield },
+  ];
+
+  const healthItems = [
+    { label: 'Backend API',        key: 'backend',            Icon: Server },
+    { label: 'Database',           key: 'database',           Icon: Database },
+    { label: 'File Storage',       key: 'storage',            Icon: HardDrive },
+    { label: 'Email Provider',     key: 'email',              Icon: Mail },
+    { label: 'Analytics Pipeline', key: 'analytics_pipeline', Icon: Zap },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-4">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight mb-2">Admin Panel</h1>
-          <p className="text-gray-600 text-sm">
-            Home dashboard for your client work plus tools to manage accounts and roles.
+          <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Manage clients, EMS data uploads, analytics dashboards, messages, and platform operations.
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-xs text-gray-600 border px-3 py-1.5 rounded-md hover:bg-gray-50"
-        >
-          Log out
-        </button>
-      </div>
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-      {successMessage && (
-        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-4">
-          {successMessage}
-        </p>
-      )}
-      <div className="mb-4 border-b border-gray-200">
-        <nav className="flex gap-4 text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab('home')}
-            className={`pb-2 px-1 border-b-2 ${
-              activeTab === 'home'
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Home
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('profile')}
-            className={`pb-2 px-1 border-b-2 ${
-              activeTab === 'profile'
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Profile
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('users')}
-            className={`pb-2 px-1 border-b-2 ${
-              activeTab === 'users'
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Users & Roles
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('messages')}
-            className={`pb-2 px-1 border-b-2 ${
-              activeTab === 'messages'
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Messages
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('clients')}
-            className={`pb-2 px-1 border-b-2 ${
-              activeTab === 'clients'
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)] font-semibold'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Clients
-          </button>
-          <a
-            href="/admin/data"
-            className="pb-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-400"
-          >
-            Data Uploads
-          </a>
-        </nav>
-      </div>
-      {activeTab === 'home' && (
-        <>
-          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <div className="border rounded-lg bg-white p-4">
-              <p className="text-[11px] text-gray-500 mb-1">Total clients</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {loadingDashboard ? '—' : dashboard.metrics.totalClients}
-              </p>
-            </div>
-            <div className="border rounded-lg bg-white p-4">
-              <p className="text-[11px] text-gray-500 mb-1">Active projects</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {loadingDashboard ? '—' : dashboard.metrics.activeProjects}
-              </p>
-            </div>
-            <div className="border rounded-lg bg-white p-4">
-              <p className="text-[11px] text-gray-500 mb-1">Open tasks</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {loadingDashboard ? '—' : dashboard.metrics.openTasks}
-              </p>
-            </div>
-            <div className="border rounded-lg bg-white p-4">
-              <p className="text-[11px] text-gray-500 mb-1">Unread messages</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {loadingDashboard ? '—' : dashboard.metrics.unreadMessages}
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
-            <div className="border rounded-lg bg-white p-4">
-              <h2 className="text-sm font-semibold mb-2">Tasks due soon</h2>
-              {loadingDashboard ? (
-                <p className="text-[11px] text-gray-600">Loading tasks...</p>
-              ) : dashboard.tasksDueSoon.length === 0 ? (
-                <p className="text-[11px] text-gray-600">No tasks due in the next 7 days.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {dashboard.tasksDueSoon.map((t) => (
-                    <li key={t.id} className="flex justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[12px] text-gray-800 truncate">{t.title}</p>
-                        <p className="text-[11px] text-gray-500">{t.status}</p>
-                      </div>
-                      <p className="text-[11px] text-gray-600 whitespace-nowrap">
-                        {t.due_date ? new Date(t.due_date).toLocaleDateString() : ''}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="border rounded-lg bg-white p-4">
-              <h2 className="text-sm font-semibold mb-2">Clients needing outreach</h2>
-              {loadingDashboard ? (
-                <p className="text-[11px] text-gray-600">Loading clients...</p>
-              ) : dashboard.clientsNeedingOutreach.length === 0 ? (
-                <p className="text-[11px] text-gray-600">All clients have recent messages.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {dashboard.clientsNeedingOutreach.map((c) => (
-                    <li key={c.id} className="flex justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[12px] text-gray-800 truncate">{c.full_name || c.email}</p>
-                        <p className="text-[11px] text-gray-500 truncate">
-                          {c.company || 'No company'}
-                        </p>
-                      </div>
-                      <p className="text-[11px] text-gray-600 whitespace-nowrap">
-                        {c.last_message_at
-                          ? new Date(c.last_message_at).toLocaleDateString()
-                          : 'No messages yet'}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          <div className="border rounded-lg bg-white p-4">
-            <h2 className="text-sm font-semibold mb-2">Quick Actions</h2>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setActiveTab('users')}
-                className="text-xs px-3 py-2 bg-[var(--brand-primary)] text-white rounded-md hover:opacity-90"
-              >
-                Manage Users
-              </button>
-              <button
-                onClick={() => setActiveTab('messages')}
-                className="text-xs px-3 py-2 border rounded-md hover:bg-gray-50"
-              >
-                View Messages
-              </button>
-              <button
-                onClick={() => setActiveTab('clients')}
-                className="text-xs px-3 py-2 border rounded-md hover:bg-gray-50"
-              >
-                Manage Clients
-              </button>
-              <a
-                href="/admin/data"
-                className="text-xs px-3 py-2 border rounded-md hover:bg-gray-50 inline-flex items-center gap-1"
-              >
-                📊 Data Uploads
-              </a>
-            </div>
-          </div>
-        </>
-      )}
-      {activeTab === 'profile' && myProfile && (
-        <>
-        <div className="mb-8 border rounded-lg bg-white p-4">
-          <h2 className="text-sm font-semibold mb-3">My profile</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Name</label>
-              <input
-                type="text"
-                className="w-full border rounded-md px-2 py-1.5 text-xs"
-                value={myProfile.full_name || ''}
-                onChange={(e) =>
-                  setMyProfile((prev) => ({ ...prev, full_name: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Company</label>
-              <input
-                type="text"
-                className="w-full border rounded-md px-2 py-1.5 text-xs"
-                value={myProfile.company || ''}
-                onChange={(e) =>
-                  setMyProfile((prev) => ({ ...prev, company: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Project</label>
-              <input
-                type="text"
-                className="w-full border rounded-md px-2 py-1.5 text-xs"
-                value={myProfile.project_name || ''}
-                onChange={(e) =>
-                  setMyProfile((prev) => ({ ...prev, project_name: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Email</label>
-              <input
-                type="email"
-                className="w-full border rounded-md px-2 py-1.5 text-xs bg-gray-50 text-gray-500 cursor-not-allowed"
-                value={myProfile.email || ''}
-                disabled
-              />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={saveMyProfile}
-            disabled={savingProfile}
-            className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {savingProfile ? 'Saving...' : 'Save profile'}
-          </button>
-        </div>
-        </>
-      )}
-      {activeTab === 'messages' && (
-        <div className="mb-8 border rounded-lg bg-white p-4 text-xs">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="text-sm font-semibold mb-1">Client messages</h2>
-              <p className="text-[11px] text-gray-600">
-                View, send, and manage messages for your clients.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={refreshAdminMessages}
-              className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-white hover:bg-gray-50"
-            >
-              Refresh
-            </button>
-          </div>
-
-          <div className="mb-4 border rounded-lg bg-gray-50 p-3">
-            <h3 className="text-[12px] font-semibold mb-2">Send message</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Client</label>
-                <select
-                  className="w-full border rounded-md px-2 py-1.5 text-xs bg-white"
-                  value={compose.userId}
-                  onChange={(e) => setCompose((prev) => ({ ...prev, userId: e.target.value }))}
-                >
-                  <option value="">Select client...</option>
-                  {profiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.full_name || p.email} ({p.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Subject</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-md px-2 py-1.5 text-xs"
-                  value={compose.subject}
-                  onChange={(e) => setCompose((prev) => ({ ...prev, subject: e.target.value }))}
-                  placeholder="e.g. Next steps, New dashboard ready, Data request"
-                />
-              </div>
-            </div>
-            <div className="mb-2">
-              <label className="block text-[11px] font-medium text-gray-600 mb-1">Body</label>
-              <textarea
-                className="w-full border rounded-md px-2 py-1.5 text-xs min-h-[80px]"
-                value={compose.body}
-                onChange={(e) => setCompose((prev) => ({ ...prev, body: e.target.value }))}
-                placeholder="Write your message to the client here."
-              />
-            </div>
-            <button
-              type="button"
-              onClick={sendAdminMessage}
-              disabled={sendingMessage}
-              className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {sendingMessage ? 'Sending...' : 'Send message'}
-            </button>
-          </div>
-          {loadingAdminMessages ? (
-            <p className="text-[11px] text-gray-600">Loading messages...</p>
-          ) : adminMessages.length === 0 ? (
-            <p className="text-[11px] text-gray-600">No messages found.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-[11px]">
-                <thead className="bg-gray-50">
-                  <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
-                    <th className="px-2 py-1 font-medium">Client</th>
-                    <th className="px-2 py-1 font-medium">Email</th>
-                    <th className="px-2 py-1 font-medium">Subject</th>
-                    <th className="px-2 py-1 font-medium">Status</th>
-                    <th className="px-2 py-1 font-medium">Sent</th>
-                    <th className="px-2 py-1 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {adminMessages.map((m) => (
-                    <tr key={m.id}>
-                      <td className="px-2 py-1 text-gray-800">{m.profile?.full_name || m.profile?.email || '—'}</td>
-                      <td className="px-2 py-1 text-gray-800">{m.profile?.email || '—'}</td>
-                      <td className="px-2 py-1 text-gray-800">{m.subject}</td>
-                      <td className="px-2 py-1 text-gray-800">
-                        {m.read_at ? (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-[10px]">
-                            Read
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-red-500/10 text-red-600 px-2 py-0.5 text-[10px]">
-                            New
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 py-1 text-gray-600">
-                        {m.created_at ? new Date(m.created_at).toLocaleString() : ''}
-                      </td>
-                      <td className="px-2 py-1 text-gray-800">
-                        <div className="flex flex-wrap gap-2">
-                          {!m.read_at && (
-                            <button
-                              type="button"
-                              onClick={() => updateAdminMessagesRead([m.id], true)}
-                              className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
-                            >
-                              Mark read
-                            </button>
-                          )}
-                          {m.read_at && (
-                            <button
-                              type="button"
-                              onClick={() => updateAdminMessagesRead([m.id], false)}
-                              className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-gray-50"
-                            >
-                              Mark unread
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => deleteAdminMessages([m.id])}
-                            className="px-2 py-1 border rounded-md text-[10px] bg-white hover:bg-red-50 text-red-600 border-red-300"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className={`text-xs px-2 py-1 rounded-full font-medium border ${isProd ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+            {isProd ? 'Production' : 'Local'}
+          </span>
+          <span className="text-xs px-2 py-1 rounded-full font-medium border bg-purple-50 text-purple-700 border-purple-200">
+            Admin
+          </span>
+          {lastRefreshed && (
+            <span className="text-xs text-gray-400 hidden sm:inline">
+              Updated {lastRefreshed.toLocaleTimeString()}
+            </span>
           )}
-        </div>
-      )}
-      {activeTab === 'users' && (
-        <>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-gray-700">Users & Roles</h2>
-        <button
-          type="button"
-          onClick={() => setShowInviteModal(true)}
-          className="inline-flex items-center px-3 py-1.5 border rounded-md text-xs bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
-        >
-          Invite user
-        </button>
-      </div>
-
-      <div className="mb-4 flex flex-col sm:flex-row gap-3">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            className="w-full border rounded-md px-3 py-2 text-xs"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="w-full sm:w-48">
-          <select
-            className="w-full border rounded-md px-3 py-2 text-xs bg-white"
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+          <button
+            onClick={loadSummary}
+            disabled={summaryLoading}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 border rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
-            <option value="all">All roles</option>
-            <option value="admin">Admin</option>
-            <option value="user">Client</option>
-          </select>
+            <RefreshCw size={13} className={summaryLoading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
         </div>
       </div>
 
-      <div className="border rounded-lg bg-white overflow-x-auto">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50">
-            <tr className="text-left text-[11px] uppercase tracking-wide text-gray-500">
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">Email</th>
-              <th className="px-4 py-2 font-medium">Role</th>
-              <th className="px-4 py-2 font-medium">Created</th>
-              <th className="px-4 py-2 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {profiles
-              .filter((p) => {
-                const matchesSearch = searchQuery === '' || 
-                  (p.full_name && p.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                  (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase()));
-                const matchesRole = roleFilter === 'all' || p.role === roleFilter;
-                return matchesSearch && matchesRole;
-              })
-              .map((p) => (
-              <tr key={p.id}>
-                <td className="px-4 py-2 text-[12px] text-gray-800">
-                  {p.full_name || '—'}
-                  {!p.full_name && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200">
-                      Incomplete profile
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-[12px] text-gray-800">{p.email}</td>
-                <td className="px-4 py-2 text-[12px]">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    p.role === 'admin' 
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}>
-                    {p.role === 'admin' ? 'Admin' : 'Client'}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-[12px] text-gray-600">
-                  {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
-                </td>
-                <td className="px-4 py-2 text-[12px] text-gray-700">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/admin/clients/${p.id}`)}
-                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
-                    >
-                      Manage
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditUser({ ...p })}
-                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setResetPasswordUser({ email: p.email, name: p.full_name || p.email })}
-                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50"
-                    >
-                      Reset password
-                    </button>
-                    {p.role !== 'admin' && (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmRoleChange({ userId: p.id, newRole: 'admin', userName: p.full_name || p.email })}
-                        className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-gray-50 text-[var(--brand-primary)] border-[var(--brand-primary)]"
-                      >
-                        Set role: Admin
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setDeleteUser({ id: p.id, name: p.full_name || p.email })}
-                      className="px-2 py-1 border rounded-md text-xs bg-white hover:bg-red-50 text-red-600 border-red-300"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* ── Error ── */}
+      {summaryError && (
+        <ErrorAlert message={summaryError} onDismiss={() => setSummaryError('')} />
+      )}
+
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
+        <MetricCard label="Total Clients"    value={summary.total_clients}        sub="Managed accounts"      icon={<Users size={14} />}         color="blue"   href="/admin/clients"       loading={summaryLoading} />
+        <MetricCard label="Active Clients"   value={summary.active_clients}       sub="Currently active"      icon={<CheckCircle2 size={14} />}   color="green"  href="/admin/clients"       loading={summaryLoading} />
+        <MetricCard label="Data Uploads"     value={summary.total_uploads}        sub="EMSCharts CSVs"        icon={<Upload size={14} />}         color="blue"   href="/admin/data"          loading={summaryLoading} />
+        <MetricCard label="Dashboards Ready" value={summary.dashboards_ready}     sub="Available for review"  icon={<BarChart2 size={14} />}      color="green"  href="/admin/dashboard"     loading={summaryLoading} />
+        <MetricCard label="Failed Uploads"   value={summary.failed_uploads}       sub="Need admin review"     icon={<XCircle size={14} />}        color={summary.failed_uploads > 0 ? 'red' : 'gray'}   href="/admin/data"          loading={summaryLoading} />
+        <MetricCard label="Unread Messages"  value={summary.unread_messages}      sub="Client communication"  icon={<MessageSquare size={14} />}  color={summary.unread_messages > 0 ? 'amber' : 'gray'} href="/admin/messages"      loading={summaryLoading} />
+        <MetricCard label="Open Tasks"       value={summary.open_tasks}           sub="Pending work"          icon={<Clock size={14} />}          color="purple" href="/admin/tasks"         loading={summaryLoading} />
+        <MetricCard label="Quality Warnings" value={summary.data_quality_warnings} sub="Mapping issues"       icon={<AlertTriangle size={14} />}  color={summary.data_quality_warnings > 0 ? 'amber' : 'gray'} href="/admin/column-mapping" loading={summaryLoading} />
       </div>
 
-      {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Invite user</h3>
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
-                <input
-                  type="email"
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  placeholder="user@example.com"
-                  value={inviteForm.email}
-                  onChange={(e) => setInviteForm((prev) => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Name (optional)</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  placeholder="John Doe"
-                  value={inviteForm.full_name}
-                  onChange={(e) => setInviteForm((prev) => ({ ...prev, full_name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-                <select
-                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
-                  value={inviteForm.role}
-                  onChange={(e) => setInviteForm((prev) => ({ ...prev, role: e.target.value }))}
-                >
-                  <option value="user">Client</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowInviteModal(false);
-                  setInviteForm({ email: '', role: 'user', full_name: '' });
-                }}
-                className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={inviteUser}
-                disabled={invitingUser}
-                className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {invitingUser ? 'Inviting...' : 'Send invite'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Main grid: 2/3 left + 1/3 right ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-      {confirmRoleChange && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-2">Confirm role change</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to change <strong>{confirmRoleChange.userName}</strong> to <strong>{confirmRoleChange.newRole === 'admin' ? 'Admin' : 'Client'}</strong>?
-              {confirmRoleChange.newRole === 'admin' && (
-                <span className="block mt-2 text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2 text-xs">
-                  ⚠️ Admin users have full access to all system features.
-                </span>
-              )}
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setConfirmRoleChange(null)}
-                className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => confirmAndUpdateRole(confirmRoleChange.userId, confirmRoleChange.newRole)}
-                className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)]"
-              >
-                Confirm change
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* LEFT column */}
+        <div className="xl:col-span-2 space-y-6">
 
-      {editUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Edit user</h3>
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Full name</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  value={editUser.full_name || ''}
-                  onChange={(e) => setEditUser((prev) => ({ ...prev, full_name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Company</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  value={editUser.company || ''}
-                  onChange={(e) => setEditUser((prev) => ({ ...prev, company: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-                <select
-                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
-                  value={editUser.role}
-                  onChange={(e) => setEditUser((prev) => ({ ...prev, role: e.target.value }))}
-                >
-                  <option value="client">Client</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
-                  value={editUser.email}
-                  disabled
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button type="button" onClick={() => setEditUser(null)} className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50">Cancel</button>
-              <button type="button" onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-60">
-                {savingEdit ? 'Saving...' : 'Save changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deleteUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-2 text-red-700">Delete user</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to permanently delete <strong>{deleteUser.name}</strong>? This cannot be undone.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button type="button" onClick={() => setDeleteUser(null)} disabled={deletingUser} className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50">Cancel</button>
-              <button type="button" onClick={handleDeleteUser} disabled={deletingUser} className="px-4 py-2 border rounded-md text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
-                {deletingUser ? 'Deleting...' : 'Delete user'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {resetPasswordUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-2">Reset password</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Send a password reset email to <strong>{resetPasswordUser.name}</strong> at <strong>{resetPasswordUser.email}</strong>?
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setResetPasswordUser(null)}
-                className="px-4 py-2 border rounded-md text-sm bg-white hover:bg-gray-50"
-                disabled={resettingPassword}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleResetPassword(resetPasswordUser.email)}
-                disabled={resettingPassword}
-                className="px-4 py-2 border rounded-md text-sm bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark,#1d3d73)] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {resettingPassword ? 'Sending...' : 'Send reset email'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-        </>
-      )}
-      {activeTab === 'clients' && (
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold">Client Management</h2>
-              <p className="text-[11px] text-gray-600">
-                View and manage your clients. Click on a client to see their full workspace.
-              </p>
-            </div>
-          </div>
-          
-          {/* Client List */}
-          <div className="border rounded-lg bg-white overflow-hidden">
-            {profiles.filter(p => p.role === 'client').length === 0 ? (
-              <div className="p-8 text-center text-gray-500 text-sm">
-                No clients yet. Invite a client from the Users & Roles tab.
+          {/* Recent Uploads */}
+          <Panel
+            title="Recent EMS Data Uploads"
+            action={<Link href="/admin/data" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">View all <ArrowRight size={12} /></Link>}
+          >
+            {summary.recent_uploads.length === 0 ? (
+              <div className="text-center py-6">
+                <Upload size={28} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-sm text-gray-400">No EMS data uploads yet.</p>
+                <p className="text-xs text-gray-400 mt-0.5 mb-3">Upload a client EMSCharts CSV to generate analytics dashboards.</p>
+                <Link href="/admin/data" className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-1.5">
+                  <Upload size={12} /> Upload Data
+                </Link>
               </div>
             ) : (
-              <table className="w-full text-xs">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600">Client</th>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600">Company</th>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600">Status</th>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600">Last Login</th>
-                    <th className="text-right px-4 py-2 font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {profiles.filter(p => p.role === 'client').map((client) => (
-                    <tr key={client.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-medium">{client.full_name || 'No name'}</p>
-                          <p className="text-gray-500">{client.email}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {client.company || '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-                          client.client_status === 'active' ? 'bg-green-100 text-green-800' :
-                          client.client_status === 'prospect' ? 'bg-blue-100 text-blue-800' :
-                          client.client_status === 'churned' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {client.client_status || 'prospect'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {client.last_login 
-                          ? new Date(client.last_login).toLocaleDateString() 
-                          : 'Never'}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => router.push(`/admin/clients/${client.id}`)}
-                          className="text-[var(--brand-primary)] hover:underline mr-3"
-                        >
-                          View Details
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await fetch('/api/proxy/impersonation/start', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                credentials: 'include',
-                                body: JSON.stringify({ client_id: client.id }),
-                              });
-                              router.push('/portal');
-                            } catch (e) {
-                              setError('Failed to start impersonation');
-                            }
-                          }}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          View as Client
-                        </button>
-                      </td>
+              <div className="overflow-x-auto -mx-1">
+                <table className="w-full text-xs min-w-[520px]">
+                  <thead>
+                    <tr className="text-left text-[10px] uppercase tracking-wide text-gray-400 border-b">
+                      <th className="pb-2 pr-3">Client</th>
+                      <th className="pb-2 pr-3">File</th>
+                      <th className="pb-2 pr-3">Status</th>
+                      <th className="pb-2 pr-3">Uploaded</th>
+                      <th className="pb-2">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y">
+                    {summary.recent_uploads.map(u => (
+                      <tr key={u.id} className="hover:bg-gray-50">
+                        <td className="py-2 pr-3 font-medium text-gray-800">{u.client_name}</td>
+                        <td className="py-2 pr-3 text-gray-500 truncate max-w-[160px]">{u.original_filename}</td>
+                        <td className="py-2 pr-3"><StatusBadge status={u.upload_status} type="upload" /></td>
+                        <td className="py-2 pr-3 text-gray-400">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                        <td className="py-2 flex items-center gap-2">
+                          <Link href={`/admin/data-explorer/${u.id}`} className="text-blue-600 hover:underline">Explore</Link>
+                          {u.upload_status === 'CLEANED' && (
+                            <Link href={`/admin/dashboard?uploadId=${u.id}`} className="text-purple-600 hover:underline">Dashboard</Link>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </div>
+          </Panel>
+
+          {/* Clients Needing Attention */}
+          <Panel
+            title="Clients Needing Attention"
+            action={<Link href="/admin/clients" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">All clients <ArrowRight size={12} /></Link>}
+          >
+            {summary.clients_needing_attention.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-4 py-3">
+                <CheckCircle2 size={15} /> All clients are up to date.
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-1">
+                <table className="w-full text-xs min-w-[440px]">
+                  <thead>
+                    <tr className="text-left text-[10px] uppercase tracking-wide text-gray-400 border-b">
+                      <th className="pb-2 pr-3">Client</th>
+                      <th className="pb-2 pr-3">Issue</th>
+                      <th className="pb-2 pr-3">Last Upload</th>
+                      <th className="pb-2">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {summary.clients_needing_attention.map(c => (
+                      <tr key={c.id} className="hover:bg-gray-50">
+                        <td className="py-2 pr-3">
+                          <p className="font-medium text-gray-800">{c.full_name || c.email}</p>
+                          {c.company && <p className="text-gray-400">{c.company}</p>}
+                        </td>
+                        <td className="py-2 pr-3">
+                          <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-medium">
+                            <AlertTriangle size={9} /> {c.issue}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-3 text-gray-400">{c.last_upload ? new Date(c.last_upload).toLocaleDateString() : 'Never'}</td>
+                        <td className="py-2">
+                          <Link href={`/admin/clients/${c.id}`} className="text-blue-600 hover:underline">View</Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Panel>
+
+          {/* Recent Messages */}
+          <Panel
+            title="Recent Client Messages"
+            action={<Link href="/admin/messages" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">All messages <ArrowRight size={12} /></Link>}
+          >
+            {summary.recent_messages.length === 0 ? (
+              <EmptyRow msg="No recent client messages." />
+            ) : (
+              <div className="space-y-2">
+                {summary.recent_messages.map(m => (
+                  <div key={m.id} className="flex items-start justify-between gap-3 py-2 border-b last:border-0">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-xs text-gray-800">{m.client_name}</span>
+                        {!m.read_at && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">New</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 truncate">{m.subject}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{m.preview}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-[10px] text-gray-400">{m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</p>
+                      <Link href="/admin/messages" className="text-[10px] text-blue-600 hover:underline">Open</Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
         </div>
-      )}
+
+        {/* RIGHT column */}
+        <div className="space-y-6">
+
+          {/* Pipeline Health */}
+          <Panel title="EMS Analytics Pipeline">
+            <div className="overflow-x-auto pb-1">
+              <PipelineStepper steps={pipelineSteps} />
+            </div>
+            {summary.data_quality_warnings > 0 && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                <AlertTriangle size={13} />
+                {summary.data_quality_warnings} upload{summary.data_quality_warnings !== 1 ? 's' : ''} need column mapping.
+                <Link href="/admin/column-mapping" className="underline ml-auto">Fix now</Link>
+              </div>
+            )}
+          </Panel>
+
+          {/* Quick Actions */}
+          <Panel title="Quick Actions">
+            <div className="space-y-1.5">
+              {quickActions.map(({ label, href, primary, Icon }) => (
+                <Link
+                  key={href + label}
+                  href={href}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors w-full ${
+                    primary
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  <Icon size={14} className="flex-shrink-0" />
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </Panel>
+
+          {/* System Health */}
+          <Panel title="System Health">
+            <div className="space-y-2">
+              {healthItems.map(({ label, key, Icon }) => (
+                <div key={key} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Icon size={14} className="text-gray-400" />
+                    {label}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <HealthIcon status={health[key]} />
+                    <span className={`text-xs font-medium capitalize ${
+                      health[key] === 'ok' ? 'text-green-600' :
+                      health[key] === 'error' ? 'text-red-600' :
+                      health[key] === 'warning' ? 'text-amber-600' : 'text-gray-400'
+                    }`}>
+                      {health[key] || 'unknown'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2 mt-2 border-t flex items-center justify-between text-xs text-gray-500">
+                <span>Environment</span>
+                <span className={`font-medium px-2 py-0.5 rounded-full ${isProd ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                  {isProd ? 'Production' : 'Local — no production data'}
+                </span>
+              </div>
+            </div>
+          </Panel>
+
+          {/* Tasks Due Soon */}
+          <Panel
+            title="Tasks Due Soon"
+            action={<Link href="/admin/tasks" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">All tasks <ArrowRight size={12} /></Link>}
+          >
+            {summary.tasks_due_soon.length === 0 ? (
+              <EmptyRow msg="No tasks due in the next 7 days." />
+            ) : (
+              <div className="space-y-2">
+                {summary.tasks_due_soon.map(t => (
+                  <div key={t.id} className="flex items-start justify-between gap-2 py-2 border-b last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-800 truncate">{t.title}</p>
+                      <p className="text-[10px] text-gray-400">{t.client_name}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-[10px] text-gray-500">{t.due_date ? new Date(t.due_date).toLocaleDateString() : '—'}</p>
+                      <StatusBadge status={t.status} type="task" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+        </div>
+      </div>
     </div>
   );
 }

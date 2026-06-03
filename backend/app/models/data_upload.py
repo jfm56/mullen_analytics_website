@@ -1,10 +1,31 @@
-from sqlalchemy import Column, String, DateTime, Text, Integer, Boolean, ForeignKey
+from sqlalchemy import Column, String, DateTime, Text, Integer, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
 from ..database import Base
+
+
+class EMSDatasetGroup(Base):
+    """Groups multiple yearly EMSCharts CSV uploads into one multi-year dataset."""
+    __tablename__ = "ems_dataset_groups"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    start_year = Column(Integer, nullable=True)
+    end_year = Column(Integer, nullable=True)
+    source_system = Column(String(100), default="emscharts")
+    status = Column(String(50), default="active")  # active | archived
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    client = relationship("User", foreign_keys=[client_id])
+    uploads = relationship("DataUpload", back_populates="dataset_group",
+                           foreign_keys="DataUpload.dataset_group_id")
 
 
 class DataUpload(Base):
@@ -21,8 +42,15 @@ class DataUpload(Base):
     file_path = Column(Text, nullable=False)
     file_size = Column(Integer, default=0)
 
-    source_system = Column(String(100), default="EMSCHARTS")
-    upload_status = Column(String(50), default="UPLOADED")  # UPLOADED, CLEANING, CLEANED, FAILED
+    source_system = Column(String(100), default="emscharts")
+    upload_type = Column(String(50), default="yearly_csv")   # yearly_csv | monthly_csv | custom_range_csv
+    upload_status = Column(String(50), default="UPLOADED")   # UPLOADED, CLEANING, CLEANED, FAILED
+
+    dataset_group_id = Column(UUID(as_uuid=True), ForeignKey("ems_dataset_groups.id"),
+                              nullable=True, index=True)
+    reporting_year = Column(Integer, nullable=True, index=True)
+    reporting_period_start = Column(DateTime, nullable=True)
+    reporting_period_end = Column(DateTime, nullable=True)
 
     row_count_original = Column(Integer, nullable=True)
     row_count_cleaned = Column(Integer, nullable=True)
@@ -35,6 +63,8 @@ class DataUpload(Base):
     client = relationship("User", foreign_keys=[client_id])
     uploaded_by = relationship("User", foreign_keys=[uploaded_by_user_id])
     project = relationship("Project", back_populates="data_uploads")
+    dataset_group = relationship("EMSDatasetGroup", back_populates="uploads",
+                                 foreign_keys=[dataset_group_id])
     cleaning_results = relationship("DataCleaningResult", back_populates="upload",
                                     cascade="all, delete-orphan")
 

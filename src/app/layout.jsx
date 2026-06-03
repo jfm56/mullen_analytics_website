@@ -1,12 +1,11 @@
  import { Inter, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { ConditionalNav, ConditionalFooter } from "@/components/ConditionalNavFooter";
 import ChatWidget from "@/components/ChatWidget";
 import CookieConsent from "@/components/CookieConsent";
 import ThemeProvider from "@/components/ThemeProvider";
+import Analytics from "@/components/Analytics";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,24 +36,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className={`${inter.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=AW-17747483900"
-          strategy="afterInteractive"
-        />
-        <Script id="gtag-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-
-            gtag('config', 'AW-17747483900');
-          `}
-        </Script>
+        <Analytics />
         <ThemeProvider>
-          <Navbar />
+          <ConditionalNav />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <ConditionalFooter />
           <ChatWidget />
           <CookieConsent />
         </ThemeProvider>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Upload, BarChart3, Search, MessageSquare } from 'lucide-react';
 import { auth, users } from '@/lib/api';
 import ClientProjectStatus from '@/components/ClientProjectStatus';
 
@@ -120,10 +121,46 @@ export default function PortalHomePage() {
 
   if (!user) return null;
 
-  const firstName = user.user_metadata?.first_name || user.email;
+  const firstName = profile?.full_name?.split(' ')[0] || user.user_metadata?.first_name || user.email;
 
   return (
-    <div className="max-w-5xl mx-auto py-16 px-4">
+    <div className="max-w-5xl mx-auto py-8 px-4">
+      {/* EMS Dashboard Status Card */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 mb-6 text-white shadow-md">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold">Welcome back, {firstName}</h1>
+            <p className="text-blue-100 text-sm mt-1">Your EMS analytics portal</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Link href="/portal/uploads"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors border border-white/30">
+              <Upload size={16} /> Upload CSV
+            </Link>
+            <Link href="/portal/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-700 hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors">
+              <BarChart3 size={16} /> Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* EMS Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Upload CSV', sub: 'Add EMSCharts export', href: '/portal/uploads', Icon: Upload, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+          { label: 'Dashboard', sub: 'View analytics', href: '/portal/dashboard', Icon: BarChart3, color: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+          { label: 'Explore Data', sub: 'Browse & filter dataset', href: '/portal/data-explorer', Icon: Search, color: 'bg-purple-50 border-purple-200 text-purple-700' },
+          { label: 'Message Us', sub: 'Contact Mullen Analytics', href: '/portal/messages', Icon: MessageSquare, color: 'bg-green-50 border-green-200 text-green-700' },
+        ].map(a => (
+          <Link key={a.label} href={a.href} className={`flex flex-col p-4 border rounded-xl transition-colors hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${a.color}`}>
+            <a.Icon size={22} className="mb-1.5" />
+            <span className="font-semibold text-sm">{a.label}</span>
+            <span className="text-xs opacity-75 mt-0.5">{a.sub}</span>
+          </Link>
+        ))}
+      </div>
+
       <div className="border rounded-lg bg-white p-8 mb-8 shadow-sm">
         <div className="flex items-start justify-between mb-8">
           <div className="flex items-center gap-6">
@@ -278,8 +315,8 @@ export default function PortalHomePage() {
         <div className="bg-gray-50 border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">Next scheduled check-in:</p>
-              <p className="text-sm text-gray-700 mt-1">Week of Jan 27, 2026</p>
+              <p className="text-sm font-medium text-gray-900">Next scheduled check-in</p>
+              <p className="text-sm text-gray-700 mt-1">No check-in scheduled yet.</p>
             </div>
             <Link
               href="/portal/messages"

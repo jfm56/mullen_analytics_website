@@ -3,13 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/api';
-
-const STATUS_COLORS = {
-  UPLOADED:  'bg-blue-100 text-blue-800',
-  CLEANING:  'bg-yellow-100 text-yellow-800',
-  CLEANED:   'bg-green-100 text-green-800',
-  FAILED:    'bg-red-100 text-red-800',
-};
+import StatusBadge from '@/components/ui/StatusBadge';
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`/api/proxy${path}`, {
@@ -261,9 +255,7 @@ export default function PortalDataPage() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[u.upload_status] || 'bg-gray-100 text-gray-700'}`}>
-                      {u.upload_status}
-                    </span>
+                    <StatusBadge status={u.upload_status} type="upload" />
                   </div>
                 </div>
 

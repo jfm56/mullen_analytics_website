@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     stripe_publishable_key: str = ""
 
     # App
+    environment: str = "production"  # local | production
+    storage_backend: str = "local"   # local | s3
     app_url: str = "http://localhost:3000"
     api_url: str = "http://localhost:8000"
     debug: bool = False

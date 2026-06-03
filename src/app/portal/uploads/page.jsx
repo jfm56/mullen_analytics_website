@@ -4,15 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, dataUploads } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
+import PortalSectionTabs from '@/components/portal/PortalSectionTabs';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 const API_URL = '/api/proxy';
-
-const STATUS_COLORS = {
-  UPLOADED: 'bg-blue-100 text-blue-800',
-  CLEANING: 'bg-yellow-100 text-yellow-800',
-  CLEANED:  'bg-green-100 text-green-800',
-  FAILED:   'bg-red-100 text-red-800',
-};
 
 export default function PortalUploadsPage() {
   const router = useRouter();
@@ -152,45 +147,44 @@ export default function PortalUploadsPage() {
         </div>
       </div>
 
-      <div className="mb-6 border-b border-gray-200 bg-[var(--brand-primary)]/5 rounded-t-md">
-        <nav className="flex flex-wrap gap-4 text-xs px-4 pt-3 items-center">
-          <a
-            href="/portal"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            Home
-          </a>
-          <a
-            href="/portal/uploads"
-            className="inline-flex items-center rounded-t-md bg-[var(--brand-primary)] text-white px-3 pb-2 border-b-2 border-[var(--brand-primary)]"
-          >
-            Upload data
-          </a>
-          <a
-            href="/portal/invoices"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            View &amp; pay invoices
-          </a>
-          <a
-            href="/portal/reports"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            Dashboards &amp; deliverables
-          </a>
-          <a
-            href="/portal/messages"
-            className="ml-auto inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            <span>Messages</span>
-            {unreadMessages > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] w-4 h-4">
-                {unreadMessages}
-              </span>
-            )}
-          </a>
-        </nav>
-      </div>
+      <PortalSectionTabs active="uploads" unread={unreadMessages} />
+
+      {/* EMSCharts export → upload guide */}
+      <details className="mb-6 bg-white border rounded-lg shadow-sm group">
+        <summary className="flex items-center justify-between gap-2 cursor-pointer list-none px-5 py-4 select-none">
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-900">
+            <span className="flex items-center justify-center w-7 h-7 rounded-lg text-base" style={{ backgroundColor: 'rgba(14,165,233,0.12)', color: '#0EA5E9' }}>?</span>
+            How to export your data from EMSCharts &amp; upload it
+          </span>
+          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#1D4ED8' }}>
+            <span className="group-open:hidden">Show steps</span>
+            <span className="hidden group-open:inline">Hide</span>
+          </span>
+        </summary>
+        <div className="px-5 pb-5 pt-1 border-t border-gray-100 grid gap-5 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">1 · Export from EMSCharts</p>
+            <ol className="space-y-1.5 text-sm text-gray-700 list-decimal pl-4">
+              <li>Sign in to EMSCharts.</li>
+              <li>Open the reporting / export area (e.g. <span className="font-medium">Reports → Report Writer</span> or <span className="font-medium">Data Export</span>).</li>
+              <li>Choose the date range you want to analyze.</li>
+              <li>Select <span className="font-medium">CSV</span> as the export format.</li>
+              <li>Run the export and save the <span className="font-mono text-xs">.csv</span> file to your computer.</li>
+            </ol>
+            <p className="text-xs text-gray-400 mt-2">EMSCharts menu names vary by version — if your screen looks different, your EMSCharts admin can point you to the CSV/data export, or just ask us.</p>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">2 · Upload it here</p>
+            <ol className="space-y-1.5 text-sm text-gray-700 list-decimal pl-4">
+              <li>Under <span className="font-medium">Upload EMSCharts CSV</span> below, choose the file you exported.</li>
+              <li>Optionally add a note (e.g. <span className="font-medium">&ldquo;Q1 2025&rdquo;</span>).</li>
+              <li>Click <span className="font-medium">Upload &amp; Generate Dashboard</span>.</li>
+              <li>We clean the data and build your dashboard automatically — it opens when it&rsquo;s ready.</li>
+            </ol>
+            <p className="text-xs text-gray-400 mt-2">Accepted: a single <span className="font-mono text-xs">.csv</span> up to 100&nbsp;MB, exported from EMSCharts.</p>
+          </div>
+        </div>
+      </details>
 
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{success}</div>}
@@ -273,9 +267,7 @@ export default function PortalUploadsPage() {
                       <p className="text-xs text-gray-500 mt-0.5">{u.row_count_original} rows → {u.row_count_cleaned ?? '?'} cleaned</p>
                     )}
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${STATUS_COLORS[u.upload_status] || 'bg-gray-100 text-gray-700'}`}>
-                    {u.upload_status}
-                  </span>
+                  <span className="flex-shrink-0"><StatusBadge status={u.upload_status} type="upload" /></span>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <a href={`${API_URL}/data/uploads/${u.id}/download-original`} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded">
@@ -401,6 +393,7 @@ export default function PortalUploadsPage() {
             metrics={dashboard.metrics}
             generatedAt={dashboard.generatedAt}
             uploadId={dashboard.upload?.id}
+            uploadInfo={dashboard.upload}
             onRefresh={() => handleViewDashboard(dashboard.upload)}
           />
         </div>

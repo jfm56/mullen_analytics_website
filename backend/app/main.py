@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .database import engine, Base
-from .routers import auth, users, messages, profiles, invoices, uploads, tasks
+from .routers import auth, users, messages, profiles, invoices, uploads, tasks, feedback
 from .routers import projects, documents, impersonation, reports, dashboard_refresh, quickbooks
 from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder, payments, clients
 from .routers import data as data_router
+from .routers import settings as settings_router
+from .routers import datasets as datasets_router
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
 
@@ -39,6 +41,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(messages.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
 app.include_router(profiles.router, prefix="/api")
 app.include_router(invoices.router, prefix="/api")
 app.include_router(uploads.router, prefix="/api")
@@ -58,20 +61,56 @@ app.include_router(admin.router,           prefix="/api")
 app.include_router(payments.router)
 app.include_router(clients.router,         prefix="/api")
 app.include_router(data_router.router,     prefix="/api")
+app.include_router(settings_router.router, prefix="/api")
+app.include_router(datasets_router.router, prefix="/api")
 
 
 @app.on_event("startup")
 async def on_startup():
     import logging, os
     log = logging.getLogger(__name__)
+
+    if settings.environment == "local":
+        print("=" * 70)
+        print("WARNING: Running in LOCAL mode.")
+        print("Files are stored locally. No production data should be used.")
+        print(f"  DATA_UPLOADS_ROOT : {settings.data_uploads_root}")
+        print(f"  DATA_STORAGE_ROOT : {settings.data_storage_root}")
+        print("=" * 70)
+
     raw_url = os.environ.get("DATABASE_URL", "<NOT SET>")
     masked = raw_url[:40] + "..." if len(raw_url) > 40 else raw_url
     log.info("DATABASE_URL env var: %s", masked)
+    log.info("ENVIRONMENT: %s | STORAGE_BACKEND: %s", settings.environment, settings.storage_backend)
     try:
         Base.metadata.create_all(bind=engine)
         log.info("DB create_all succeeded")
     except Exception as exc:  # noqa: BLE001
         log.error("DB create_all failed: %s", exc)
+
+    # Self-healing schema patches: create_all() creates new tables but never
+    # ALTERs existing ones, and the Railway deploy does not run the SQL
+    # migrations. These idempotent ADD COLUMN IF NOT EXISTS statements keep the
+    # data_uploads table in sync with the model on every deploy (e.g. the
+    # dataset-group columns that post-date the original table migration).
+    try:
+        from sqlalchemy import text as _text
+        _schema_patches = [
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS upload_type VARCHAR(50) DEFAULT 'yearly_csv'",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS dataset_group_id UUID",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_year INTEGER",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_period_start TIMESTAMP",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_period_end TIMESTAMP",
+            "CREATE INDEX IF NOT EXISTS ix_data_uploads_dataset_group_id ON data_uploads(dataset_group_id)",
+            "CREATE INDEX IF NOT EXISTS ix_data_uploads_reporting_year ON data_uploads(reporting_year)",
+        ]
+        with engine.begin() as conn:
+            for _stmt in _schema_patches:
+                conn.execute(_text(_stmt))
+        log.info("DB schema self-heal patches applied")
+    except Exception as exc:  # noqa: BLE001
+        log.error("DB schema self-heal failed: %s", exc)
+
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)
 

@@ -86,7 +86,7 @@ export default function Home() {
       {/* HERO */}
       <section>
         <img
-          src="/Hero%20image.png"
+          src="/hero-image.png"
           alt="Analytics and AI for First Responders and Healthcare"
           className="w-full block"
           style={{ height: 'auto' }}

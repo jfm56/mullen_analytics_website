@@ -7,16 +7,28 @@ GET /api/admin/agencies          — all agencies with run counts
 GET /api/admin/pipeline/runs     — all recent pipeline runs
 GET /api/admin/audit-logs        — recent audit log entries
 GET /api/admin/stats             — platform-wide summary stats
+GET /api/admin/dashboard/summary — full dashboard summary (KPIs + panels)
+GET /api/admin/clients           — all client profiles with upload stats
+GET /api/admin/clients/{id}      — single client detail
+GET /api/admin/clients/{id}/uploads        — all uploads for a client
+GET /api/admin/clients/{id}/latest-upload  — latest upload for a client
+GET /api/admin/clients/{id}/dashboard-summary
 """
+import os
+from datetime import datetime, timedelta
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
+from sqlalchemy import func, desc, text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.agency import Agency, AgencyFile, AuditLog, PipelineRun
-from ..models.user import User
+from ..models.user import User, Profile
+from ..models.data_upload import DataUpload, EMSDashboardMetrics
+from ..models.message import Message
+from ..models.task import EnhancedTask
 from ..schemas.agency import AuditLogResponse, PipelineRunResponse
 from ..services.auth import get_user_profile
 from .auth import get_current_user
@@ -49,6 +61,185 @@ async def platform_stats(
         "total_runs":      total_runs,
         "completed_runs":  completed_runs,
         "active_runs":     active_runs,
+    }
+
+
+@router.get("/dashboard/summary")
+async def admin_dashboard_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(db, current_user)
+
+    def _safe_count(q):
+        try:
+            return q.scalar() or 0
+        except Exception:
+            return 0
+
+    total_clients = _safe_count(db.query(func.count(Profile.id)).filter(Profile.role == "client"))
+    active_clients = _safe_count(
+        db.query(func.count(Profile.id)).filter(Profile.role == "client", Profile.client_status == "active")
+    )
+    total_uploads = _safe_count(db.query(func.count(DataUpload.id)))
+    dashboards_ready = _safe_count(
+        db.query(func.count(DataUpload.id)).filter(DataUpload.upload_status == "CLEANED")
+    )
+    failed_uploads = _safe_count(
+        db.query(func.count(DataUpload.id)).filter(DataUpload.upload_status == "FAILED")
+    )
+    data_quality_warnings = _safe_count(
+        db.query(func.count(DataUpload.id)).filter(DataUpload.upload_status == "NEEDS_MAPPING")
+    )
+
+    try:
+        unread_messages = _safe_count(db.query(func.count(Message.id)).filter(Message.read_at.is_(None)))
+    except Exception:
+        unread_messages = 0
+
+    try:
+        open_tasks = _safe_count(
+            db.query(func.count(EnhancedTask.id)).filter(EnhancedTask.status.in_(["todo", "in_progress"]))
+        )
+    except Exception:
+        open_tasks = 0
+
+    # Recent uploads (last 5)
+    recent_uploads = []
+    try:
+        rows = (
+            db.query(DataUpload, Profile)
+            .outerjoin(Profile, DataUpload.client_id == Profile.id)
+            .order_by(desc(DataUpload.created_at))
+            .limit(5)
+            .all()
+        )
+        recent_uploads = [
+            {
+                "id": str(u.id),
+                "original_filename": u.original_filename,
+                "upload_status": u.upload_status,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+                "client_name": (p.full_name or p.email) if p else "—",
+                "client_id": str(u.client_id),
+            }
+            for u, p in rows
+        ]
+    except Exception:
+        pass
+
+    # Clients needing attention
+    clients_needing_attention = []
+    try:
+        clients = db.query(Profile).filter(Profile.role == "client").order_by(Profile.created_at.desc()).limit(50).all()
+        cids = [c.id for c in clients]
+        stats = _upload_stats(db, cids)
+        for c in clients:
+            s = stats.get(str(c.id), {})
+            issues = []
+            if s.get("has_failed"):
+                issues.append("Failed upload")
+            if not s.get("upload_count"):
+                issues.append("No uploads yet")
+            elif not s.get("has_dashboard"):
+                issues.append("Dashboard not ready")
+            if issues:
+                clients_needing_attention.append({
+                    "id": str(c.id),
+                    "full_name": c.full_name,
+                    "email": c.email,
+                    "company": c.company,
+                    "issue": ", ".join(issues),
+                    "last_upload": s.get("last_upload"),
+                })
+    except Exception:
+        pass
+
+    # Recent messages (last 5)
+    recent_messages = []
+    try:
+        msg_rows = (
+            db.query(Message, Profile)
+            .outerjoin(Profile, Message.user_id == Profile.id)
+            .order_by(desc(Message.created_at))
+            .limit(5)
+            .all()
+        )
+        recent_messages = [
+            {
+                "id": str(m.id),
+                "subject": m.subject,
+                "preview": (m.body or "")[:100],
+                "read_at": m.read_at.isoformat() if m.read_at else None,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+                "client_name": (p.full_name or p.email) if p else "—",
+            }
+            for m, p in msg_rows
+        ]
+    except Exception:
+        pass
+
+    # Tasks due soon (next 7 days)
+    tasks_due_soon = []
+    try:
+        now = datetime.utcnow()
+        week_out = now + timedelta(days=7)
+        task_rows = (
+            db.query(EnhancedTask, Profile)
+            .outerjoin(Profile, EnhancedTask.client_id == Profile.id)
+            .filter(
+                EnhancedTask.status.in_(["todo", "in_progress"]),
+                EnhancedTask.due_date.isnot(None),
+                EnhancedTask.due_date <= week_out,
+            )
+            .order_by(EnhancedTask.due_date.asc())
+            .limit(5)
+            .all()
+        )
+        tasks_due_soon = [
+            {
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status,
+                "priority": t.priority,
+                "due_date": t.due_date.isoformat() if t.due_date else None,
+                "client_name": (p.full_name or p.email) if p else "—",
+            }
+            for t, p in task_rows
+        ]
+    except Exception:
+        pass
+
+    # System health
+    db_status = "ok"
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        db_status = "error"
+
+    env = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "local")).lower()
+
+    return {
+        "total_clients": total_clients,
+        "active_clients": active_clients,
+        "total_uploads": total_uploads,
+        "dashboards_ready": dashboards_ready,
+        "failed_uploads": failed_uploads,
+        "unread_messages": unread_messages,
+        "open_tasks": open_tasks,
+        "data_quality_warnings": data_quality_warnings,
+        "recent_uploads": recent_uploads,
+        "clients_needing_attention": clients_needing_attention,
+        "recent_messages": recent_messages,
+        "tasks_due_soon": tasks_due_soon,
+        "system_health": {
+            "backend": "ok",
+            "database": db_status,
+            "storage": "ok",
+            "email": "unknown",
+            "analytics_pipeline": "unknown",
+            "environment": env,
+        },
     }
 
 
@@ -123,3 +314,180 @@ async def list_audit_logs(
     if action:
         query = query.filter(AuditLog.action == action)
     return query.order_by(AuditLog.created_at.desc()).limit(limit).all()
+
+
+# ============================================================================
+# Admin Client Management
+# ============================================================================
+
+def _upload_stats(db: Session, client_ids: list) -> dict:
+    """Return {client_id: {count, last_upload, has_dashboard, has_failed}} for each id."""
+    rows = (
+        db.query(
+            DataUpload.client_id,
+            func.count(DataUpload.id).label("upload_count"),
+            func.max(DataUpload.created_at).label("last_upload"),
+        )
+        .filter(DataUpload.client_id.in_(client_ids))
+        .group_by(DataUpload.client_id)
+        .all()
+    )
+    failed_ids = {
+        row[0]
+        for row in db.query(DataUpload.client_id)
+        .filter(DataUpload.client_id.in_(client_ids), DataUpload.upload_status == "FAILED")
+        .distinct()
+        .all()
+    }
+    dash_ids = {
+        row[0]
+        for row in db.query(DataUpload.client_id)
+        .filter(DataUpload.client_id.in_(client_ids), DataUpload.upload_status == "CLEANED")
+        .distinct()
+        .all()
+    }
+    return {
+        str(r.client_id): {
+            "upload_count": r.upload_count,
+            "last_upload": r.last_upload.isoformat() if r.last_upload else None,
+            "has_dashboard": str(r.client_id) in dash_ids,
+            "has_failed": str(r.client_id) in failed_ids,
+        }
+        for r in rows
+    }
+
+
+@router.get("/clients")
+async def list_admin_clients(
+    search: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(db, current_user)
+    query = db.query(Profile).filter(Profile.role == "client")
+    if search:
+        like = f"%{search.lower()}%"
+        query = query.filter(
+            func.lower(Profile.full_name).like(like) |
+            func.lower(Profile.email).like(like) |
+            func.lower(Profile.company).like(like)
+        )
+    profiles = query.order_by(Profile.created_at.desc()).all()
+    client_ids = [p.id for p in profiles]
+    stats = _upload_stats(db, client_ids)
+    return [
+        {
+            "id": str(p.id),
+            "full_name": p.full_name,
+            "email": p.email,
+            "company": p.company,
+            "client_status": p.client_status,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            **stats.get(str(p.id), {"upload_count": 0, "last_upload": None, "has_dashboard": False, "has_failed": False}),
+        }
+        for p in profiles
+    ]
+
+
+@router.get("/clients/{client_id}")
+async def get_admin_client(
+    client_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(db, current_user)
+    p = db.query(Profile).filter(Profile.id == client_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Client not found")
+    stats = _upload_stats(db, [client_id])
+    return {
+        "id": str(p.id),
+        "full_name": p.full_name,
+        "email": p.email,
+        "company": p.company,
+        "client_status": p.client_status,
+        "notes": p.notes,
+        "health_score": p.health_score,
+        "contract_value": float(p.contract_value or 0),
+        "created_at": p.created_at.isoformat() if p.created_at else None,
+        **stats.get(str(client_id), {"upload_count": 0, "last_upload": None, "has_dashboard": False, "has_failed": False}),
+    }
+
+
+@router.get("/clients/{client_id}/uploads")
+async def list_client_uploads(
+    client_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(db, current_user)
+    uploads = (
+        db.query(DataUpload)
+        .filter(DataUpload.client_id == client_id)
+        .order_by(desc(DataUpload.created_at))
+        .all()
+    )
+    return [
+        {
+            "id": str(u.id),
+            "original_filename": u.original_filename,
+            "upload_status": u.upload_status,
+            "file_size": u.file_size,
+            "row_count_original": u.row_count_original,
+            "row_count_cleaned": u.row_count_cleaned,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "updated_at": u.updated_at.isoformat() if u.updated_at else None,
+        }
+        for u in uploads
+    ]
+
+
+@router.get("/clients/{client_id}/latest-upload")
+async def get_client_latest_upload(
+    client_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(db, current_user)
+    u = (
+        db.query(DataUpload)
+        .filter(DataUpload.client_id == client_id)
+        .order_by(desc(DataUpload.created_at))
+        .first()
+    )
+    if not u:
+        return None
+    return {
+        "id": str(u.id),
+        "original_filename": u.original_filename,
+        "upload_status": u.upload_status,
+        "row_count_original": u.row_count_original,
+        "row_count_cleaned": u.row_count_cleaned,
+        "created_at": u.created_at.isoformat() if u.created_at else None,
+    }
+
+
+@router.get("/clients/{client_id}/dashboard-summary")
+async def get_client_dashboard_summary(
+    client_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(db, current_user)
+    latest = (
+        db.query(DataUpload)
+        .filter(DataUpload.client_id == client_id, DataUpload.upload_status == "CLEANED")
+        .order_by(desc(DataUpload.created_at))
+        .first()
+    )
+    if not latest:
+        return {"has_dashboard": False, "upload_id": None, "metrics": None}
+    metrics = db.query(EMSDashboardMetrics).filter(EMSDashboardMetrics.data_upload_id == latest.id).first()
+    if not metrics:
+        return {"has_dashboard": False, "upload_id": str(latest.id), "metrics": None}
+    return {
+        "has_dashboard": True,
+        "upload_id": str(latest.id),
+        "metrics": metrics.metrics_json if metrics else None,
+        "generated_at": metrics.updated_at.isoformat() if metrics and metrics.updated_at else None,
+    }

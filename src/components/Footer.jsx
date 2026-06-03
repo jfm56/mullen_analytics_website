@@ -1,7 +1,15 @@
 'use client';
 
+// Re-show the cookie banner by clearing the stored consent choice, then reloading.
+// (Cookie name matches `cookieName` in CookieConsent.jsx.)
+function reopenCookiePreferences() {
+  document.cookie = 'mullen-analytics-cookie-consent=; Max-Age=0; path=/';
+  window.location.reload();
+}
+
 const NAV_LINKS = [
   { label: 'About', href: '/about' },
+  { label: 'Products', href: '/products' },
   { label: 'Capabilities', href: '/capabilities' },
   { label: 'First Responders', href: '/first-responders' },
   { label: 'Healthcare', href: '/healthcare' },
@@ -122,15 +130,33 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div
-          className="pt-8 flex flex-col md:flex-row items-center justify-between gap-3"
+          className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <p className="text-xs" style={{ color: '#1E3A58' }} suppressHydrationWarning>
+          <p className="text-xs" style={{ color: '#64748B' }} suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Mullen Analytics &amp; AI Consulting. All rights reserved.
           </p>
-          <p className="text-xs" style={{ color: '#1E3A58' }}>
-            Veteran-Owned &nbsp;·&nbsp; First Responder Expertise &nbsp;·&nbsp; Healthcare Analytics
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <a
+              href="/privacy"
+              className="text-xs transition-colors duration-150"
+              style={{ color: '#94A3B8' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#F1F5F9')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#94A3B8')}
+            >
+              Privacy Policy
+            </a>
+            <button
+              type="button"
+              onClick={reopenCookiePreferences}
+              className="text-xs transition-colors duration-150"
+              style={{ color: '#94A3B8', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#F1F5F9')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#94A3B8')}
+            >
+              Cookie Preferences
+            </button>
+          </div>
         </div>
       </div>
     </footer>

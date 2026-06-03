@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { auth } from '@/lib/api';
+
+// Brand background — explicit colors so the page reads correctly regardless of
+// the visitor's OS light/dark preference (the theme CSS variables flip in dark
+// mode, which is what made the old white-card form hard to read).
+const PAGE_BG = { background: 'linear-gradient(160deg, #071829 0%, #0D2035 55%, #071829 100%)' };
 
 export default function PortalLoginPage() {
   const router = useRouter();
@@ -42,7 +49,7 @@ export default function PortalLoginPage() {
 
     try {
       const result = await auth.login(email, password);
-      
+
       if (result.success) {
         // Get session to check role
         const session = await auth.getSession();
@@ -64,58 +71,104 @@ export default function PortalLoginPage() {
   // Show loading while checking session
   if (checkingSession) {
     return (
-      <div className="max-w-md mx-auto py-16 px-4 text-center text-gray-600 text-sm">
-        Checking session...
+      <div className="min-h-screen flex items-center justify-center" style={PAGE_BG}>
+        <div className="text-sm animate-pulse" style={{ color: '#94A3B8' }}>Checking session…</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto py-16 px-4">
-      <h1 className="text-2xl font-bold mb-2">Client Portal</h1>
-      <p className="text-gray-600 mb-6 text-sm">
-        Log in to upload data, view invoices, and access reports from Mullen Analytics &amp; AI Consulting LLC.
-      </p>
-      <div className="border rounded-lg p-6 shadow-sm bg-white">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]"
-            />
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 text-sm rounded-md bg-[var(--brand-primary)] text-white disabled:opacity-60"
-          >
-            {loading ? 'Logging in...' : 'Log in'}
-          </button>
-        </form>
-        <div className="mt-4 text-xs text-gray-600 text-center">
-          <span>Contact us if you need access to the portal.</span>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={PAGE_BG}>
+      <div className="w-full max-w-sm">
+        {/* Brand */}
+        <div className="flex flex-col items-center mb-7">
+          <Image
+            src="/navbar-logo.png"
+            alt="Mullen Analytics"
+            width={48}
+            height={48}
+            priority
+            className="object-contain"
+            style={{ width: 'auto', height: 44 }}
+          />
+          <span className="mt-3 font-bold text-lg" style={{ color: '#F1F5F9', letterSpacing: '-0.01em' }}>
+            Mullen Analytics
+          </span>
+          <span className="mt-1 text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0EA5E9' }}>
+            Client Portal
+          </span>
         </div>
+
+        {/* Card */}
+        <div className="rounded-2xl p-7" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 24px 60px rgba(0,0,0,0.45)' }}>
+          <h1 className="text-xl font-bold mb-1" style={{ color: '#071829' }}>Sign in</h1>
+          <p className="text-sm mb-6" style={{ color: '#475569' }}>
+            Upload data, view invoices, and access your reports.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: '#334155' }}>
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-lg px-3 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-colors"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="text-sm font-medium" style={{ color: '#334155' }}>
+                  Password
+                </label>
+                <Link href="/portal/reset-password" className="text-xs font-medium hover:underline" style={{ color: '#1D4ED8' }}>
+                  Forgot password?
+                </Link>
+              </div>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-lg px-3 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-colors"
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm rounded-md px-3 py-2" style={{ color: '#B91C1C', backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 px-4 text-sm font-semibold rounded-lg text-white transition-colors"
+              style={{ backgroundColor: loading ? '#3B5BB5' : '#1D4ED8', cursor: loading ? 'not-allowed' : 'pointer' }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#2563EB'; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#1D4ED8'; }}
+            >
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className="mt-5 text-xs text-center" style={{ color: '#64748B' }}>
+            Need access?{' '}
+            <a href="/contact" className="font-medium hover:underline" style={{ color: '#1D4ED8' }}>Contact us</a>{' '}
+            to get set up.
+          </p>
+        </div>
+
+        <p className="mt-6 text-center text-xs">
+          <Link href="/" className="hover:underline" style={{ color: '#94A3B8' }}>← Back to mullenanalytics.com</Link>
+        </p>
       </div>
     </div>
   );

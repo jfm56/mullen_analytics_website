@@ -276,12 +276,26 @@ def _compute_filtered_metrics(df: pd.DataFrame, label: str) -> Dict[str, Any]:
         return {"label": label, "empty": True, "total_calls": 0}
 
     vol = calculate_dispatched_call_volume(df)
+    # Normalize call_volume keys to match regular dashboard format
+    if isinstance(vol, dict):
+        if vol.get("total_calls") is None:
+            vol["total_calls"] = vol.get("total", len(df))
+        if "avg_calls_per_day" not in vol:
+            date_col_v = detect_column(df, "incident_date")
+            if date_col_v:
+                try:
+                    _dates = pd.to_datetime(df[date_col_v], errors="coerce").dt.date
+                    _n_days = _dates.nunique()
+                    vol["avg_calls_per_day"] = _safe(round(len(df) / _n_days, 1)) if _n_days else None
+                except Exception:
+                    pass
 
     # Response times
     dispatch_col = detect_column(df, "dispatch_time")
     arrival_col  = detect_column(df, "arrival_time")
     clear_col    = detect_column(df, "clear_time")
     enroute_col  = detect_column(df, "enroute_time")
+    received_col = detect_column(df, "received_time") or detect_column(df, "call_received_time")
 
     rt_minutes: Optional[pd.Series] = None
     rt_label = ""
@@ -305,6 +319,21 @@ def _compute_filtered_metrics(df: pd.DataFrame, label: str) -> Dict[str, Any]:
             "p90_minutes":    _safe(round(float(rt_minutes.quantile(0.90)), 2)),
             "max_minutes":    _safe(round(float(rt_minutes.max()), 2)),
         }
+        # Add breakdown medians to match regular dashboard
+        if dispatch_col and enroute_col:
+            _d2e = _minutes_between(df, dispatch_col, enroute_col)
+            if _d2e is not None and _d2e.notna().sum() > 0:
+                rt["dispatch_to_enroute_median"] = _safe(round(float(_d2e.median()), 2))
+        if enroute_col and arrival_col:
+            _e2a = _minutes_between(df, enroute_col, arrival_col)
+            if _e2a is not None and _e2a.notna().sum() > 0:
+                rt["enroute_to_arrival_median"] = _safe(round(float(_e2a.median()), 2))
+        if received_col and dispatch_col:
+            _r2d = _minutes_between(df, received_col, dispatch_col)
+            if _r2d is not None and _r2d.notna().sum() > 0:
+                rt["received_to_dispatch_median"] = _safe(round(float(_r2d.median()), 2))
+        if dispatch_col and arrival_col:
+            rt["dispatch_to_arrival_median"] = _safe(round(float(rt_minutes.median()), 2))
 
     # By day
     date_col = detect_column(df, "incident_date")

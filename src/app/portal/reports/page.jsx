@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { auth, dataUploads } from '@/lib/api';
 import TableauEmbed from '@/components/TableauEmbed';
 import EMSDashboard from '@/components/EMSDashboard';
+import PortalSectionTabs from '@/components/portal/PortalSectionTabs';
 
 const API_URL = '/api/proxy';
 
@@ -96,45 +97,7 @@ export default function PortalReportsPage() {
         </div>
       </div>
 
-      <div className="mb-6 border-b border-gray-200 bg-[var(--brand-primary)]/5 rounded-t-md">
-        <nav className="flex flex-wrap gap-4 text-xs px-4 pt-3 items-center">
-          <a
-            href="/portal"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            Home
-          </a>
-          <a
-            href="/portal/uploads"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            Upload data
-          </a>
-          <a
-            href="/portal/invoices"
-            className="inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            View &amp; pay invoices
-          </a>
-          <a
-            href="/portal/reports"
-            className="inline-flex items-center rounded-t-md bg-[var(--brand-primary)] text-white px-3 pb-2 border-b-2 border-[var(--brand-primary)]"
-          >
-            Dashboards &amp; deliverables
-          </a>
-          <a
-            href="/portal/messages"
-            className="ml-auto inline-flex items-center border-b-2 border-transparent pb-2 text-gray-600 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] px-3"
-          >
-            <span>Messages</span>
-            {unreadMessages > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] w-4 h-4">
-                {unreadMessages}
-              </span>
-            )}
-          </a>
-        </nav>
-      </div>
+      <PortalSectionTabs active="reports" unread={unreadMessages} />
 
       {/* EMS Analytics Dashboards */}
       {cleanedUploads.length > 0 && (

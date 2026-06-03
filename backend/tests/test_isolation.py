@@ -151,3 +151,66 @@ def test_unauthenticated_access_blocked(db, client):
         assert res.status_code in (401, 403), (
             f"UNAUTHENTICATED ACCESS: {method.upper()} {path} returned {res.status_code}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Client upload isolation: client A's data upload is invisible to client B
+# ---------------------------------------------------------------------------
+
+def _make_data_upload(db, owner_user_id):
+    from app.models.data_upload import DataUpload   # noqa: PLC0415
+    up = DataUpload(
+        client_id=owner_user_id,
+        uploaded_by_user_id=owner_user_id,
+        original_filename="secret.csv",
+        stored_filename="stored_secret.csv",
+        file_path="/tmp/stored_secret.csv",
+        file_size=42,
+        source_system="EMSCHARTS",
+        upload_status="UPLOADED",
+    )
+    db.add(up)
+    db.flush()
+    return up
+
+
+def test_client_upload_isolation(db, client):
+    """Client B must not see or reach client A's data upload (IDOR guard)."""
+    user_a = _make_user(db, "client-a@isolation.example.com", role="client")
+    user_b = _make_user(db, "client-b@isolation.example.com", role="client")
+    db.flush()
+    upload = _make_data_upload(db, user_a.id)
+    db.commit()
+    upload_id = str(upload.id)
+
+    # Owner (client A) can see and reach their own upload.
+    _login(client, "client-a@isolation.example.com")
+    res_a = client.get("/api/data/uploads")
+    assert res_a.status_code == 200
+    assert any(u["id"] == upload_id for u in res_a.json()), "Client A should see their own upload"
+
+    # Client B is fully isolated.
+    client.cookies.clear()
+    _login(client, "client-b@isolation.example.com")
+
+    list_b = client.get("/api/data/uploads")
+    assert list_b.status_code == 200
+    assert all(u["id"] != upload_id for u in list_b.json()), (
+        "ISOLATION BREACH: client B can see client A's upload in the list"
+    )
+
+    for method, path, kwargs in [
+        ("get",    f"/api/data/uploads/{upload_id}",                   {}),
+        ("get",    f"/api/data/uploads/{upload_id}/dashboard",         {}),
+        ("get",    f"/api/data/uploads/{upload_id}/cleaning-results",  {}),
+        ("get",    f"/api/data/uploads/{upload_id}/download-original", {}),
+        ("get",    f"/api/data/uploads/{upload_id}/preview",           {}),
+        ("post",   f"/api/data/uploads/{upload_id}/clean",             {}),
+        ("post",   f"/api/data/uploads/{upload_id}/query",             {"json": {}}),
+        ("delete", f"/api/data/uploads/{upload_id}",                   {}),
+    ]:
+        res = getattr(client, method)(path, **kwargs)
+        assert res.status_code == 403, (
+            f"ISOLATION BREACH: {method.upper()} {path} returned {res.status_code} for client B "
+            f"(not the owner). Expected 403."
+        )
