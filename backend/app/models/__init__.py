@@ -1,5 +1,6 @@
 from .user import User, Profile, Session, PasswordResetToken
 from .message import Message
+from .feedback import Feedback
 from .invoice import Invoice
 from .upload import Upload
 from .document import Document
@@ -9,3 +10,4 @@ from .project import Project
 from .impersonation import ImpersonationLog
 from .agency import Agency, AgencyMembership, AgencyFile, AuditLog, PipelineRun
 from .app_settings import AppSetting
+from .data_upload import EMSDatasetGroup  # noqa: F401 – register with Base

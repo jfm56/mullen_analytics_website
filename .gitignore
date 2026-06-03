@@ -55,3 +55,10 @@ backend/local_data/
 *.csv
 *.xlsx
 *.xls
+
+# claude code / editor tooling
+.claude/
+
+# backups & local dev server logs
+*.bak
+backend/_nextdev.log

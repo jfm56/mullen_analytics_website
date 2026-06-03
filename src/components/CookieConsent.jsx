@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { updateConsent } from '@/components/Analytics';
 
 const CookieConsentLib = dynamic(() => import('react-cookie-consent'), {
   ssr: false,
@@ -40,8 +41,8 @@ export default function CookieConsent() {
         cursor: 'pointer',
       }}
       expires={365}
-      onAccept={() => {}}
-      onDecline={() => {}}
+      onAccept={() => updateConsent(true)}
+      onDecline={() => updateConsent(false)}
     >
       <span style={{ fontSize: '14px', color: '#FFFFFF' }}>
         We use cookies to enhance your browsing experience and analyze site traffic. 

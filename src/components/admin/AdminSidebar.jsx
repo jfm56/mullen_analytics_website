@@ -4,13 +4,14 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, Upload, BarChart2, Search,
   Columns, MessageSquare, UserCog, FolderOpen, Receipt,
-  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight,
+  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight, Database,
 } from 'lucide-react';
 
 const NAV = [
   { label: 'Home',           href: '/admin',               Icon: LayoutDashboard },
   { label: 'Clients',        href: '/admin/clients',        Icon: Users },
   { label: 'Data Uploads',   href: '/admin/data',           Icon: Upload },
+  { label: 'Datasets (YoY)', href: '/admin/data/datasets',  Icon: Database },
   { label: 'Dashboards',     href: '/admin/dashboard',      Icon: BarChart2 },
   { label: 'Data Explorer',  href: '/admin/data-explorer',  Icon: Search },
   { label: 'Column Mapping', href: '/admin/column-mapping', Icon: Columns },

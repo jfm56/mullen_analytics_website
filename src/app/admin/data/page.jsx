@@ -438,6 +438,7 @@ export default function AdminDataPage() {
             metrics={dashboard.metrics}
             generatedAt={dashboard.generatedAt}
             uploadId={dashboard.upload?.id}
+            uploadInfo={dashboard.upload}
             onRefresh={() => handleViewDashboard(dashboard.upload)}
           />
         </div>

@@ -162,6 +162,21 @@ export const users = {
 /**
  * Messages API
  */
+/**
+ * Client feedback API — recommendations & issues
+ */
+export const feedback = {
+  /** List the current client's submissions */
+  list: () => apiFetch('/api/feedback/'),
+  /** Submit a recommendation or issue: { type, title, body } */
+  create: (data) => apiFetch('/api/feedback/', { method: 'POST', body: JSON.stringify(data) }),
+  /** Delete one of the client's own submissions */
+  remove: (id) => apiFetch(`/api/feedback/${id}`, { method: 'DELETE' }),
+  // Admin
+  listAll: () => apiFetch('/api/feedback/admin'),
+  update: (id, data) => apiFetch(`/api/feedback/admin/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+};
+
 export const messages = {
   /**
    * Get current user's messages

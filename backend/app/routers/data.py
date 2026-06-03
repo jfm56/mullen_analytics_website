@@ -526,6 +526,26 @@ async def get_upload_dashboard(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/predictive
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/predictive")
+async def get_upload_predictive(
+    upload_id: UUID,
+    horizon: int = 12,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Predictive analytics — call-volume forecast, demand patterns, and staffing."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_predictive_service import get_predictive_dashboard
+    return get_predictive_dashboard(upload, db, horizon=horizon)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 
