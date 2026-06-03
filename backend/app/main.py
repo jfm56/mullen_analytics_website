@@ -87,6 +87,30 @@ async def on_startup():
         log.info("DB create_all succeeded")
     except Exception as exc:  # noqa: BLE001
         log.error("DB create_all failed: %s", exc)
+
+    # Self-healing schema patches: create_all() creates new tables but never
+    # ALTERs existing ones, and the Railway deploy does not run the SQL
+    # migrations. These idempotent ADD COLUMN IF NOT EXISTS statements keep the
+    # data_uploads table in sync with the model on every deploy (e.g. the
+    # dataset-group columns that post-date the original table migration).
+    try:
+        from sqlalchemy import text as _text
+        _schema_patches = [
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS upload_type VARCHAR(50) DEFAULT 'yearly_csv'",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS dataset_group_id UUID",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_year INTEGER",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_period_start TIMESTAMP",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_period_end TIMESTAMP",
+            "CREATE INDEX IF NOT EXISTS ix_data_uploads_dataset_group_id ON data_uploads(dataset_group_id)",
+            "CREATE INDEX IF NOT EXISTS ix_data_uploads_reporting_year ON data_uploads(reporting_year)",
+        ]
+        with engine.begin() as conn:
+            for _stmt in _schema_patches:
+                conn.execute(_text(_stmt))
+        log.info("DB schema self-heal patches applied")
+    except Exception as exc:  # noqa: BLE001
+        log.error("DB schema self-heal failed: %s", exc)
+
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)
 
