@@ -56,7 +56,7 @@ export default function PortalShell({ children }) {
 
   const isActive = (href) => href === '/portal' ? pathname === '/portal' : pathname.startsWith(href);
 
-  const NavLinks = ({ onNavigate }) => (
+  const renderNavItems = (onNavigate) => (
     <>
       {NAV.map(({ label, href, Icon }) => {
         const active = isActive(href);
@@ -99,7 +99,7 @@ export default function PortalShell({ children }) {
             </div>
           </div>
           <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-            <NavLinks />
+            {renderNavItems()}
           </nav>
           <div className="border-t border-gray-200 p-2">
             <button
@@ -146,7 +146,7 @@ export default function PortalShell({ children }) {
                 </button>
               </div>
               <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-                <NavLinks onNavigate={() => setMobileOpen(false)} />
+                {renderNavItems(() => setMobileOpen(false))}
               </nav>
               <div className="border-t border-gray-200 p-2">
                 <button
