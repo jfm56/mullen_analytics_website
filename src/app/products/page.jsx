@@ -43,8 +43,8 @@ const PRODUCTS = [
       'TOTP MFA · Row-Level Security · tamper-evident audit logs',
     ],
     image: null,
-    href: '/contact',
-    cta: 'Request early access',
+    href: '/ems-qa',
+    cta: 'Explore the platform',
     badge: 'HIPAA-focused',
   },
   {

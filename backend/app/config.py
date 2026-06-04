@@ -60,6 +60,12 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = ""
     stripe_publishable_key: str = ""
 
+    # Traffic enrichment (response-time / MVA). Default proxy needs no key.
+    traffic_provider: str = "time_proxy"   # time_proxy | google
+    google_maps_api_key: str = ""
+    # Optional station/base origin "lat,lng" for traffic routes; blank = agency center
+    traffic_origin: str = ""
+
     # App
     environment: str = "production"  # local | production
     storage_backend: str = "local"   # local | s3

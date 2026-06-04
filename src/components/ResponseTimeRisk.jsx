@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Clock, CloudSnow, AlertTriangle, Gauge } from 'lucide-react';
+import { Clock, CloudSnow, AlertTriangle, Gauge, Car } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
 } from 'recharts';
@@ -170,8 +170,44 @@ export default function ResponseTimeRisk({ uploadId }) {
           </div>
         )}
 
+        {data.traffic?.available && (data.traffic.areas || []).length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5">
+              <Car size={13} /> Typical traffic by area
+              <span className="font-normal text-gray-400">· Google · weekday rush hour from your station</span>
+            </p>
+            <div className="overflow-x-auto border rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b text-[11px] uppercase tracking-wide text-gray-500">
+                  <tr>
+                    <th className="px-3 py-2.5 text-left font-medium">Area</th>
+                    <th className="px-3 py-2.5 text-right font-medium">Congestion</th>
+                    <th className="px-3 py-2.5 text-right font-medium">Drive time</th>
+                    <th className="px-3 py-2.5 text-right font-medium">Distance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {data.traffic.areas.slice(0, 10).map((a) => {
+                    const f = a.congestion_factor;
+                    const cls = f >= 1.2 ? 'text-red-600' : f >= 1.1 ? 'text-amber-600' : 'text-gray-500';
+                    return (
+                      <tr key={a.name} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 font-medium text-gray-700">{a.name}</td>
+                        <td className={`px-3 py-2 text-right font-semibold ${cls}`}>{f != null ? `×${f.toFixed(2)}` : '—'}</td>
+                        <td className="px-3 py-2 text-right text-gray-600">{a.typical_min}m <span className="text-gray-400 text-xs">/ {a.free_flow_min}m free</span></td>
+                        <td className="px-3 py-2 text-right text-gray-500">{a.distance_mi != null ? `${a.distance_mi}mi` : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1.5">Congestion = typical drive time ÷ free-flow time. Higher = harder to reach in traffic.</p>
+          </div>
+        )}
+
         <p className="text-[11px] text-gray-400">
-          Decision-support estimates from historical patterns + weather. Traffic uses an hour-of-day proxy; a live traffic feed can be added.
+          Decision-support estimates from historical patterns, weather, and{data.traffic?.available ? ' live Google traffic' : ' an hour-of-day traffic proxy'}.
         </p>
       </div>
     </div>
