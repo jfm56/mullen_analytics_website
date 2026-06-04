@@ -43,7 +43,7 @@ export default function AdminClientsPage() {
           <h2 className="text-xl font-bold text-gray-900">Clients</h2>
           <p className="text-sm text-gray-500 mt-0.5">Manage agencies, uploads, and dashboards</p>
         </div>
-        <Link href="/admin" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+        <Link href="/admin/users?invite=1" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
           + Invite client →
         </Link>
       </div>
@@ -73,7 +73,7 @@ export default function AdminClientsPage() {
           <div className="p-4"><SkeletonTable rows={6} /></div>
         ) : clients.length === 0 ? (
           <div className="p-12 text-center text-gray-400 text-sm">
-            {search ? 'No clients match your search.' : 'No clients yet. Invite your first client from Admin Home.'}
+            {search ? 'No clients match your search.' : 'No clients yet — use “+ Invite client” above to add your first client.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
