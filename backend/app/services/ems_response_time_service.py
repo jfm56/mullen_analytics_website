@@ -163,10 +163,21 @@ def get_response_time_risk(upload, db, target_minutes: float = 9.0, settings: Op
                 })
         by_township.sort(key=lambda x: -x["p90"])
 
+    # ── Traffic: per-area typical congestion (needs a configured provider) ────
+    from . import traffic_service
+    area_centroids: Dict[str, Any] = {}
+    if muni_col:
+        for t in by_township[:15]:
+            c = _centroid_for(t["township"])
+            if c:
+                area_centroids[t["township"]] = c
+    traffic = traffic_service.get_area_congestion(_agency_center(df, muni_col), area_centroids)
+
     return {
         "available": True,
         "target_minutes": target_minutes,
-        "traffic_provider": "time_proxy",
+        "traffic_provider": traffic.get("provider", "time_proxy"),
+        "traffic": traffic,
         "summary": summary,
         "weather_impact": weather_impact,
         "scenarios": scenarios,
