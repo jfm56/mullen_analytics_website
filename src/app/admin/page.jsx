@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
         <MetricCard label="Dashboards Ready" value={summary.dashboards_ready}     sub="Available for review"  icon={<BarChart2 size={14} />}      color="green"  href="/admin/dashboard"     loading={summaryLoading} />
         <MetricCard label="Failed Uploads"   value={summary.failed_uploads}       sub="Need admin review"     icon={<XCircle size={14} />}        color={summary.failed_uploads > 0 ? 'red' : 'gray'}   href="/admin/data"          loading={summaryLoading} />
         <MetricCard label="Unread Messages"  value={summary.unread_messages}      sub="Client communication"  icon={<MessageSquare size={14} />}  color={summary.unread_messages > 0 ? 'amber' : 'gray'} href="/admin/messages"      loading={summaryLoading} />
-        <MetricCard label="Open Tasks"       value={summary.open_tasks}           sub="Pending work"          icon={<Clock size={14} />}          color="purple" href="/admin/tasks"         loading={summaryLoading} />
+        <MetricCard label="Open Tasks"       value={summary.open_tasks}           sub="Pending work"          icon={<Clock size={14} />}          color="purple" loading={summaryLoading} />
         <MetricCard label="Quality Warnings" value={summary.data_quality_warnings} sub="Mapping issues"       icon={<AlertTriangle size={14} />}  color={summary.data_quality_warnings > 0 ? 'amber' : 'gray'} href="/admin/column-mapping" loading={summaryLoading} />
       </div>
 
@@ -397,7 +397,6 @@ export default function AdminDashboardPage() {
           {/* Tasks Due Soon */}
           <Panel
             title="Tasks Due Soon"
-            action={<Link href="/admin/tasks" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">All tasks <ArrowRight size={12} /></Link>}
           >
             {summary.tasks_due_soon.length === 0 ? (
               <EmptyRow msg="No tasks due in the next 7 days." />
