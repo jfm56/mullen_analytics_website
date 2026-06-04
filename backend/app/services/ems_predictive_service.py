@@ -26,13 +26,23 @@ _WEEKDAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 def _load_df(upload) -> Optional[pd.DataFrame]:
     result = upload.cleaning_results[-1] if upload.cleaning_results else None
     path = result.cleaned_file_path if result and result.cleaned_file_path else upload.file_path
-    if not path:
-        return None
-    try:
-        return pd.read_csv(path, low_memory=False)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("predictive: could not read %s: %s", path, exc)
-        return None
+    if path:
+        try:
+            return pd.read_csv(path, low_memory=False)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("predictive: could not read %s: %s — trying DB copy", path, exc)
+    # Fallback: cleaned CSV persisted in the DB (server-accessible; works when the
+    # file isn't on this server's disk — e.g. ephemeral Railway storage or a path
+    # from a different machine).
+    blob = getattr(result, "cleaned_data_gz", None) if result is not None else None
+    if blob:
+        try:
+            import gzip
+            import io
+            return pd.read_csv(io.BytesIO(gzip.decompress(blob)), low_memory=False)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("predictive: DB cleaned-data load failed: %s", exc)
+    return None
 
 
 def _resolve_dt(df: pd.DataFrame, overrides: Dict) -> tuple:
