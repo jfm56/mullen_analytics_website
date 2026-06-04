@@ -103,6 +103,7 @@ async def on_startup():
             "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS reporting_period_end TIMESTAMP",
             "CREATE INDEX IF NOT EXISTS ix_data_uploads_dataset_group_id ON data_uploads(dataset_group_id)",
             "CREATE INDEX IF NOT EXISTS ix_data_uploads_reporting_year ON data_uploads(reporting_year)",
+            "ALTER TABLE data_cleaning_results ADD COLUMN IF NOT EXISTS cleaned_data_gz BYTEA",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:

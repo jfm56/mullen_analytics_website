@@ -437,6 +437,17 @@ async def clean_upload(
         logger.error("Cleaning failed for upload %s: %s", upload_id, exc)
         raise HTTPException(status_code=500, detail=f"Cleaning failed: {exc}")
 
+    # Persist a gzipped copy of the cleaned CSV in the DB so the analytics
+    # services can read it even when the file isn't on this server's disk
+    # (ephemeral storage / paths written on a different machine).
+    cleaned_blob = None
+    try:
+        import gzip
+        with open(cleaned_path, "rb") as _fh:
+            cleaned_blob = gzip.compress(_fh.read())
+    except Exception as _exc:  # noqa: BLE001
+        logger.warning("Could not store cleaned-data blob for %s: %s", upload_id, _exc)
+
     # Persist cleaning result
     result = DataCleaningResult(
         data_upload_id=upload.id,
@@ -444,6 +455,7 @@ async def clean_upload(
         duplicate_rows_count=stats["duplicate_rows_count"],
         removed_rows_count=stats["removed_rows_count"],
         cleaned_file_path=cleaned_path,
+        cleaned_data_gz=cleaned_blob,
         cleaning_notes=stats["cleaning_notes"],
     )
     db.add(result)

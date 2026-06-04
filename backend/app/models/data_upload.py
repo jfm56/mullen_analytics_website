@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, Integer, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, Text, Integer, Boolean, ForeignKey, UniqueConstraint, LargeBinary
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -81,6 +81,7 @@ class DataCleaningResult(Base):
     duplicate_rows_count = Column(Integer, default=0)
     removed_rows_count = Column(Integer, default=0)
     cleaned_file_path = Column(Text, nullable=True)
+    cleaned_data_gz = Column(LargeBinary, nullable=True)  # gzipped cleaned CSV — server-accessible fallback when the file isn't on disk
     cleaning_notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
