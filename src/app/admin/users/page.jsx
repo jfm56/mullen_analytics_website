@@ -70,6 +70,13 @@ export default function AdminUsersPage() {
         }
         setAuthOk(true);
         loadUsers();
+        // Auto-open the invite form when arriving from "+ Invite client" (role
+        // defaults to client). Read the query directly to avoid a useSearchParams
+        // Suspense boundary at build time.
+        if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('invite')) {
+          setCreatedUser(null);
+          setCreateModal(true);
+        }
       } catch {
         router.replace('/portal/login');
       }
