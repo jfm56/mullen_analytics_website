@@ -349,6 +349,16 @@ async def delete_upload(
         if result.cleaned_file_path and Path(result.cleaned_file_path).exists():
             Path(result.cleaned_file_path).unlink(missing_ok=True)
 
+    # Remove dependent rows that have plain (non-cascading) foreign keys, or the
+    # final delete fails with a FK violation for any *processed* upload (one that
+    # has generated dashboard metrics, a data profile, column settings, or column
+    # mappings). data_cleaning_results is handled by its ORM delete-orphan cascade
+    # via db.delete(upload) below, so it's intentionally excluded here.
+    for _dependent in (EMSDashboardMetrics, DataProfile, AnalyticsColumnSettings, EMSColumnMapping):
+        db.query(_dependent).filter(_dependent.data_upload_id == upload.id).delete(
+            synchronize_session=False
+        )
+
     db.delete(upload)
     db.commit()
     return {"success": True}
