@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Home, Upload, BarChart3, Search, FileText,
-  MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb,
+  MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
 } from 'lucide-react';
 import { auth } from '@/lib/api';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
@@ -101,7 +101,14 @@ export default function PortalShell({ children }) {
           <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
             {renderNavItems()}
           </nav>
-          <div className="border-t border-gray-200 p-2">
+          <div className="border-t border-gray-200 p-2 space-y-0.5">
+            <Link
+              href="/"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+            >
+              <Globe size={18} className="flex-shrink-0" />
+              <span>Main site</span>
+            </Link>
             <button
               onClick={async () => { await auth.logout?.(); router.push('/portal/login'); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-red-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
@@ -148,7 +155,15 @@ export default function PortalShell({ children }) {
               <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
                 {renderNavItems(() => setMobileOpen(false))}
               </nav>
-              <div className="border-t border-gray-200 p-2">
+              <div className="border-t border-gray-200 p-2 space-y-0.5">
+                <Link
+                  href="/"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
+                >
+                  <Globe size={18} className="flex-shrink-0" />
+                  <span>Main site</span>
+                </Link>
                 <button
                   onClick={async () => { setMobileOpen(false); await auth.logout?.(); router.push('/portal/login'); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-red-600 rounded-lg transition-colors"

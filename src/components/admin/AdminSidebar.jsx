@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, Upload, BarChart2, Search,
   Columns, MessageSquare, UserCog, FolderOpen, Receipt,
-  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight, Database,
+  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight, Database, Globe,
 } from 'lucide-react';
 
 const NAV = [
@@ -82,7 +82,16 @@ export default function AdminSidebar({ collapsed, onToggle }) {
       </nav>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} className="px-2 py-3">
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} className="px-2 py-3 space-y-0.5">
+        <Link
+          href="/"
+          title={collapsed ? 'Main site' : undefined}
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+          className={`flex items-center gap-3 px-2.5 py-2 rounded-lg text-xs transition-colors hover:bg-white/10 hover:opacity-100 ${collapsed ? 'justify-center' : ''}`}
+        >
+          <Globe size={15} className="flex-shrink-0" />
+          {!collapsed && <span>Main site</span>}
+        </Link>
         <Link
           href="/portal"
           title={collapsed ? 'Client Portal' : undefined}
