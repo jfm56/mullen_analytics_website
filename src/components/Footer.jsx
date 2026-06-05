@@ -10,6 +10,7 @@ function reopenCookiePreferences() {
 const NAV_LINKS = [
   { label: 'About', href: '/about' },
   { label: 'Products', href: '/products' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Capabilities', href: '/capabilities' },
   { label: 'First Responders', href: '/first-responders' },
   { label: 'Healthcare', href: '/healthcare' },
