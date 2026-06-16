@@ -95,3 +95,62 @@ def get_weather_map(lat: float, lng: float, start: str, end: str) -> Dict[str, D
 
     _CACHE[key] = out
     return out
+
+
+_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+
+
+def get_weather_forecast(lat: float, lng: float, start: str, end: str) -> Dict[str, Dict[str, Any]]:
+    """Like get_weather_map but uses Open-Meteo's FORECAST endpoint for near-future
+    dates (~16 days ahead). Same return shape. Returns {} on failure so callers
+    degrade gracefully.
+    """
+    key = f"fc:{round(lat, 2)},{round(lng, 2)},{start},{end}"
+    if key in _CACHE:
+        return _CACHE[key]
+
+    params = {
+        "latitude": round(lat, 3),
+        "longitude": round(lng, 3),
+        "start_date": start,
+        "end_date": end,
+        "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,wind_speed_10m_max",
+        "timezone": "America/New_York",
+        "temperature_unit": "fahrenheit",
+        "precipitation_unit": "inch",
+        "wind_speed_unit": "mph",
+    }
+    url = _FORECAST_URL + "?" + urllib.parse.urlencode(params)
+    out: Dict[str, Dict[str, Any]] = {}
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "MullenAnalytics/1.0"})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        daily = data.get("daily", {}) or {}
+        dates = daily.get("time", []) or []
+        tmax = daily.get("temperature_2m_max", []) or []
+        tmin = daily.get("temperature_2m_min", []) or []
+        precip = daily.get("precipitation_sum", []) or []
+        snow = daily.get("snowfall_sum", []) or []
+        wind = daily.get("wind_speed_10m_max", []) or []
+
+        def at(arr, i):
+            return arr[i] if i < len(arr) else None
+
+        for i, d in enumerate(dates):
+            tx, tn = at(tmax, i), at(tmin, i)
+            pr, sn, wd = at(precip, i), at(snow, i), at(wind, i)
+            out[d] = {
+                "condition": _categorize(sn, pr, tx, tn, wd),
+                "temp_max_f": tx,
+                "temp_min_f": tn,
+                "precip_in": pr,
+                "snow": sn,
+                "wind_mph": wd,
+            }
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("weather forecast fetch failed (%s): %s", url[:80], exc)
+        return {}
+
+    _CACHE[key] = out
+    return out

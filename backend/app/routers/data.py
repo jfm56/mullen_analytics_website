@@ -626,6 +626,29 @@ async def get_upload_mva_hotspots(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/forecast/weather-traffic
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/forecast/weather-traffic")
+async def get_upload_weather_traffic_forecast(
+    upload_id: UUID,
+    horizon: int = 14,
+    weather: bool = True,
+    traffic: bool = True,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Weather- & traffic-aware EMS call forecast, by day and by area."""
+    horizon = max(1, min(31, horizon))
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_weather_traffic_forecast_service import forecast_calls_by_day_and_area
+    return forecast_calls_by_day_and_area(upload, db, horizon_days=horizon, weather=weather, traffic=traffic)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { dataUploads, dashboardFilter } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
 import PredictiveAnalytics from '@/components/PredictiveAnalytics';
+import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
 import ResponseTimeRisk from '@/components/ResponseTimeRisk';
 import MvaHotspots from '@/components/MvaHotspots';
@@ -518,6 +519,7 @@ export default function PortalDashboardPage() {
           </div>
         </div>
         <PredictiveAnalytics uploadId={selectedId} />
+        <WeatherTrafficForecast uploadId={selectedId} />
         <GeographicHeatMap uploadId={selectedId} />
         <ResponseTimeRisk uploadId={selectedId} />
         <MvaHotspots uploadId={selectedId} />
