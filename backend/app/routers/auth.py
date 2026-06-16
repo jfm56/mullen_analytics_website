@@ -18,6 +18,7 @@ from ..services.auth import (
     create_password_reset_token, use_password_reset_token,
 )
 from ..services.email import send_password_reset_email
+from ..services.audit import log_action
 from ..models.user import User, Profile
 
 settings = get_settings()
@@ -58,26 +59,36 @@ async def login(
     db: Session = Depends(get_db),
 ):
     """Authenticate user and create session with HTTP-only cookie."""
-    user = authenticate_user(db, login_data.email, login_data.password)
-    
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    # Get client info for session
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
-    
+
+    user = authenticate_user(db, login_data.email, login_data.password)
+
+    if not user:
+        # Audit the failed attempt (never let auditing break auth).
+        try:
+            log_action(db, action="login_failed",
+                       details={"email": login_data.email}, ip_address=ip_address)
+        except Exception:
+            pass
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
     # Create session
     session, raw_token = create_session(
         db, str(user.id), ip_address, user_agent
     )
-    
+
     # Update last login on profile
     profile = get_user_profile(db, str(user.id))
     if profile:
         profile.last_login = datetime.utcnow()
         db.commit()
-    
+
+    try:
+        log_action(db, action="login", user_id=str(user.id), ip_address=ip_address)
+    except Exception:
+        pass
+
     # Set cookie
     set_session_cookie(response, raw_token)
     
@@ -96,10 +107,17 @@ async def logout(
 ):
     """Logout user and clear session."""
     token = get_session_token(request)
-    
+
     if token:
+        try:
+            u = validate_session(db, token)
+            if u:
+                log_action(db, action="logout", user_id=str(u.id),
+                           ip_address=(request.client.host if request.client else None))
+        except Exception:
+            pass
         delete_session(db, token)
-    
+
     clear_session_cookie(response)
     
     return LogoutResponse(success=True, message="Logged out successfully")

@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.agency import Agency, AgencyFile, AuditLog, PipelineRun
-from ..models.user import User, Profile
+from ..models.user import User, Profile, Session as UserSession
 from ..models.data_upload import DataUpload, EMSDashboardMetrics
 from ..models.message import Message
 from ..models.task import EnhancedTask
@@ -314,6 +314,134 @@ async def list_audit_logs(
     if action:
         query = query.filter(AuditLog.action == action)
     return query.order_by(AuditLog.created_at.desc()).limit(limit).all()
+
+
+@router.get("/monitoring")
+async def admin_monitoring(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Unified monitoring — user roster/activity, recent audit log, and auth/security events."""
+    _require_admin(db, current_user)
+    now = datetime.utcnow()
+    day_ago = now - timedelta(days=1)
+    week_ago = now - timedelta(days=7)
+
+    def _safe(q, default=0):
+        try:
+            return q.scalar() or 0
+        except Exception:
+            return default
+
+    kpis = {
+        "total_users": _safe(db.query(func.count(Profile.id))),
+        "admins": _safe(db.query(func.count(Profile.id)).filter(Profile.role == "admin")),
+        "clients": _safe(db.query(func.count(Profile.id)).filter(Profile.role == "client")),
+        "active_24h": _safe(db.query(func.count(Profile.id)).filter(Profile.last_login >= day_ago)),
+        "active_7d": _safe(db.query(func.count(Profile.id)).filter(Profile.last_login >= week_ago)),
+        "active_sessions": _safe(db.query(func.count(UserSession.id)).filter(UserSession.expires_at > now)),
+        "logins_24h": _safe(db.query(func.count(UserSession.id)).filter(UserSession.created_at >= day_ago)),
+        "failed_24h": _safe(
+            db.query(func.count(AuditLog.id)).filter(AuditLog.action == "login_failed", AuditLog.created_at >= day_ago)
+        ),
+    }
+
+    try:
+        sess_by_user = {
+            str(r.user_id): int(r.n)
+            for r in db.query(UserSession.user_id, func.count(UserSession.id).label("n"))
+            .filter(UserSession.expires_at > now)
+            .group_by(UserSession.user_id)
+            .all()
+        }
+    except Exception:
+        sess_by_user = {}
+
+    users = []
+    try:
+        for prof, usr in db.query(Profile, User).outerjoin(User, Profile.id == User.id).all():
+            uid = str(prof.id)
+            last_login = prof.last_login or (usr.last_sign_in_at if usr else None)
+            users.append({
+                "id": uid,
+                "email": prof.email,
+                "full_name": prof.full_name,
+                "company": prof.company,
+                "role": prof.role,
+                "client_status": prof.client_status,
+                "last_login": last_login.isoformat() if last_login else None,
+                "active_sessions": sess_by_user.get(uid, 0),
+            })
+        users.sort(key=lambda u: (u["last_login"] or ""), reverse=True)
+    except Exception:
+        users = []
+
+    name_by_id = {u["id"]: (u["full_name"] or u["email"]) for u in users}
+
+    recent_activity = []
+    try:
+        for a in db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(40).all():
+            recent_activity.append({
+                "id": str(a.id),
+                "action": a.action,
+                "user": name_by_id.get(str(a.user_id)) if a.user_id else None,
+                "resource_type": a.resource_type,
+                "resource_id": a.resource_id,
+                "details": a.details,
+                "ip_address": a.ip_address,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+    except Exception:
+        recent_activity = []
+
+    security_events = []
+    try:
+        sec = ("login", "login_failed", "logout", "password_reset", "role_changed", "account_created")
+        for a in (
+            db.query(AuditLog).filter(AuditLog.action.in_(sec))
+            .order_by(AuditLog.created_at.desc()).limit(40).all()
+        ):
+            security_events.append({
+                "type": a.action,
+                "user": name_by_id.get(str(a.user_id)) if a.user_id else (a.details or {}).get("email"),
+                "ip_address": a.ip_address,
+                "details": a.details,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+    except Exception:
+        pass
+    try:
+        from ..models.impersonation import ImpersonationLog
+        for im in db.query(ImpersonationLog).order_by(ImpersonationLog.created_at.desc()).limit(20).all():
+            security_events.append({
+                "type": f"impersonation_{im.action}",
+                "user": name_by_id.get(str(im.admin_id)),
+                "target": name_by_id.get(str(im.client_id)),
+                "ip_address": im.ip_address,
+                "details": {"page_path": im.page_path},
+                "created_at": im.created_at.isoformat() if im.created_at else None,
+            })
+    except Exception:
+        pass
+    security_events.sort(key=lambda e: (e.get("created_at") or ""), reverse=True)
+    security_events = security_events[:40]
+
+    alerts = []
+    if kpis["failed_24h"] >= 5:
+        alerts.append({
+            "level": "warning",
+            "title": "Failed logins",
+            "message": f"{kpis['failed_24h']} failed login attempts in the last 24h.",
+        })
+
+    return {
+        "generated_at": now.isoformat(),
+        "kpis": kpis,
+        "alerts": alerts,
+        "users": users,
+        "recent_activity": recent_activity,
+        "security_events": security_events,
+    }
 
 
 # ============================================================================
