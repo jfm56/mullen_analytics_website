@@ -649,6 +649,27 @@ async def get_upload_weather_traffic_forecast(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/forecast/ift
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/forecast/ift")
+async def get_upload_ift_outlook(
+    upload_id: UUID,
+    horizon: int = 14,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Interfacility-transport outlook — patterns, day-of-week forecast, and a schedule recommendation."""
+    horizon = max(1, min(31, horizon))
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_ift_service import get_ift_outlook
+    return get_ift_outlook(upload, db, horizon_days=horizon)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 

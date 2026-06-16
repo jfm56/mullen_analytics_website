@@ -4,6 +4,7 @@ import { dataUploads, dashboardFilter } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
 import PredictiveAnalytics from '@/components/PredictiveAnalytics';
 import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
+import IftOutlook from '@/components/IftOutlook';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
 import ResponseTimeRisk from '@/components/ResponseTimeRisk';
 import MvaHotspots from '@/components/MvaHotspots';
@@ -520,6 +521,7 @@ export default function PortalDashboardPage() {
         </div>
         <PredictiveAnalytics uploadId={selectedId} />
         <WeatherTrafficForecast uploadId={selectedId} />
+        <IftOutlook uploadId={selectedId} />
         <GeographicHeatMap uploadId={selectedId} />
         <ResponseTimeRisk uploadId={selectedId} />
         <MvaHotspots uploadId={selectedId} />
