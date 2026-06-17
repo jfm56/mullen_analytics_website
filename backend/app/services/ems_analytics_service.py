@@ -137,6 +137,22 @@ def _call_volume(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str
         method = "row_count"
     out: Dict[str, Any] = {"total_calls": total, "total": total, "method": method}
 
+    # Counting breakdown (additive — does NOT change `total`): split into
+    # emergency vs interfacility so the headline can be reconciled to an
+    # external reference (e.g. an emergency-only count).
+    try:
+        from .ems_filter_service import detect_interfacility_rows
+        ift_n = int(detect_interfacility_rows(df).sum())
+        out["interfacility_calls"] = ift_n
+        out["emergency_calls"] = int(len(df) - ift_n)
+    except Exception:
+        pass
+    out["count_basis"] = (
+        "unique incidents" if method == "unique_incident_number"
+        else "dispatched responses (one row per unit dispatch)" if method == "dispatch_datetime_not_null"
+        else "raw rows"
+    )
+
     _DOW_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     # by_day — use dispatch_time or incident_date
@@ -279,6 +295,30 @@ def _response_times(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[
     _seg(enroute_col,  arrival_col,   "enroute_to_arrival_median")
     _seg(dispatch_col, arrival_col,   "dispatch_to_arrival_median")
     _seg(received_col, clear_col,     "total_call_time_median")
+
+    # Explicit labels + a full travel-time breakdown so the UI can distinguish
+    # "response time" (dispatch -> on-scene, incl. turnout) from "travel time"
+    # (en route -> on-scene) rather than conflating them.
+    _LABELS = {
+        "dispatch_to_arrival": "Response time (dispatch → on-scene)",
+        "dispatch_to_clear":   "Dispatch → clear",
+        "enroute_to_arrival":  "Travel time (en route → on-scene)",
+    }
+    out["metric_label"] = _LABELS.get(label, label)
+    if dispatch_col and enroute_col:
+        _to = _minutes_between(df, dispatch_col, enroute_col)
+        if _to is not None and _to.notna().sum() > 0:
+            out["turnout_median_minutes"] = _safe(round(float(_to.median()), 2))
+    if enroute_col and arrival_col and label != "enroute_to_arrival":
+        _tv = _minutes_between(df, enroute_col, arrival_col)
+        if _tv is not None and _tv.notna().sum() > 0:
+            out["travel_time"] = {
+                "label": "Travel time (en route → on-scene)",
+                "median_minutes": _safe(round(float(_tv.median()), 2)),
+                "mean_minutes":   _safe(round(float(_tv.mean()),   2)),
+                "p90_minutes":    _safe(round(float(_tv.quantile(0.90)), 2)),
+                "sample_size":    int(_tv.notna().sum()),
+            }
 
     return out
 
