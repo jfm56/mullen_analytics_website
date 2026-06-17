@@ -691,6 +691,27 @@ async def get_upload_ai_insights(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/turnover
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/turnover")
+async def get_upload_turnover(
+    upload_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Staffing turnover/attrition outlook — an operational risk proxy from the
+    dispatch data, or the trained SBEMS termination forecast when HR separation
+    history is available."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_turnover_service import get_turnover_outlook
+    return get_turnover_outlook(upload, db)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 

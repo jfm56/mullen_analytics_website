@@ -37,7 +37,7 @@ _SYSTEM = (
     "You are an expert EMS operations analyst writing an executive interpretation of an "
     "agency's analytics dashboard for its leadership (chief / operations director). You are "
     "given a JSON summary computed from the agency's own data: call volume, response-time "
-    "performance, demand patterns, a staffing recommendation, and the interfacility-transport "
+    "performance, demand patterns, a staffing recommendation, a staffing turnover-risk read, and the interfacility-transport"
     "(IFT) outlook.\n\n"
     "Rules:\n"
     "- Ground EVERY statement in the provided numbers. Never invent figures, trends, or causes.\n"
@@ -217,6 +217,21 @@ def _build_summary(upload, db) -> Dict[str, Any]:
         if w not in warnings:
             warnings.append(w)
 
+    # Turnover risk — reuse the already-computed predictive result (no recompute).
+    turnover_summary = None
+    if staffing:
+        try:
+            from .ems_turnover_service import _operational_stress
+            st = _operational_stress(pred)
+            turnover_summary = {
+                "method": "operational_proxy",
+                "risk_level": st["level"],
+                "composite_index": st["composite_index"],
+                "drivers": (st.get("drivers") or [])[:4],
+            }
+        except Exception:  # noqa: BLE001
+            pass
+
     return {
         "agency": (
             getattr(upload, "agency_name", None)
@@ -233,6 +248,7 @@ def _build_summary(upload, db) -> Dict[str, Any]:
         "response_time": resp,
         "forecast": forecast,
         "staffing": staff,
+        "turnover": turnover_summary,
         "ift": ift_summary,
         "data_caveats": warnings,
     }

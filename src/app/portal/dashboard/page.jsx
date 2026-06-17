@@ -4,6 +4,7 @@ import { dataUploads, dashboardFilter } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
 import AiInsights from '@/components/AiInsights';
 import PredictiveAnalytics from '@/components/PredictiveAnalytics';
+import TurnoverRisk from '@/components/TurnoverRisk';
 import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
 import IftOutlook from '@/components/IftOutlook';
 import PageTabs from '@/components/ui/PageTabs';
@@ -542,6 +543,7 @@ export default function PortalDashboardPage() {
         {dashTab === 'predictions' && (
           <div className="space-y-5">
             <PredictiveAnalytics uploadId={selectedId} />
+            <TurnoverRisk uploadId={selectedId} />
             <WeatherTrafficForecast uploadId={selectedId} />
           </div>
         )}
