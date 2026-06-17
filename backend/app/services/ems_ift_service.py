@@ -22,6 +22,7 @@ import pandas as pd
 from .ems_analytics_service import detect_mapped_column
 from .ems_column_mapping_service import get_column_overrides
 from .ems_filter_service import detect_interfacility_rows
+from .ems_geographic_service import _centroid_for, _detect_location_column, _normalize_location
 from .ems_predictive_service import _load_df, _resolve_dt
 
 logger = logging.getLogger(__name__)
@@ -111,6 +112,29 @@ def get_ift_outlook(upload, db, horizon_days: int = 14, shift_hours: int = 8) ->
         for t, c in df.loc[mask, itype].astype(str).value_counts().head(6).items():
             by_type.append({"type": t, "count": int(c)})
 
+    # Location breakdown — which scene areas generate the most transfers, so a
+    # transport crew can be staged near demand. (Origin->destination FACILITY
+    # routing needs a receiving-facility field the EMSCharts export lacks; this
+    # is the scene location, mapped to a centroid where known.)
+    by_location: List[Dict[str, Any]] = []
+    loc_col = _detect_location_column(df, ov)
+    if loc_col:
+        locs = df.loc[mask, loc_col].dropna().astype(str).map(_normalize_location)
+        locs = locs[locs.str.len() > 0]
+        grand = int(locs.shape[0])
+        weeks = max(span_days / 7.0, 1.0)
+        for name, cnt in locs.value_counts().head(12).items():
+            c = _centroid_for(name)
+            by_location.append({
+                "location": name,
+                "count": int(cnt),
+                "share_pct": round(100 * int(cnt) / grand, 1) if grand else 0.0,
+                "avg_per_week": round(int(cnt) / weeks, 2),
+                "lat": c[0] if c else None,
+                "lng": c[1] if c else None,
+                "mapped": c is not None,
+            })
+
     # Trend: recent half vs earlier half (weekly rate).
     mid = valid.min() + (valid.max() - valid.min()) / 2
     recent = int((ift_dt >= mid).sum())
@@ -169,6 +193,7 @@ def get_ift_outlook(upload, db, horizon_days: int = 14, shift_hours: int = 8) ->
         "by_weekday": by_weekday,
         "by_hour": by_hour,
         "by_type": by_type,
+        "by_location": by_location,
         "forecast": forecast,
         "schedule_recommendation": schedule,
         "warnings": warnings,

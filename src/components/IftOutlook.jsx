@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import {
-  Truck, CalendarClock, Clock, Repeat, TrendingUp, TrendingDown, Minus, AlertTriangle,
+  Truck, CalendarClock, Clock, Repeat, MapPin, TrendingUp, TrendingDown, Minus, AlertTriangle,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
@@ -68,6 +68,8 @@ export default function IftOutlook({ uploadId }) {
   const hourData = Array.from({ length: 24 }, (_, h) => ({ hour: h, label: `${h}`, calls: (data.by_hour || {})[h] || 0 }));
   const inWindow = (h) => h >= sched.window_start && h < sched.window_end;
   const fc = data.forecast || [];
+  const byLoc = data.by_location || [];
+  const locMax = Math.max(1, ...byLoc.map((l) => l.count));
 
   return (
     <div className="bg-white border rounded-xl shadow-sm">
@@ -145,6 +147,33 @@ export default function IftOutlook({ uploadId }) {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Where transfers originate */}
+        {byLoc.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5">
+              <MapPin size={12} /> Where transfers originate (scene location)
+            </p>
+            <div className="space-y-1.5">
+              {byLoc.slice(0, 8).map((l) => (
+                <div key={l.location}>
+                  <div className="flex justify-between text-xs mb-0.5">
+                    <span className="text-gray-700 truncate flex items-center gap-1">
+                      {l.location}{!l.mapped && <span className="text-[10px] text-gray-300">(no map)</span>}
+                    </span>
+                    <span className="text-gray-500 whitespace-nowrap">{l.count} · {l.share_pct}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(l.count / locMax) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">
+              Stage the transport crew near the top origin. Destination-facility routing would need a receiving-facility field, which this export doesn’t include.
+            </p>
+          </div>
+        )}
 
         {/* By type + 14-day forecast */}
         <div className="grid lg:grid-cols-2 gap-6">
