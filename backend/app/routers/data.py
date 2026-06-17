@@ -670,6 +670,27 @@ async def get_upload_ift_outlook(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/ai-insights
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/ai-insights")
+async def get_upload_ai_insights(
+    upload_id: UUID,
+    refresh: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """AI executive interpretation of the dashboard — what's important, what it
+    means, and recommendations, grounded in the agency's computed metrics."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_ai_insights_service import interpret_dashboard
+    return await interpret_dashboard(upload, db, refresh=refresh)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 

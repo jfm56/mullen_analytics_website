@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { dataUploads, dashboardFilter } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
+import AiInsights from '@/components/AiInsights';
 import PredictiveAnalytics from '@/components/PredictiveAnalytics';
 import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
 import IftOutlook from '@/components/IftOutlook';
@@ -516,6 +517,8 @@ export default function PortalDashboardPage() {
         />
 
         {dashTab === 'overview' && (
+          <div className="space-y-5">
+          <AiInsights uploadId={selectedId} />
           <div className="bg-white border rounded-xl shadow-sm p-6">
             <EMSDashboard
               metrics={dashboard.metrics}
@@ -532,6 +535,7 @@ export default function PortalDashboardPage() {
                 🔍 Explore Full Dataset
               </Link>
             </div>
+          </div>
           </div>
         )}
 
