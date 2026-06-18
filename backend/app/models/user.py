@@ -62,6 +62,11 @@ class Profile(Base):
     upload_enabled = Column(Boolean, default=False)
     allowed_file_types = Column(String(255), default="csv,xlsx,json,pdf")
     max_upload_mb = Column(Integer, default=50)
+
+    # EMS QA add-on — entitlement that drives the portal -> EMS QA SSO handoff.
+    ems_qa_enabled = Column(Boolean, default=False)
+    ems_agency_slug = Column(String(255), nullable=True)
+    ems_role = Column(String(50), nullable=True)
     
     # Metadata
     tags = Column(JSON, default=list)

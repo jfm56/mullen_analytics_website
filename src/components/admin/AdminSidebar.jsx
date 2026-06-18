@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, Upload, BarChart2, Search,
   Columns, MessageSquare, UserCog, FolderOpen, Receipt,
-  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight, Database, Globe, Activity,
+  ClipboardList, Settings, ExternalLink, ChevronLeft, ChevronRight, Database, Globe, Activity, Bug,
 } from 'lucide-react';
 
 const NAV = [
@@ -20,6 +20,7 @@ const NAV = [
   { label: 'Projects',       href: '/admin/projects',       Icon: FolderOpen },
   { label: 'Invoices',       href: '/admin/invoices',       Icon: Receipt },
   { label: 'Monitoring',     href: '/admin/monitoring',     Icon: Activity },
+  { label: 'Errors & Issues',href: '/admin/errors',         Icon: Bug },
   { label: 'Audit Logs',     href: '/admin/audit-logs',     Icon: ClipboardList },
   { label: 'Settings',       href: '/admin/settings',       Icon: Settings },
 ];

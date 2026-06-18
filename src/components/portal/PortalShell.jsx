@@ -6,9 +6,11 @@ import Image from 'next/image';
 import {
   Home, Upload, BarChart3, Search, FileText,
   MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
+  Activity, ExternalLink,
 } from 'lucide-react';
-import { auth } from '@/lib/api';
+import { auth, emsQa } from '@/lib/api';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
+import ClientErrorReporter from '@/components/ClientErrorReporter';
 
 const NAV = [
   { label: 'Home',          href: '/portal',                Icon: Home },
@@ -80,12 +82,24 @@ export default function PortalShell({ children }) {
           </Link>
         );
       })}
+      {profile?.ems_qa_enabled && (
+        <button
+          type="button"
+          onClick={() => { onNavigate?.(); emsQa.open().catch(() => {}); }}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+        >
+          <Activity size={18} className="flex-shrink-0" />
+          <span>QA Platform</span>
+          <ExternalLink size={14} className="ml-auto text-gray-400" />
+        </button>
+      )}
     </>
   );
 
   return (
     <>
       <ImpersonationBanner />
+      <ClientErrorReporter />
       <div className="flex min-h-screen bg-gray-50">
         {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-56 bg-white border-r border-gray-200 flex-shrink-0">

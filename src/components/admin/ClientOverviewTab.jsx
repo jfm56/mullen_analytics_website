@@ -20,6 +20,9 @@ export default function ClientOverviewTab({
     contract_value: client?.contract_value || 0,
     health_score: client?.health_score || 0,
     notes: client?.notes || '',
+    ems_qa_enabled: client?.ems_qa_enabled || false,
+    ems_agency_slug: client?.ems_agency_slug || '',
+    ems_role: client?.ems_role || 'qa_reviewer',
   });
 
   const handleSave = async () => {
@@ -129,6 +132,14 @@ export default function ClientOverviewTab({
                   : 'Never'}
               </p>
             </div>
+            <div>
+              <p className="text-gray-500 mb-1">EMS QA add-on</p>
+              <p className="font-medium">
+                {client.ems_qa_enabled
+                  ? `Enabled · ${client.ems_agency_slug || '—'} (${client.ems_role || 'qa_reviewer'})`
+                  : 'Off'}
+              </p>
+            </div>
             {client.notes && (
               <div className="col-span-full">
                 <p className="text-gray-500 mb-1">Notes</p>
@@ -188,6 +199,41 @@ export default function ClientOverviewTab({
                 rows={3}
                 className="w-full border rounded px-2 py-1.5"
               />
+            </div>
+            <div className="col-span-full border-t pt-3 mt-1">
+              <label className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  checked={!!formData.ems_qa_enabled}
+                  onChange={(e) => setFormData({ ...formData, ems_qa_enabled: e.target.checked })}
+                />
+                <span className="text-gray-700 font-medium">EMS QA add-on (single sign-on)</span>
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-500 mb-1">EMS agency slug</label>
+                  <input
+                    type="text"
+                    value={formData.ems_agency_slug}
+                    onChange={(e) => setFormData({ ...formData, ems_agency_slug: e.target.value })}
+                    placeholder="e.g. riverside-county-ems"
+                    className="w-full border rounded px-2 py-1.5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">EMS role</label>
+                  <select
+                    value={formData.ems_role}
+                    onChange={(e) => setFormData({ ...formData, ems_role: e.target.value })}
+                    className="w-full border rounded px-2 py-1.5"
+                  >
+                    <option value="qa_reviewer">QA reviewer</option>
+                    <option value="clinical_lead">Clinical lead</option>
+                    <option value="admin">Admin</option>
+                    <option value="read_only">Read only</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         )}

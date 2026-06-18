@@ -445,6 +445,161 @@ async def admin_monitoring(
 
 
 # ============================================================================
+# Admin — Errors / issues + per-user login history (IT support visibility)
+# ============================================================================
+
+@router.get("/errors")
+async def admin_errors(
+    source: Optional[str] = None,
+    resolved: Optional[bool] = None,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Application errors (server 500s + client JS) plus user-reported issues, newest first."""
+    _require_admin(db, current_user)
+    from ..models.error_log import ErrorLog
+
+    name_by_id = {}
+    try:
+        for prof in db.query(Profile).all():
+            name_by_id[str(prof.id)] = prof.full_name or prof.email
+    except Exception:
+        pass
+
+    q = db.query(ErrorLog)
+    if source:
+        q = q.filter(ErrorLog.source == source)
+    if resolved is not None:
+        q = q.filter(ErrorLog.resolved == resolved)
+    errors = []
+    for e in q.order_by(ErrorLog.created_at.desc()).limit(min(limit, 500)).all():
+        errors.append({
+            "id": str(e.id),
+            "source": e.source,
+            "level": e.level,
+            "error_type": e.error_type,
+            "message": e.message,
+            "path": e.path,
+            "method": e.method,
+            "status_code": e.status_code,
+            "user": name_by_id.get(str(e.user_id)) if e.user_id else None,
+            "user_id": str(e.user_id) if e.user_id else None,
+            "ip_address": e.ip_address,
+            "resolved": bool(e.resolved),
+            "has_stacktrace": bool(e.stacktrace),
+            "created_at": e.created_at.isoformat() if e.created_at else None,
+        })
+
+    # User-reported issues (Feedback type='issue') surfaced alongside.
+    issues = []
+    try:
+        from ..models.feedback import Feedback
+        for f in (
+            db.query(Feedback).filter(Feedback.type == "issue")
+            .order_by(Feedback.created_at.desc()).limit(50).all()
+        ):
+            issues.append({
+                "id": str(f.id),
+                "title": f.title,
+                "body": f.body,
+                "status": f.status,
+                "user": name_by_id.get(str(f.user_id)) if f.user_id else None,
+                "admin_response": f.admin_response,
+                "created_at": f.created_at.isoformat() if f.created_at else None,
+            })
+    except Exception:
+        pass
+
+    day_ago = datetime.utcnow() - timedelta(days=1)
+    counts = {
+        "open_errors": _q_count(db, ErrorLog, ErrorLog.resolved.is_(False)),
+        "errors_24h": _q_count(db, ErrorLog, ErrorLog.created_at >= day_ago),
+        "open_issues": len([i for i in issues if i["status"] in ("open", "in_review")]),
+    }
+    return {"errors": errors, "issues": issues, "counts": counts}
+
+
+def _q_count(db, model, *filters) -> int:
+    try:
+        return db.query(func.count(model.id)).filter(*filters).scalar() or 0
+    except Exception:
+        return 0
+
+
+@router.get("/errors/{error_id}")
+async def admin_error_detail(
+    error_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Full error detail including stacktrace."""
+    _require_admin(db, current_user)
+    from ..models.error_log import ErrorLog
+    e = db.query(ErrorLog).filter(ErrorLog.id == error_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Error not found")
+    prof = db.query(Profile).filter(Profile.id == e.user_id).first() if e.user_id else None
+    return {
+        "id": str(e.id), "source": e.source, "level": e.level, "error_type": e.error_type,
+        "message": e.message, "path": e.path, "method": e.method, "status_code": e.status_code,
+        "stacktrace": e.stacktrace, "user_agent": e.user_agent, "ip_address": e.ip_address,
+        "user": (prof.full_name or prof.email) if prof else None,
+        "resolved": bool(e.resolved),
+        "created_at": e.created_at.isoformat() if e.created_at else None,
+    }
+
+
+@router.patch("/errors/{error_id}/resolve")
+async def admin_resolve_error(
+    error_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Toggle an error's resolved/reviewed state."""
+    _require_admin(db, current_user)
+    from ..models.error_log import ErrorLog
+    e = db.query(ErrorLog).filter(ErrorLog.id == error_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Error not found")
+    e.resolved = not bool(e.resolved)
+    db.commit()
+    return {"success": True, "resolved": bool(e.resolved)}
+
+
+@router.get("/users/{user_id}/logins")
+async def admin_user_logins(
+    user_id: UUID,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Per-user login history — each session row is one login (when, IP, device)."""
+    _require_admin(db, current_user)
+    now = datetime.utcnow()
+    prof = db.query(Profile).filter(Profile.id == user_id).first()
+    rows = (
+        db.query(UserSession).filter(UserSession.user_id == user_id)
+        .order_by(UserSession.created_at.desc()).limit(min(limit, 200)).all()
+    )
+    logins = [{
+        "id": str(s.id),
+        "created_at": s.created_at.isoformat() if s.created_at else None,
+        "ip_address": s.ip_address,
+        "user_agent": s.user_agent,
+        "active": bool(s.expires_at and s.expires_at > now),
+        "expires_at": s.expires_at.isoformat() if s.expires_at else None,
+    } for s in rows]
+    return {
+        "user_id": str(user_id),
+        "user": (prof.full_name or prof.email) if prof else None,
+        "email": prof.email if prof else None,
+        "total_logins": _q_count(db, UserSession, UserSession.user_id == user_id),
+        "logins": logins,
+    }
+
+
+# ============================================================================
 # Admin Client Management
 # ============================================================================
 
