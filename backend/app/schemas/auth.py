@@ -53,7 +53,11 @@ class ProfileResponse(BaseModel):
     tableau_open_url: Optional[str] = None
     last_login: Optional[datetime] = None
     created_at: Optional[datetime] = None
-    
+    # EMS QA add-on — lets the portal show the "QA Platform" SSO tile.
+    ems_qa_enabled: bool = False
+    ems_agency_slug: Optional[str] = None
+    ems_role: Optional[str] = None
+
     class Config:
         from_attributes = True
 
