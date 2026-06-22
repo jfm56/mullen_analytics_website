@@ -121,6 +121,14 @@ export const plans = {
 };
 
 /**
+ * Billing — self-serve subscription checkout (Stripe)
+ */
+export const billing = {
+  config: () => apiFetch('/api/billing/config'),
+  checkout: (plan) => apiFetch('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) }),
+};
+
+/**
  * EMS QA single sign-on — mint a one-time token and hand the browser off to the
  * EMS QA app (no second login). Only members with the add-on can call this.
  */
@@ -774,6 +782,7 @@ export default {
   impersonation,
   admin,
   plans,
+  billing,
   invoices,
   uploads,
   reports,

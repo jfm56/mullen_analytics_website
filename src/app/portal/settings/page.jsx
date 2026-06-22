@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Building2, User, Bell, Database, BarChart2, HelpCircle,
-  RefreshCw, Save, X, CheckCircle2, KeyRound,
+  RefreshCw, Save, X, CheckCircle2, KeyRound, CreditCard,
 } from 'lucide-react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
+import { billing, plans as plansApi } from '@/lib/api';
 
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -63,6 +64,7 @@ function SectionCard({ title, children, editing, onEdit, onSave, onCancel, savin
 const SECTIONS = [
   { id: 'profile',      label: 'User Profile',          Icon: User       },
   { id: 'agency',       label: 'Agency Profile',         Icon: Building2  },
+  { id: 'billing',      label: 'Plan & Billing',         Icon: CreditCard },
   { id: 'notifications',label: 'Notifications',          Icon: Bell       },
   { id: 'data',         label: 'Data Preferences',       Icon: Database   },
   { id: 'dashboard',    label: 'Dashboard Preferences',  Icon: BarChart2  },
@@ -82,6 +84,11 @@ export default function PortalSettingsPage() {
   const [editSection, setEditSection] = useState(null);
   const [draft, setDraft]       = useState({});
   const [saving, setSaving]     = useState(false);
+
+  // Plan & billing
+  const [billingCfg, setBillingCfg]   = useState(null);
+  const [planCatalog, setPlanCatalog] = useState([]);
+  const [subscribing, setSubscribing] = useState('');
 
   // Client preferences (stored as simple local state — no backend prefs table yet)
   const [prefs, setPrefs] = useState({
@@ -109,6 +116,11 @@ export default function PortalSettingsPage() {
       const s = await sessionRes.json();
       if (!s.authenticated) { router.replace('/portal/login'); return; }
       setProfile(s.profile);
+      billing.config().then(setBillingCfg).catch(() => setBillingCfg({ enabled: false }));
+      plansApi.list().then((d) => setPlanCatalog(d.plans || [])).catch(() => {});
+      if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('subscribed')) {
+        setSaveMsg('Subscription active — welcome aboard!');
+      }
       if (pubRes?.ok) {
         const pubData = await pubRes.json();
         setPortalSettings(pubData.settings || {});
@@ -172,6 +184,19 @@ export default function PortalSettingsPage() {
     }
   }
 
+  async function handleSubscribe(plan) {
+    setSubscribing(plan);
+    setError('');
+    try {
+      const r = await billing.checkout(plan);
+      if (r?.checkout_url) window.location.href = r.checkout_url;
+      else throw new Error('Could not start checkout.');
+    } catch (e) {
+      setError(e.message || 'Could not start checkout.');
+      setSubscribing('');
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-sm text-gray-400">
@@ -182,6 +207,14 @@ export default function PortalSettingsPage() {
 
   const supportEmail = portalSettings['company.support_email'] || 'admin@mullenanalytics.com';
   const portalName   = portalSettings['branding.portal_name'] || 'Client Analytics Portal';
+  const planStatus = profile?.plan_status || 'trialing';
+  const trialDaysLeft = profile?.trial_ends_at
+    ? Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000)
+    : null;
+  const statusCls = planStatus === 'active' ? 'bg-green-50 text-green-700 border-green-200'
+    : planStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200'
+    : planStatus === 'canceled' ? 'bg-gray-50 text-gray-600 border-gray-200'
+    : 'bg-blue-50 text-blue-700 border-blue-200';
 
   return (
     <div className="max-w-[900px] mx-auto space-y-6">
@@ -307,6 +340,60 @@ export default function PortalSettingsPage() {
               <Field label="" hint="">
                 <p className="text-xs text-gray-400 py-2">Contact your Mullen Analytics representative to update agency details.</p>
               </Field>
+            </SectionCard>
+          )}
+
+          {/* ── Plan & Billing ── */}
+          {activeSection === 'billing' && (
+            <SectionCard title="Plan & Billing" editing={false} onEdit={() => {}} onSave={() => {}} onCancel={() => {}} saving={false}>
+              <Field label="Current plan">
+                <span className="text-sm text-gray-700 capitalize">{(profile?.plan || 'free_trial').replace(/_/g, ' ')}</span>
+              </Field>
+              <Field label="Status">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border capitalize ${statusCls}`}>
+                  {planStatus}
+                </span>
+              </Field>
+              {trialDaysLeft != null && planStatus !== 'active' && (
+                <Field label="Free trial" hint="Time remaining in your 14-day trial">
+                  <span className="text-sm text-gray-700">{trialDaysLeft > 0 ? `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left` : 'Ended'}</span>
+                </Field>
+              )}
+              <div className="py-4">
+                {planStatus === 'active' ? (
+                  <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    Your subscription is active — thank you! To change or cancel, contact {supportEmail}.
+                  </p>
+                ) : billingCfg?.enabled && (billingCfg.priced_plans || []).length > 0 ? (
+                  <>
+                    <p className="text-xs text-gray-500 mb-2">Subscribe to keep full access when your trial ends:</p>
+                    <div className="grid sm:grid-cols-3 gap-2">
+                      {billingCfg.priced_plans.map((slug) => {
+                        const p = planCatalog.find((x) => x.slug === slug);
+                        const recommended = profile?.plan === slug;
+                        return (
+                          <button
+                            key={slug}
+                            onClick={() => handleSubscribe(slug)}
+                            disabled={!!subscribing}
+                            className={`text-left rounded-lg border px-3 py-2.5 transition-colors disabled:opacity-50 ${recommended ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-300 hover:bg-gray-50'}`}
+                          >
+                            <div className="text-sm font-semibold text-gray-900">{p?.name || slug}</div>
+                            <div className="text-xs text-gray-500">{p ? `${p.price_display}${p.period}` : ''}{recommended ? ' · your pick' : ''}</div>
+                            <div className="text-[11px] text-blue-600 mt-1 font-medium">{subscribing === slug ? 'Starting…' : 'Subscribe →'}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-2">Secure recurring checkout via Stripe. Cancel anytime.</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    Your 14-day trial is active. To activate a paid plan, contact{' '}
+                    <a href={`mailto:${supportEmail}`} className="text-blue-600 hover:underline">{supportEmail}</a> — we’ll get you set up.
+                  </p>
+                )}
+              </div>
             </SectionCard>
           )}
 

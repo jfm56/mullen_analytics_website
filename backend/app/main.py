@@ -118,6 +118,8 @@ async def on_startup():
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_status VARCHAR(50) DEFAULT 'trialing'",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:

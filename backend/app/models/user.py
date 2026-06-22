@@ -76,9 +76,12 @@ class Profile(Base):
     # Self-serve membership / plan (chosen at public signup; activated by an admin
     # or, later, by Stripe subscription billing).
     plan = Column(String(50), default="free_trial")       # free_trial|starter|professional|enterprise
-    plan_status = Column(String(50), default="trialing")   # trialing|pending|active|canceled
+    plan_status = Column(String(50), default="trialing")   # trialing|pending|active|past_due|canceled
     trial_ends_at = Column(DateTime, nullable=True)
     plan_selected_at = Column(DateTime, nullable=True)
+    # Stripe subscription linkage (set by the billing webhook; no card data stored)
+    stripe_customer_id = Column(String(255), nullable=True)
+    stripe_subscription_id = Column(String(255), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

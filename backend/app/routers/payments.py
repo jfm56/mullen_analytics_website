@@ -14,11 +14,12 @@ from typing import Optional
 from uuid import UUID
 
 import stripe
+from pydantic import BaseModel
 
 from ..database import get_db
 from ..config import get_settings
 from ..models.invoice import Invoice
-from ..models.user import User
+from ..models.user import User, Profile
 from ..services.audit import log_action
 from .auth import get_current_user, require_admin
 
@@ -35,6 +36,53 @@ def _get_stripe():
         )
     stripe.api_key = settings.stripe_secret_key
     return stripe
+
+
+def _price_for_plan(slug):
+    return {
+        "starter": settings.stripe_price_starter,
+        "professional": settings.stripe_price_professional,
+        "enterprise": settings.stripe_price_enterprise,
+    }.get(slug or "") or None
+
+
+def _activate_subscription(db, user_id, plan, customer=None, subscription=None):
+    """Webhook handler: flip a member's plan to active once Stripe confirms the subscription."""
+    prof = db.query(Profile).filter(Profile.id == user_id).first()
+    if not prof:
+        return
+    if plan:
+        prof.plan = plan
+    prof.plan_status = "active"
+    prof.client_status = "active"
+    if customer:
+        prof.stripe_customer_id = customer
+    if subscription:
+        prof.stripe_subscription_id = subscription
+    db.commit()
+    try:
+        log_action(db, action="subscription_activated", user_id=str(user_id), details={"plan": plan})
+    except Exception:
+        pass
+
+
+def _set_subscription_status(db, sub_obj, status):
+    """Sync a plan's status from a Stripe subscription event (by sub id, then metadata)."""
+    if not status:
+        return
+    sub_id = sub_obj.get("id")
+    meta = sub_obj.get("metadata", {}) or {}
+    prof = None
+    if sub_id:
+        prof = db.query(Profile).filter(Profile.stripe_subscription_id == sub_id).first()
+    if not prof and meta.get("user_id"):
+        prof = db.query(Profile).filter(Profile.id == meta["user_id"]).first()
+    if not prof:
+        return
+    prof.plan_status = status
+    if status == "canceled":
+        prof.client_status = "churned"
+    db.commit()
 
 
 # ============================================================================
@@ -136,6 +184,74 @@ async def set_manual_payment_url(
 
 
 # ============================================================================
+# Self-serve subscription billing — plan checkout
+# ============================================================================
+
+class CheckoutRequest(BaseModel):
+    plan: Optional[str] = None
+
+
+@router.get("/api/billing/config")
+async def billing_config():
+    """Whether self-serve subscription billing is live (Stripe key + ≥1 price set)."""
+    enabled = bool(settings.stripe_secret_key) and any(
+        (settings.stripe_price_starter, settings.stripe_price_professional, settings.stripe_price_enterprise)
+    )
+    return {
+        "enabled": enabled,
+        "publishable_key": settings.stripe_publishable_key or None,
+        "priced_plans": [s for s in ("starter", "professional", "enterprise") if _price_for_plan(s)],
+    }
+
+
+@router.post("/api/billing/checkout")
+async def create_subscription_checkout(
+    data: CheckoutRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe subscription Checkout Session for the current user's plan.
+    The webhook activates the plan on payment; no card data touches our servers."""
+    _get_stripe()
+    profile = db.query(Profile).filter(Profile.id == current_user.id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    plan = (data.plan or profile.plan or "").strip()
+    if not plan or plan == "free_trial":
+        raise HTTPException(status_code=400, detail="Choose a paid plan to subscribe.")
+    price_id = _price_for_plan(plan)
+    if not price_id:
+        raise HTTPException(status_code=503, detail=f"Subscription billing isn't set up for the {plan} plan yet.")
+
+    try:
+        kwargs = dict(
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=f"{settings.app_url}/portal/dashboard?subscribed=1",
+            cancel_url=f"{settings.app_url}/portal/settings?billing=cancelled",
+            metadata={"user_id": str(current_user.id), "plan": plan},
+            subscription_data={"metadata": {"user_id": str(current_user.id), "plan": plan}},
+        )
+        if profile.stripe_customer_id:
+            kwargs["customer"] = profile.stripe_customer_id
+        else:
+            kwargs["customer_email"] = current_user.email
+        session = stripe.checkout.Session.create(**kwargs)
+    except stripe.StripeError as exc:
+        logger.error("Stripe subscription session error: %s", exc)
+        raise HTTPException(status_code=502, detail=f"Stripe error: {getattr(exc, 'user_message', None) or str(exc)}")
+
+    try:
+        log_action(db, action="subscription_checkout_started", user_id=str(current_user.id),
+                   details={"plan": plan, "stripe_session_id": session.id},
+                   ip_address=request.client.host if request.client else None)
+    except Exception:
+        pass
+    return {"checkout_url": session.url, "stripe_session_id": session.id}
+
+
+# ============================================================================
 # Stripe Webhook — validates signature, updates invoice status
 # ============================================================================
 
@@ -170,7 +286,8 @@ async def stripe_webhook(
 
     if event_type == "checkout.session.completed":
         session_obj = event["data"]["object"]
-        invoice_id = session_obj.get("metadata", {}).get("invoice_id")
+        meta = session_obj.get("metadata", {}) or {}
+        invoice_id = meta.get("invoice_id")
         if invoice_id:
             invoice = db.query(Invoice).filter(
                 Invoice.id == invoice_id
@@ -190,6 +307,24 @@ async def stripe_webhook(
                         "payment_status": session_obj.get("payment_status"),
                     },
                 )
+        elif meta.get("user_id") and session_obj.get("mode") == "subscription":
+            # Self-serve plan subscription completed → activate the member's plan.
+            _activate_subscription(
+                db, meta["user_id"], meta.get("plan"),
+                customer=session_obj.get("customer"),
+                subscription=session_obj.get("subscription"),
+            )
+
+    elif event_type == "customer.subscription.deleted":
+        _set_subscription_status(db, event["data"]["object"], "canceled")
+
+    elif event_type == "customer.subscription.updated":
+        sub = event["data"]["object"]
+        _status = {
+            "active": "active", "trialing": "active", "past_due": "past_due",
+            "unpaid": "past_due", "canceled": "canceled",
+        }.get(sub.get("status"))
+        _set_subscription_status(db, sub, _status)
 
     elif event_type == "checkout.session.expired":
         session_obj = event["data"]["object"]

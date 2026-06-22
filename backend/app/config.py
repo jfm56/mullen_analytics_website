@@ -55,10 +55,16 @@ class Settings(BaseSettings):
     data_uploads_root: str = r"D:\MullenAnalytics\DataUploads"
     max_upload_size_mb: int = 100
 
-    # Stripe (unused — billing via QuickBooks)
+    # Stripe — one-time invoices + self-serve subscription plans.
+    # Empty keys = billing disabled (the request/trial signup model still works).
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_publishable_key: str = ""
+    # Recurring subscription price IDs (create them in your Stripe dashboard),
+    # mapped per plan slug. Leave blank to keep a tier on the manual/trial model.
+    stripe_price_starter: str = ""
+    stripe_price_professional: str = ""
+    stripe_price_enterprise: str = ""
 
     # Traffic enrichment (response-time / MVA). Default proxy needs no key.
     traffic_provider: str = "time_proxy"   # time_proxy | google
