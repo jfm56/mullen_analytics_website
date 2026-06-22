@@ -725,6 +725,23 @@ function FilteredMetricsView({ metrics }) {
   const cv = metrics.call_volume    || {};
   const rt = metrics.response_times || {};
 
+  // Distinguish "data can't be loaded" (cleaned bytes missing on the server)
+  // from "filter matched nothing" — otherwise the KPIs render as blank "—".
+  const unavailable = !!metrics.error;
+  const noMatch = !unavailable && (metrics.empty || (cv.total == null && cv.total_calls == null));
+  if (unavailable || noMatch) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+        <span>
+          {unavailable
+            ? "This upload's cleaned data isn't available on the server, so filtered views can't be computed. Re-upload the CSV to restore filtering, predictions, and outlooks for it."
+            : 'No calls match the selected filters.'}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {metrics.filters_applied && Object.keys(metrics.filters_applied).length > 0 && (
