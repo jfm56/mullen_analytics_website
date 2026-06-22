@@ -22,8 +22,37 @@ logger = logging.getLogger(__name__)
 
 _WEEKDAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
+# In-process caches keyed by (upload_id, cleaning-result signature) so repeated
+# dashboard loads (PredictiveAnalytics, TurnoverRisk, AI insights, emergency/IFT
+# outlooks) don't re-parse the CSV or re-train the forecast on every request.
+# Auto-invalidates when the upload is re-cleaned (the signature changes).
+_DF_CACHE: Dict[tuple, pd.DataFrame] = {}
+_DASH_CACHE: Dict[tuple, Dict[str, Any]] = {}
+
+
+def _result_sig(upload) -> str:
+    r = upload.cleaning_results[-1] if getattr(upload, "cleaning_results", None) else None
+    if r is None:
+        return f"raw|{getattr(upload, 'file_path', None)}"
+    return f"{getattr(r, 'id', None)}|{getattr(r, 'created_at', None)}"
+
 
 def _load_df(upload) -> Optional[pd.DataFrame]:
+    """Cached DataFrame load — parses the CSV/gz blob once per (upload, cleaning)."""
+    key = (str(getattr(upload, "id", "")), _result_sig(upload))
+    hit = _DF_CACHE.get(key)
+    if hit is not None:
+        return hit.copy()
+    df = _load_df_raw(upload)
+    if df is not None:
+        if len(_DF_CACHE) > 8:
+            _DF_CACHE.clear()
+        _DF_CACHE[key] = df
+        return df.copy()
+    return None
+
+
+def _load_df_raw(upload) -> Optional[pd.DataFrame]:
     result = upload.cleaning_results[-1] if upload.cleaning_results else None
     path = result.cleaned_file_path if result and result.cleaned_file_path else upload.file_path
     if path:
@@ -239,7 +268,19 @@ def _staffing(
 
 
 def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[Dict] = None) -> Dict[str, Any]:
-    """Main entry point used by the API. Returns forecast + patterns + staffing."""
+    """Main entry point used by the API. Returns forecast + patterns + staffing.
+
+    Result is cached per (upload, cleaning signature, horizon, settings) so the
+    Predictions tab + TurnoverRisk + AI insights reuse one computation instead of
+    re-training the forecast on every request."""
+    _ckey = (
+        str(getattr(upload, "id", "")), _result_sig(upload), horizon,
+        repr(sorted(settings.items())) if settings else "",
+    )
+    _hit = _DASH_CACHE.get(_ckey)
+    if _hit is not None:
+        return _hit
+
     df = _load_df(upload)
     if df is None or df.empty:
         return {"available": False, "reason": "No cleaned data available for this upload."}
@@ -302,7 +343,7 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
             "forecasts are limited. 12+ months is recommended for reliable forecasting."
         )
 
-    return {
+    result = {
         "available": True,
         "confidence": _confidence(days_available),
         "context": {
@@ -323,3 +364,7 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
         "staffing": staffing,
         "warnings": warnings,
     }
+    if len(_DASH_CACHE) > 16:
+        _DASH_CACHE.clear()
+    _DASH_CACHE[_ckey] = result
+    return result
