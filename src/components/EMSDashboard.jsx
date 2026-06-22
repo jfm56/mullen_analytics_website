@@ -148,9 +148,10 @@ function HBarChart({ data, labelKey = 'label', valueKey = 'count', color = '#3b8
             const valStr = typeof d[valueKey] === 'number' && !Number.isInteger(d[valueKey])
               ? d[valueKey].toFixed(1) : String(d[valueKey] ?? '');
             return (
-              <g key={i}>
+              <g key={i} className="cursor-default">
+                <title>{`${raw}: ${valStr}`}</title>
                 <text x={LABEL_W - 8} y={y + 20} textAnchor="end" fontSize={11} fill="#6b7280">{label}</text>
-                <rect x={LABEL_W} y={y + 6} width={barW} height={20} rx={3} fill={color} opacity={0.8} />
+                <rect x={LABEL_W} y={y + 6} width={barW} height={20} rx={3} fill={color} opacity={0.85} />
                 <text x={LABEL_W + barW + 6} y={y + 20} fontSize={11} fill="#374151" fontWeight="500">{valStr}</text>
               </g>
             );
@@ -258,6 +259,57 @@ function HourBarChart({ data }) {
           </Bar>
         </RBarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ─── Response Lifecycle (ZOLL interval timeline) ───────────────────────────────
+// A proportional, single-bar timeline of where a median call's time goes —
+// chute → response → on-scene → transport → turnaround — so leadership can see
+// the whole call lifecycle at a glance, not just the headline response figure.
+function ResponseLifecycle({ intervals }) {
+  const SEGMENTS = [
+    { key: 'chute_time',      label: 'Chute',      color: '#c7d2fe' },
+    { key: 'response_time',   label: 'Response',   color: '#7c3aed' },
+    { key: 'scene_time',      label: 'On scene',   color: '#2563eb' },
+    { key: 'transport_time',  label: 'Transport',  color: '#0891b2' },
+    { key: 'turnaround_time', label: 'Turnaround', color: '#14b8a6' },
+  ];
+  const segs = SEGMENTS
+    .map(s => ({ ...s, min: intervals?.[s.key]?.median_minutes }))
+    .filter(s => typeof s.min === 'number' && s.min > 0);
+  if (segs.length < 2) return null;
+  const total = segs.reduce((a, s) => a + s.min, 0);
+  let cum = 0;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Median call lifecycle</p>
+        <p className="text-[11px] text-gray-400 tabular-nums">{fmtMin(total)} · dispatch → available</p>
+      </div>
+      <div className="flex w-full h-9 rounded-lg overflow-hidden ring-1 ring-black/5">
+        {segs.map((s) => {
+          const pct = (s.min / total) * 100;
+          cum += s.min;
+          return (
+            <div key={s.key}
+              title={`${s.label}: ${fmtMin(s.min)} median · cumulative ${fmtMin(cum)}`}
+              style={{ width: `${pct}%`, backgroundColor: s.color }}
+              className="flex items-center justify-center text-[10px] font-semibold text-white/95 overflow-hidden whitespace-nowrap select-none">
+              {pct > 9 ? fmtMin(s.min) : ''}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+        {segs.map(s => (
+          <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-gray-600">
+            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: s.color }} />
+            {s.label} <span className="text-gray-400 tabular-nums">{fmtMin(s.min)}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -553,6 +605,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                       tooltip="90% of calls completed at or below this time." />
                     <StatCard label="Longest"     value={fmtMin(rt.max_minutes)}    color="red" />
                   </div>
+                  {rt.intervals && <ResponseLifecycle intervals={rt.intervals} />}
                   {rt.intervals && Object.keys(rt.intervals).length > 0 ? (
                     <div>
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">

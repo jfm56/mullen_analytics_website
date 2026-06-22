@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     sendgrid_api_key: str = ""
     smtp_from_email: str = "noreply@mullenanalytics.com"
     smtp_from_name: str = "Mullen Analytics"
+
+    # AI (Anthropic) — powers the dashboard AI insights + report drafting.
+    # Empty = those features show a graceful "enable" hint instead of running.
+    anthropic_api_key: str = ""
     
     # Storage
     storage_provider: str = "s3"  # "s3" or "gcs"
@@ -96,4 +100,12 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    # Bridge the Anthropic key from .env/Settings into the process environment so
+    # modules that read os.getenv("ANTHROPIC_API_KEY") directly (AI insights,
+    # report drafting) pick it up. pydantic-settings loads .env into the Settings
+    # object, NOT into os.environ — without this bridge, setting the key in .env
+    # alone never enables the AI features. An explicit shell env var still wins.
+    if settings.anthropic_api_key and not os.getenv("ANTHROPIC_API_KEY"):
+        os.environ["ANTHROPIC_API_KEY"] = settings.anthropic_api_key
+    return settings
