@@ -4,7 +4,9 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   BarChart as RBarChart, Bar, LineChart as RLineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  ReferenceLine, LabelList,
 } from 'recharts';
+import CHART, { RESPONSE_TARGET_MIN } from '@/lib/chartTheme';
 import DashboardFilterBar from './DashboardFilterBar';
 import CompareMode from './CompareMode';
 import ColumnMappingModal from './ColumnMappingModal';
@@ -126,39 +128,37 @@ function ExportCSVButton({ data, filename = 'export.csv' }) {
 }
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
-function HBarChart({ data, labelKey = 'label', valueKey = 'count', color = '#3b82f6', top = 10, showAll = false }) {
+function HBarChart({ data, labelKey = 'label', valueKey = 'count', color, top = 10, showAll = false, refLine = null, unit = '' }) {
   const [expanded, setExpanded] = useState(false);
   if (!Array.isArray(data) || data.length === 0) return null;
   const displayCount = expanded || showAll ? data.length : top;
   const sliced = data.slice(0, displayCount);
-  const max = Math.max(...sliced.map(d => d[valueKey] || 0), 1);
-  const ROW_H = 32, LABEL_W = 180, BAR_AREA = 260, VALUE_W = 60;
-  const svgW = LABEL_W + BAR_AREA + VALUE_W;
-  const height = sliced.length * ROW_H + 8;
+  const barColor = color || CHART.primary;
+  const height = sliced.length * 30 + 24;
+  const truncate = (s) => { const r = String(s ?? ''); return r.length > 22 ? r.slice(0, 21) + '…' : r; };
+  const fmtValue = (v) => (typeof v === 'number' && !Number.isInteger(v)) ? v.toFixed(1) : v;
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <svg width={svgW} height={height} style={{ minWidth: Math.min(svgW, 500) }}>
-          {sliced.map((d, i) => {
-            const barW = Math.max(2, (d[valueKey] / max) * BAR_AREA);
-            const y = 4 + i * ROW_H;
-            const raw = String(d[labelKey] ?? '');
-            const label = raw.length > 28 ? raw.slice(0, 27) + '…' : raw;
-            const valStr = typeof d[valueKey] === 'number' && !Number.isInteger(d[valueKey])
-              ? d[valueKey].toFixed(1) : String(d[valueKey] ?? '');
-            return (
-              <g key={i} className="cursor-default">
-                <title>{`${raw}: ${valStr}`}</title>
-                <text x={LABEL_W - 8} y={y + 20} textAnchor="end" fontSize={11} fill="#6b7280">{label}</text>
-                <rect x={LABEL_W} y={y + 6} width={barW} height={20} rx={3} fill={color} opacity={0.85} />
-                <text x={LABEL_W + barW + 6} y={y + 20} fontSize={11} fill="#374151" fontWeight="500">{valStr}</text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      {data.length > top && (
+      <ResponsiveContainer width="100%" height={height}>
+        <RBarChart data={sliced} layout="vertical" margin={{ top: 4, right: 54, left: 8, bottom: refLine ? 16 : 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} horizontal={false} />
+          <XAxis type="number" tick={CHART.tickSm} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey={labelKey} width={150} interval={0}
+            tick={CHART.tick} tickFormatter={truncate} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={CHART.tooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+            formatter={(v) => [`${fmtValue(v)}${unit}`, '']} />
+          {refLine != null && (
+            <ReferenceLine x={refLine.value} stroke={CHART.reference} strokeDasharray="4 3"
+              label={{ value: refLine.label, position: 'bottom', fontSize: 10, fill: CHART.reference }} />
+          )}
+          <Bar dataKey={valueKey} fill={barColor} radius={[0, 4, 4, 0]} maxBarSize={22}>
+            <LabelList dataKey={valueKey} position="right" formatter={fmtValue}
+              style={{ fontSize: 11, fill: '#374151', fontWeight: 500 }} />
+          </Bar>
+        </RBarChart>
+      </ResponsiveContainer>
+      {data.length > top && !showAll && (
         <button onClick={() => setExpanded(e => !e)}
           className="mt-2 text-xs text-blue-600 hover:underline">
           {expanded ? `Show Top ${top}` : `View All ${data.length} Categories`}
@@ -176,6 +176,7 @@ function TrendChart({ byDay, byWeek, byMonth }) {
   const [trend, setTrend] = useState(defaultTrend);
   const data = hasData(trend) ? datasets[trend] : [];
   const xKey = xKeys[trend];
+  const mean = data.length ? data.reduce((a, d) => a + (d.count || 0), 0) / data.length : 0;
   const fmtTick = (v) => !v ? '' : trend === 'month' ? String(v) : String(v).slice(5);
 
   return (
@@ -199,14 +200,18 @@ function TrendChart({ byDay, byWeek, byMonth }) {
         : (
           <ResponsiveContainer width="100%" height={300}>
             <RLineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey={xKey} tickFormatter={fmtTick} tick={{ fontSize: 11 }}
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+              <XAxis dataKey={xKey} tickFormatter={fmtTick} tick={CHART.tick}
                 angle={-30} textAnchor="end" interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 11 }} width={36} />
+              <YAxis tick={CHART.tick} width={36} />
               <Tooltip formatter={(v) => [v.toLocaleString(), 'Calls']}
                 labelFormatter={(l) => `${trend.charAt(0).toUpperCase() + trend.slice(1)}: ${l}`}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-              <Line type="monotone" dataKey="count" stroke="#3b82f6"
+                contentStyle={CHART.tooltip} />
+              {mean > 0 && (
+                <ReferenceLine y={mean} stroke={CHART.referenceAvg} strokeDasharray="4 3"
+                  label={{ value: `avg ${Math.round(mean)}`, position: 'right', fontSize: 10, fill: CHART.referenceAvg }} />
+              )}
+              <Line type="monotone" dataKey="count" stroke={CHART.primary}
                 strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
             </RLineChart>
           </ResponsiveContainer>
@@ -218,18 +223,23 @@ function TrendChart({ byDay, byWeek, byMonth }) {
 function DayOfWeekChart({ data }) {
   if (!Array.isArray(data) || !data.length) return null;
   const maxAvg = Math.max(...data.map(d => d.avg));
+  const mean = data.reduce((a, d) => a + (d.avg || 0), 0) / data.length;
   return (
     <div>
       <p className="text-xs text-gray-500 mb-3">Average daily calls per weekday</p>
       <ResponsiveContainer width="100%" height={240}>
         <RBarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="day" tickFormatter={(d) => d.slice(0, 3)} tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 11 }} width={36} />
-          <Tooltip formatter={(v) => [v, 'Avg Calls']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+          <XAxis dataKey="day" tickFormatter={(d) => d.slice(0, 3)} tick={CHART.tick} />
+          <YAxis tick={CHART.tick} width={36} />
+          <Tooltip formatter={(v) => [v, 'Avg Calls']} contentStyle={CHART.tooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
+          {mean > 0 && (
+            <ReferenceLine y={mean} stroke={CHART.referenceAvg} strokeDasharray="4 3"
+              label={{ value: `avg ${mean.toFixed(1)}`, position: 'right', fontSize: 10, fill: CHART.referenceAvg }} />
+          )}
           <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.avg === maxAvg ? '#2563eb' : '#93c5fd'} />
+              <Cell key={i} fill={entry.avg === maxAvg ? CHART.primary : CHART.primaryLight} />
             ))}
           </Bar>
         </RBarChart>
@@ -241,20 +251,25 @@ function DayOfWeekChart({ data }) {
 function HourBarChart({ data }) {
   if (!Array.isArray(data) || !data.length) return null;
   const maxVal = Math.max(...data.map(d => d.count));
+  const mean = data.reduce((a, d) => a + (d.count || 0), 0) / data.length;
   return (
     <div>
       <p className="text-xs text-gray-500 mb-3">Number of calls dispatched each hour</p>
       <ResponsiveContainer width="100%" height={240}>
         <RBarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} tick={{ fontSize: 10 }} interval={1} />
-          <YAxis tick={{ fontSize: 11 }} width={36} />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+          <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} tick={CHART.tickSm} interval={1} />
+          <YAxis tick={CHART.tick} width={36} />
           <Tooltip formatter={(v) => [v.toLocaleString(), 'Calls']}
             labelFormatter={(h) => `${h}:00 – ${(h + 1) % 24}:00`}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+            contentStyle={CHART.tooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
+          {mean > 0 && (
+            <ReferenceLine y={mean} stroke={CHART.referenceAvg} strokeDasharray="4 3"
+              label={{ value: `avg ${mean.toFixed(1)}`, position: 'right', fontSize: 10, fill: CHART.referenceAvg }} />
+          )}
           <Bar dataKey="count" radius={[3, 3, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.count === maxVal ? '#4f46e5' : '#a5b4fc'} />
+              <Cell key={i} fill={entry.count === maxVal ? CHART.accent : CHART.accentLight} />
             ))}
           </Bar>
         </RBarChart>
@@ -269,12 +284,12 @@ function HourBarChart({ data }) {
 // the whole call lifecycle at a glance, not just the headline response figure.
 function ResponseLifecycle({ intervals }) {
   const SEGMENTS = [
-    { key: 'chute_time',      label: 'Chute',      color: '#c7d2fe' },
-    { key: 'response_time',   label: 'Response',   color: '#7c3aed' },
-    { key: 'scene_time',      label: 'On scene',   color: '#2563eb' },
-    { key: 'transport_time',  label: 'Transport',  color: '#0891b2' },
-    { key: 'turnaround_time', label: 'Turnaround', color: '#14b8a6' },
-  ];
+    { key: 'chute_time',      label: 'Chute' },
+    { key: 'response_time',   label: 'Response' },
+    { key: 'scene_time',      label: 'On scene' },
+    { key: 'transport_time',  label: 'Transport' },
+    { key: 'turnaround_time', label: 'Turnaround' },
+  ].map(s => ({ ...s, color: CHART.lifecycle[s.key] }));
   const segs = SEGMENTS
     .map(s => ({ ...s, min: intervals?.[s.key]?.median_minutes }))
     .filter(s => typeof s.min === 'number' && s.min > 0);
@@ -565,7 +580,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
               {cvTab === 'type' && (
                 <>
                   <MappingWarning reason={cv.by_incident_type?.reason} onMap={onMap} />
-                  <HBarChart data={cv.by_incident_type} color="#f59e0b" top={10} />
+                  <HBarChart data={cv.by_incident_type} color={CHART.warn} top={10} />
                   <div className="flex justify-end mt-2">
                     <ExportCSVButton data={cv.by_incident_type} filename="calls_by_type.csv" />
                   </div>
@@ -574,7 +589,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
               {cvTab === 'muni' && (
                 <>
                   <MappingWarning reason={cv.by_municipality?.reason} onMap={onMap} />
-                  <HBarChart data={cv.by_municipality} color="#10b981" top={10} />
+                  <HBarChart data={cv.by_municipality} color={CHART.good} top={10} />
                   <div className="flex justify-end mt-2">
                     <ExportCSVButton data={cv.by_municipality} filename="calls_by_municipality.csv" />
                   </div>
@@ -643,7 +658,8 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                 <div>
                   <p className="text-xs text-gray-500 mb-3">Average response time per unit (minutes)</p>
                   <HBarChart data={up.avg_response_time_by_unit} labelKey="unit"
-                    valueKey="avg_response_time_minutes" color="#f59e0b" top={10} />
+                    valueKey="avg_response_time_minutes" color={CHART.warn} unit=" min" top={10}
+                    refLine={{ value: RESPONSE_TARGET_MIN, label: `${RESPONSE_TARGET_MIN}m target` }} />
                 </div>
               )}
             </div>
@@ -671,13 +687,14 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-medium text-gray-600 mb-2">Calls per Unit</p>
-                <HBarChart data={unitsToShow} labelKey="unit" valueKey="calls" color="#3b82f6" showAll={true} />
+                <HBarChart data={unitsToShow} labelKey="unit" valueKey="calls" color={CHART.primary} showAll={true} />
               </div>
               {rtByUnitToShow.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-2">Avg Response Time (min)</p>
                   <HBarChart data={rtByUnitToShow} labelKey="unit" valueKey="avg_response_time_minutes"
-                    color="#f59e0b" showAll={true} />
+                    color={CHART.warn} unit=" min" showAll={true}
+                    refLine={{ value: RESPONSE_TARGET_MIN, label: `${RESPONSE_TARGET_MIN}m target` }} />
                 </div>
               )}
             </div>

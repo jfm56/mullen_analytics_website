@@ -6,6 +6,7 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from 'recharts';
+import CHART from '@/lib/chartTheme';
 
 async function apiFetch(path) {
   const res = await fetch(`/api/proxy${path}`, { credentials: 'include' });
@@ -118,12 +119,12 @@ export default function EmergencyTransportOutlook({ uploadId }) {
             <p className="text-xs font-semibold text-gray-600 mb-2">Avg emergency {eventNoun} per day of week</p>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={dowData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [`${v}/day`, `avg ${eventNoun}`]} />
                 <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
-                  {dowData.map((d, i) => <Cell key={i} fill={i < 5 ? '#e11d48' : '#fda4af'} />)}
+                  {dowData.map((d, i) => <Cell key={i} fill={i < 5 ? CHART.bad : CHART.badLight} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -132,12 +133,12 @@ export default function EmergencyTransportOutlook({ uploadId }) {
             <p className="text-xs font-semibold text-gray-600 mb-2">Emergency {eventNoun} by hour of day</p>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={hourData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={2} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [v, eventNoun]} labelFormatter={(h) => fmtHour(Number(h))} />
                 <Bar dataKey="calls" radius={[3, 3, 0, 0]}>
-                  {hourData.map((d) => <Cell key={d.hour} fill={d.hour === data.peak_hour ? '#e11d48' : '#fecdd3'} />)}
+                  {hourData.map((d) => <Cell key={d.hour} fill={d.hour === data.peak_hour ? CHART.bad : CHART.badLight} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

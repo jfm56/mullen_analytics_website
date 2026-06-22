@@ -7,6 +7,7 @@ import {
   ResponsiveContainer, ComposedChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
+import CHART from '@/lib/chartTheme';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const ABBR = { Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun' };
@@ -159,15 +160,15 @@ function ForecastTab({ data }) {
       <div className="chart-wrapper" style={{ height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={rows} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
             <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 10 }} />
             <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line type="monotone" dataKey="upper" stroke="#93C5FD" strokeWidth={1} strokeDasharray="2 3" dot={false} name="Upper" />
-            <Line type="monotone" dataKey="lower" stroke="#93C5FD" strokeWidth={1} strokeDasharray="2 3" dot={false} name="Lower" />
-            <Line type="monotone" dataKey="actual" stroke="#2563EB" strokeWidth={2} dot={false} name="Actual" />
-            <Line type="monotone" dataKey="forecast" stroke="#16A34A" strokeWidth={2} strokeDasharray="5 4" dot={false} name="Forecast" />
+            <Line type="monotone" dataKey="upper" stroke={CHART.primaryLight} strokeWidth={1} strokeDasharray="2 3" dot={false} name="Upper" />
+            <Line type="monotone" dataKey="lower" stroke={CHART.primaryLight} strokeWidth={1} strokeDasharray="2 3" dot={false} name="Lower" />
+            <Line type="monotone" dataKey="actual" stroke={CHART.primary} strokeWidth={2} dot={false} name="Actual" />
+            <Line type="monotone" dataKey="forecast" stroke={CHART.good} strokeWidth={2} strokeDasharray="5 4" dot={false} name="Forecast" />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -191,11 +192,11 @@ function PatternsTab({ data }) {
         <p className="text-xs font-semibold text-gray-600 mb-2">Calls by weekday</p>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={weekdayData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
             <XAxis dataKey="day" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 10 }} />
             <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-            <Bar dataKey="calls" fill="#2563EB" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="calls" fill={CHART.primary} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -203,11 +204,11 @@ function PatternsTab({ data }) {
         <p className="text-xs font-semibold text-gray-600 mb-2">Calls by hour of day</p>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={hourData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
             <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={2} />
             <YAxis tick={{ fontSize: 10 }} />
             <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-            <Bar dataKey="calls" fill="#0EA5E9" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="calls" fill={CHART.accent} radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

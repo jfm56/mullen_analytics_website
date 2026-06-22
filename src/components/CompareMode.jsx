@@ -10,10 +10,11 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts';
+import CHART from '@/lib/chartTheme';
 import { dashboardFilter } from '@/lib/api';
 
 
-const COLORS = { a: '#3b82f6', b: '#10b981' };
+const COLORS = { a: CHART.series[0], b: CHART.series[1] };
 const COMPARE_TYPES = [
   { value: 'unit', label: 'Unit vs Unit' },
   { value: 'municipality', label: 'Municipality vs Municipality' },
