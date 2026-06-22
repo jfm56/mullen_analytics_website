@@ -34,6 +34,7 @@ export default function PortalShell({ children }) {
   const [ready, setReady] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [planFeatures, setPlanFeatures] = useState(null);
   const [verifyNeeded, setVerifyNeeded] = useState(false);
   const [verifyAddr, setVerifyAddr] = useState('');
   const [resendState, setResendState] = useState('idle'); // idle | sending | sent | error
@@ -52,6 +53,8 @@ export default function PortalShell({ children }) {
       setReady(true);
       fetch('/api/proxy/messages/unread-count', { credentials: 'include' })
         .then(r => r.json()).then(d => setUnread(d.count || 0)).catch(() => {});
+      fetch('/api/proxy/plans/me', { credentials: 'include' })
+        .then(r => r.json()).then(d => setPlanFeatures(d.features || {})).catch(() => {});
     }).catch(() => router.replace('/portal/login'));
   }, [router, bypass]);
 
@@ -75,9 +78,17 @@ export default function PortalShell({ children }) {
 
   const isActive = (href) => href === '/portal' ? pathname === '/portal' : pathname.startsWith(href);
 
+  // Plan gating: hide nav items the current plan doesn't include (backend also
+  // enforces with a 403). Show everything until entitlements load to avoid flicker.
+  const GATED_NAV = { '/portal/data-explorer': 'data_explorer', '/portal/datasets': 'compare_years' };
+  const navAllowed = ({ href }) => {
+    const feat = GATED_NAV[href];
+    return !feat || !planFeatures || planFeatures[feat];
+  };
+
   const renderNavItems = (onNavigate) => (
     <>
-      {NAV.map(({ label, href, Icon }) => {
+      {NAV.filter(navAllowed).map(({ label, href, Icon }) => {
         const active = isActive(href);
         return (
           <Link

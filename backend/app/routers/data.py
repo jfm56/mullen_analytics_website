@@ -54,6 +54,7 @@ from ..services.ems_filter_service import (
     restore_columns,
 )
 from ..models.user import Profile, User
+from ..services.plan_access import require_feature, enforce_dataset_limit
 from ..models.project import Project
 from .auth import get_current_user
 
@@ -436,6 +437,7 @@ async def clean_upload(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    enforce_dataset_limit(db, current_user, upload)
 
     if not Path(upload.file_path).exists():
         raise HTTPException(status_code=404, detail="Original file not found on disk")
@@ -912,6 +914,7 @@ async def get_data_profile(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "data_explorer")
 
     cached = db.query(DataProfile).filter(DataProfile.data_upload_id == upload_id).first()
     if cached and not refresh:
@@ -1045,6 +1048,7 @@ async def query_upload(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "data_explorer")
     limit = min(body.limit, 500)
     return query_dataset(
         upload, db,
@@ -1073,6 +1077,7 @@ async def get_upload_chart_data(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "data_explorer")
     return get_chart_data(
         upload, db,
         x_col=body.x_col,
@@ -1136,6 +1141,7 @@ async def dashboard_compare(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "compare_years")
     return compare_dashboard(
         upload, db,
         group_a_label=body.group_a.label,

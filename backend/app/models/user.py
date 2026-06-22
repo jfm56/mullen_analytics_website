@@ -83,6 +83,7 @@ class Profile(Base):
     # Stripe subscription linkage (set by the billing webhook; no card data stored)
     stripe_customer_id = Column(String(255), nullable=True)
     stripe_subscription_id = Column(String(255), nullable=True)
+    extra_dataset_slots = Column(Integer, default=0)  # add-on: each adds +1 active-dataset slot
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
