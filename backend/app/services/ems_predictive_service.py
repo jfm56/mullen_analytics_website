@@ -315,7 +315,10 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
         from .ems_analytics_service import _response_times
         _rt = _response_times(df, overrides)
         if _rt.get("available"):
-            resp_p90 = _rt.get("p90_minutes")
+            # Staffing pressure uses dispatch → on-scene (time-to-scene); the
+            # headline 'response time' is now ZOLL's en route → on-scene (shorter).
+            _ivs = _rt.get("intervals") or {}
+            resp_p90 = (_ivs.get("dispatch_to_arrival") or {}).get("p90_minutes") or _rt.get("p90_minutes")
     except Exception:  # noqa: BLE001
         pass
     ift_outlook = None

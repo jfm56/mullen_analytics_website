@@ -33,14 +33,21 @@ _ALIASES: Dict[str, List[str]] = {
     "received_time":   ["received_time", "date_received", "time_received", "date_called",
                         "call_received_time"],
     "dispatch_time":   ["dispatch_time", "dispatched", "time_dispatched", "date_dispatched",
-                        "dispatch_dt", "dispatchtime", "dispatch"],
+                        "dispatch_dt", "dispatchtime", "dispatch", "dt_disp"],
     "enroute_time":    ["enroute_time", "en_route_time", "enroute", "date_enroute",
-                        "responding_time", "mobile_time", "mobiletime"],
+                        "responding_time", "mobile_time", "mobiletime", "dt_enroute"],
     "arrival_time":    ["arrival_time", "arrived", "on_scene_time", "scene_arrival_time",
-                        "date_arrived", "onscene_time", "arrivaltime", "time_arrived", "on_scene"],
+                        "date_arrived", "onscene_time", "arrivaltime", "time_arrived", "on_scene", "dt_arrive"],
     "clear_time":      ["clear_time", "cleared", "cleartime", "time_cleared",
                         "date_available", "date_arrive_rec", "available_time", "available",
                         "in_service_time"],
+    # ZOLL emsCharts canonical interval endpoints (dt_lvref / dt_arvrec / dt_available).
+    "leave_scene_time":        ["leave_scene_time", "date_leave_ref", "dt_lvref", "left_scene",
+                                "depart_scene", "date_left_scene", "scene_depart_time"],
+    "arrive_destination_time": ["arrive_destination_time", "date_arrive_rec", "dt_arvrec",
+                                "arrived_destination", "at_destination", "destination_arrival_time"],
+    "available_time":          ["available_time", "date_available", "dt_available", "available",
+                                "in_service_time", "date_in_service"],
     "unit":            ["unit", "unit_id", "responding_unit", "apparatus",
                         "unitname", "unit_name", "truck", "vehicle"],
     "incident_type":   ["incident_type", "call_type", "nature", "complaint",
@@ -251,75 +258,84 @@ def _call_volume(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str
 
 
 def _response_times(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str, Any]:
-    received_col  = detect_mapped_column(df, "received_time",  overrides)
-    dispatch_col  = detect_mapped_column(df, "dispatch_time",  overrides)
-    enroute_col   = detect_mapped_column(df, "enroute_time",   overrides)
-    arrival_col   = detect_mapped_column(df, "arrival_time",   overrides)
-    clear_col     = detect_mapped_column(df, "clear_time",     overrides)
+    """Response-time intervals aligned with ZOLL emsCharts' canonical definitions:
+        chute = enroute − dispatch · response = arrival − enroute · scene = leave − arrival
+        transport = arrive_dest − leave · turnaround = available − arrive_dest
+        total = available − dispatch.
+    The headline 'response time' is ZOLL's en route → on-scene; dispatch → on-scene
+    (chute + response) is kept separately for time-to-scene / staffing use."""
+    received_col = detect_mapped_column(df, "received_time", overrides)
+    dispatch_col = detect_mapped_column(df, "dispatch_time", overrides)
+    enroute_col  = detect_mapped_column(df, "enroute_time", overrides)
+    arrival_col  = detect_mapped_column(df, "arrival_time", overrides)
+    leave_col    = detect_mapped_column(df, "leave_scene_time", overrides)
+    dest_col     = detect_mapped_column(df, "arrive_destination_time", overrides)
+    avail_col    = detect_mapped_column(df, "available_time", overrides) or detect_mapped_column(df, "clear_time", overrides)
 
-    primary: Optional[pd.Series] = None
-    label = ""
-    if dispatch_col and arrival_col:
-        primary = _minutes_between(df, dispatch_col, arrival_col)
-        label = "dispatch_to_arrival"
-    elif dispatch_col and clear_col:
-        primary = _minutes_between(df, dispatch_col, clear_col)
-        label = "dispatch_to_clear"
-    elif enroute_col and arrival_col:
-        primary = _minutes_between(df, enroute_col, arrival_col)
-        label = "enroute_to_arrival"
-
-    if primary is None or primary.notna().sum() == 0:
-        return {"available": False, "reason": "no usable time columns found — set column mapping"}
-
-    out = {
-        "available": True,
-        "metric": label,
-        "sample_size":    int(primary.notna().sum()),
-        "median_minutes": _safe(round(float(primary.median()), 2)),
-        "mean_minutes":   _safe(round(float(primary.mean()),   2)),
-        "p90_minutes":    _safe(round(float(primary.quantile(0.90)), 2)),
-        "max_minutes":    _safe(round(float(primary.max()),    2)),
-        "min_minutes":    _safe(round(float(primary.min()),    2)),
-    }
-
-    # Breakdown segments
-    def _seg(a_col, b_col, name):
-        if a_col and b_col:
+    def _iv(a_col, b_col) -> Optional[pd.Series]:
+        if a_col and b_col and a_col != b_col:
             s = _minutes_between(df, a_col, b_col)
             if s is not None and s.notna().sum() > 0:
-                out[name] = _safe(round(float(s.median()), 2))
+                return s
+        return None
 
-    _seg(received_col, dispatch_col,  "received_to_dispatch_median")
-    _seg(dispatch_col, enroute_col,   "dispatch_to_enroute_median")
-    _seg(enroute_col,  arrival_col,   "enroute_to_arrival_median")
-    _seg(dispatch_col, arrival_col,   "dispatch_to_arrival_median")
-    _seg(received_col, clear_col,     "total_call_time_median")
+    chute      = _iv(dispatch_col, enroute_col)
+    response   = _iv(enroute_col, arrival_col)        # ZOLL "response time"
+    scene      = _iv(arrival_col, leave_col)
+    transport  = _iv(leave_col, dest_col)
+    turnaround = _iv(dest_col, avail_col)
+    total      = _iv(dispatch_col, avail_col)
+    d2a        = _iv(dispatch_col, arrival_col)       # dispatch → on-scene (chute + response)
+    r2d        = _iv(received_col, dispatch_col)
 
-    # Explicit labels + a full travel-time breakdown so the UI can distinguish
-    # "response time" (dispatch -> on-scene, incl. turnout) from "travel time"
-    # (en route -> on-scene) rather than conflating them.
-    _LABELS = {
-        "dispatch_to_arrival": "Response time (dispatch → on-scene)",
-        "dispatch_to_clear":   "Dispatch → clear",
-        "enroute_to_arrival":  "Travel time (en route → on-scene)",
-    }
-    out["metric_label"] = _LABELS.get(label, label)
-    if dispatch_col and enroute_col:
-        _to = _minutes_between(df, dispatch_col, enroute_col)
-        if _to is not None and _to.notna().sum() > 0:
-            out["turnout_median_minutes"] = _safe(round(float(_to.median()), 2))
-    if enroute_col and arrival_col and label != "enroute_to_arrival":
-        _tv = _minutes_between(df, enroute_col, arrival_col)
-        if _tv is not None and _tv.notna().sum() > 0:
-            out["travel_time"] = {
-                "label": "Travel time (en route → on-scene)",
-                "median_minutes": _safe(round(float(_tv.median()), 2)),
-                "mean_minutes":   _safe(round(float(_tv.mean()),   2)),
-                "p90_minutes":    _safe(round(float(_tv.quantile(0.90)), 2)),
-                "sample_size":    int(_tv.notna().sum()),
-            }
+    # Headline = ZOLL response (en route → arrival); fall back to dispatch → arrival.
+    if response is not None:
+        primary, metric, mlabel = response, "enroute_to_arrival", "Response time (en route → on-scene)"
+    elif d2a is not None:
+        primary, metric, mlabel = d2a, "dispatch_to_arrival", "Dispatch → on-scene"
+    else:
+        return {"available": False, "reason": "no usable time columns found — set column mapping"}
 
+    def _stats(s: pd.Series) -> Dict[str, Any]:
+        return {
+            "median_minutes": _safe(round(float(s.median()), 2)),
+            "mean_minutes":   _safe(round(float(s.mean()), 2)),
+            "p90_minutes":    _safe(round(float(s.quantile(0.90)), 2)),
+            "max_minutes":    _safe(round(float(s.max()), 2)),
+            "sample_size":    int(s.notna().sum()),
+        }
+
+    out: Dict[str, Any] = {"available": True, "metric": metric, "metric_label": mlabel}
+    out.update(_stats(primary))
+    out["min_minutes"] = _safe(round(float(primary.min()), 2))
+
+    # Full ZOLL interval set (for the breakdown table + downstream consumers).
+    intervals: Dict[str, Any] = {}
+    for name, lbl, s in [
+        ("chute_time",          "Chute time (dispatch → en route)", chute),
+        ("response_time",       "Response time (en route → on-scene)", response),
+        ("scene_time",          "On-scene time (arrival → depart scene)", scene),
+        ("transport_time",      "Transport time (depart scene → destination)", transport),
+        ("turnaround_time",     "Turnaround (destination → available)", turnaround),
+        ("total_time",          "Total task time (dispatch → available)", total),
+        ("dispatch_to_arrival", "Dispatch → on-scene (chute + response)", d2a),
+    ]:
+        if s is not None:
+            intervals[name] = {"label": lbl, **_stats(s)}
+    out["intervals"] = intervals
+
+    # Back-compat keys still read by the dashboard + predictive/staffing.
+    def _med(s: Optional[pd.Series]) -> Any:
+        return _safe(round(float(s.median()), 2)) if s is not None else None
+
+    out["dispatch_to_enroute_median"] = _med(chute)
+    out["enroute_to_arrival_median"]  = _med(response)
+    out["received_to_dispatch_median"] = _med(r2d)
+    out["dispatch_to_arrival_median"] = _med(d2a)
+    if chute is not None:
+        out["turnout_median_minutes"] = _med(chute)   # chute == turnout
+    if response is not None:
+        out["travel_time"] = {"label": "Response time (en route → on-scene)", **_stats(response)}
     return out
 
 

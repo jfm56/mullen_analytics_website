@@ -446,7 +446,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
           <StatCard icon={Clock}     label="Median Response"  value={fmtMin(rt.median_minutes)}   color="purple"
             tooltip="The middle response time. Half of calls were faster, half were slower." />
           <StatCard icon={Activity}  label="Avg Response"     value={fmtMin(rt.mean_minutes)}     color="purple"
-            tooltip="Dispatch → on-scene (total response time, includes turnout). Travel-only time is in the Response Times section." />
+            tooltip="ZOLL response time: en route → on-scene. Chute time, dispatch → on-scene, and the full interval breakdown are in the Response Times section." />
           <StatCard icon={Zap}       label="P90 Response"     value={fmtMin(rt.p90_minutes)}      color="orange"
             tooltip="90% of calls were completed at or below this response time." />
         </div>
@@ -553,7 +553,20 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                       tooltip="90% of calls completed at or below this time." />
                     <StatCard label="Longest"     value={fmtMin(rt.max_minutes)}    color="red" />
                   </div>
-                  {(rt.dispatch_to_enroute_median != null || rt.enroute_to_arrival_median != null || rt.received_to_dispatch_median != null) && (
+                  {rt.intervals && Object.keys(rt.intervals).length > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        ZOLL interval breakdown <span className="font-normal normal-case text-gray-400">(median · P90)</span>
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {Object.entries(rt.intervals).map(([k, v]) => (
+                          <StatCard key={k} label={v.label}
+                            value={`${fmtMin(v.median_minutes)} · ${fmtMin(v.p90_minutes)}`}
+                            color={k === 'response_time' ? 'purple' : k === 'dispatch_to_arrival' ? 'blue' : 'indigo'} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (rt.dispatch_to_enroute_median != null || rt.enroute_to_arrival_median != null || rt.received_to_dispatch_median != null) && (
                     <div>
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Response Time Breakdown</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -565,8 +578,8 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                     </div>
                   )}
                   <p className="text-xs text-gray-500">
-                    Headline figures are <strong>{rt.metric_label || rt.metric?.replace(/_/g, ' ')}</strong>.
-                    {rt.travel_time && <> Travel time (en route → on-scene) median is {fmtMin(rt.travel_time.median_minutes)}; total response also includes ~{fmtMin(rt.turnout_median_minutes)} turnout.</>}
+                    Headline figures are <strong>{rt.metric_label || rt.metric?.replace(/_/g, ' ')}</strong>, aligned with ZOLL emsCharts (en route → on-scene).
+                    {rt.intervals?.dispatch_to_arrival && <> Dispatch → on-scene (chute + response) median is {fmtMin(rt.intervals.dispatch_to_arrival.median_minutes)}.</>}
                   </p>
                   <p className="text-xs text-gray-400 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
                     <strong>P90</strong> is often more useful than average because it shows the slower end of your response performance.
