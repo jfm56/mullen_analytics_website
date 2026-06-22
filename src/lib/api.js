@@ -111,6 +111,25 @@ export const auth = {
       body: JSON.stringify(data),
     });
   },
+
+  /**
+   * Verify an email address using the token from the verification email (public)
+   */
+  async verifyEmail(token) {
+    return apiFetch('/api/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  /**
+   * Resend the verification email for the signed-in user
+   */
+  async resendVerification() {
+    return apiFetch('/api/auth/resend-verification', {
+      method: 'POST',
+    });
+  },
 };
 
 /**

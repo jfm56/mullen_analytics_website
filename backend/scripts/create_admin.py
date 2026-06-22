@@ -36,7 +36,8 @@ def create_admin(email: str, password: str, full_name: str = None):
             email=email,
             password=password,
             full_name=full_name,
-            role="admin"
+            role="admin",
+            email_confirmed=True,
         )
         
         print(f"✅ Admin user created successfully!")

@@ -84,7 +84,9 @@ def make_admin(db, suffix="da"):
 
 def make_client_user(db, suffix="dc"):
     email = f"client_{suffix}_{uuid.uuid4().hex[:6]}@test.com"
-    user = create_user_with_profile(db, email=email, password="Client123!", role="client")
+    # email_confirmed=True: these represent onboarded clients; uploads are gated
+    # on email verification, so an unverified client could not upload.
+    user = create_user_with_profile(db, email=email, password="Client123!", role="client", email_confirmed=True)
     db.commit()
     return user, email
 

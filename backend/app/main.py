@@ -120,6 +120,7 @@ async def on_startup():
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:
@@ -127,6 +128,35 @@ async def on_startup():
         log.info("DB schema self-heal patches applied")
     except Exception as exc:  # noqa: BLE001
         log.error("DB schema self-heal failed: %s", exc)
+
+    # One-time backfill: every user predating email verification has
+    # email_confirmed=False but was never asked to verify. Mark them confirmed
+    # so they aren't retroactively nagged or upload-blocked. Guarded by an
+    # app_settings marker so it runs exactly once and never re-confirms future
+    # (genuinely unverified) self-serve signups on later restarts.
+    try:
+        from sqlalchemy import text as _text
+        _marker = "email_verification_backfill_v1"
+        with engine.begin() as conn:
+            already_done = conn.execute(
+                _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
+            ).first()
+            if not already_done:
+                result = conn.execute(
+                    _text("UPDATE users SET email_confirmed = TRUE WHERE email_confirmed = FALSE")
+                )
+                conn.execute(
+                    _text(
+                        "INSERT INTO app_settings (key, value, category, value_type, description, "
+                        "created_at, updated_at) VALUES (:k, 'true', 'system', 'boolean', :d, "
+                        "NOW(), NOW()) ON CONFLICT (key) DO NOTHING"
+                    ),
+                    {"k": _marker, "d": "Existing users confirmed when email verification shipped"},
+                )
+                log.info("Email-verification backfill: confirmed %s pre-existing user(s)",
+                         getattr(result, "rowcount", "?"))
+    except Exception as exc:  # noqa: BLE001
+        log.error("Email-verification backfill failed: %s", exc)
 
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)

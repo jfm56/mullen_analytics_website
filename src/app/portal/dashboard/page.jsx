@@ -9,7 +9,7 @@ import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
 import IftOutlook from '@/components/IftOutlook';
 import PageTabs from '@/components/ui/PageTabs';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
-import ResponseTimeRisk from '@/components/ResponseTimeRisk';
+import EmergencyTransportOutlook from '@/components/EmergencyTransportOutlook';
 import MvaHotspots from '@/components/MvaHotspots';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonCard } from '@/components/ui/LoadingSkeleton';
@@ -551,7 +551,7 @@ export default function PortalDashboardPage() {
         {dashTab === 'scheduling' && (
           <div className="space-y-5">
             <IftOutlook uploadId={selectedId} />
-            <ResponseTimeRisk uploadId={selectedId} />
+            <EmergencyTransportOutlook uploadId={selectedId} />
           </div>
         )}
 

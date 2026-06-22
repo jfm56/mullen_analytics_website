@@ -295,11 +295,13 @@ async def create_user(
     # Create user ID
     user_id = uuid4()
     
-    # Create user
+    # Create user (admin-created/invited users are pre-vouched, so their email
+    # is considered confirmed — they get a setup link, not a verification flow).
     new_user = User(
         id=user_id,
         email=user_data.email.lower(),
         password_hash=hash_password(temp_password),
+        email_confirmed=True,
     )
     db.add(new_user)
     

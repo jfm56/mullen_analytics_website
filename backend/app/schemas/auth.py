@@ -28,7 +28,11 @@ class SessionResponse(BaseModel):
 class UserResponse(BaseModel):
     id: UUID
     email: str
-    
+    # Defaults True so code paths that don't set it explicitly (e.g. legacy/
+    # impersonation responses built from a profile) never show a false
+    # "unverified" banner. The session/login endpoints set the real value.
+    email_confirmed: bool = True
+
     class Config:
         from_attributes = True
 
@@ -86,6 +90,21 @@ class PasswordResetResponse(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
+
+
+class EmailVerificationConfirm(BaseModel):
+    token: str
+
+
+class EmailVerificationResponse(BaseModel):
+    success: bool
+    message: str
+    already_verified: bool = False
+
+
+class ResendVerificationResponse(BaseModel):
+    success: bool
+    message: str
 
 
 class RegisterRequest(BaseModel):

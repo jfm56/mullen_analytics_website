@@ -23,6 +23,7 @@ class User(Base):
     profile = relationship("Profile", back_populates="user", uselist=False)
     sessions = relationship("Session", back_populates="user")
     password_reset_tokens = relationship("PasswordResetToken", back_populates="user")
+    email_verification_tokens = relationship("EmailVerificationToken", back_populates="user")
 
 
 class Profile(Base):
@@ -119,3 +120,22 @@ class PasswordResetToken(Base):
     
     # Relationships
     user = relationship("User", back_populates="password_reset_tokens")
+
+
+class EmailVerificationToken(Base):
+    """Email verification tokens for public self-serve signups.
+
+    Mirrors PasswordResetToken: the raw token is emailed, only its sha256 hash is
+    stored, and it is single-use (used_at) with an expiry.
+    """
+    __tablename__ = "email_verification_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(255), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="email_verification_tokens")

@@ -33,7 +33,10 @@ class Settings(BaseSettings):
     
     # Password Reset
     password_reset_expire_hours: int = 1
-    
+
+    # Email verification (public self-serve signup)
+    email_verification_expire_hours: int = 48
+
     # Email (SendGrid HTTP API)
     sendgrid_api_key: str = ""
     smtp_from_email: str = "noreply@mullenanalytics.com"

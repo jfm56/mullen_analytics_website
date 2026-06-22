@@ -208,6 +208,17 @@ async def upload_csv(
     """Upload a CSV file. Admin must supply client_id; clients auto-use their own id."""
     admin = _is_admin(db, current_user)
 
+    # Email-verification gate: unverified self-serve trial users can log in and
+    # explore the portal, but uploading (storage + compute) is gated until they
+    # verify their email — this limits abuse from fake/typo'd signups. Admins
+    # (including admins uploading on behalf of a client) bypass this check.
+    if not admin and not current_user.email_confirmed:
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email address to upload data. Check your inbox for the "
+                   "verification link, or use the Resend button on the banner.",
+        )
+
     # Resolve effective client_id
     if admin:
         if not client_id:
@@ -709,6 +720,28 @@ async def get_upload_turnover(
     _assert_upload_access(db, upload, current_user)
     from ..services.ems_turnover_service import get_turnover_outlook
     return get_turnover_outlook(upload, db)
+
+
+# ============================================================================
+# GET /api/data/uploads/{upload_id}/emergency-transport
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/emergency-transport")
+async def get_upload_emergency_transport(
+    upload_id: UUID,
+    horizon: int = 14,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Emergency-transport outlook — emergency call volume, transport split,
+    day/hour patterns, scene areas, and a near-term demand forecast."""
+    horizon = max(1, min(31, horizon))
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_emergency_transport_service import get_emergency_transport_outlook
+    return get_emergency_transport_outlook(upload, db, horizon_days=horizon)
 
 
 # ============================================================================

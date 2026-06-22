@@ -184,3 +184,49 @@ async def send_password_reset_email(
         body_html=body,
     )
     return await send_email(to_email, "Reset Your Mullen Analytics Password", html)
+
+
+async def send_verification_email(
+    to_email: str,
+    full_name: str | None,
+    verify_token: str,
+) -> bool:
+    """Send a branded email-verification email for a new self-serve signup."""
+    name = full_name.split()[0] if full_name else to_email
+    verify_url = f"{settings.app_url}/portal/verify-email?token={verify_token}"
+    expire_hours = settings.email_verification_expire_hours
+
+    body = f"""
+      <h2 style="margin:0 0 16px;font-size:26px;color:#111827;">
+        Confirm Your Email
+      </h2>
+      <p style="font-size:16px;color:#374151;line-height:26px;margin:0 0 12px;">
+        Hi {name},
+      </p>
+      <p style="font-size:16px;color:#374151;line-height:26px;margin:0 0 24px;">
+        Welcome to Mullen Analytics! Your 14-day trial is ready. Please confirm
+        this email address to unlock data uploads and secure your account. This
+        link expires in {expire_hours}&nbsp;hours.
+      </p>
+      <div style="text-align:center;margin:0 0 28px;">
+        <a href="{verify_url}"
+           style="display:inline-block;background:#0f172a;color:#ffffff;padding:14px 32px;
+                  border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">
+          Verify My Email
+        </a>
+      </div>
+      <p style="font-size:13px;color:#6b7280;margin:0 0 8px;">
+        Or paste this link into your browser:<br />
+        <span style="color:#0f172a;word-break:break-all;">{verify_url}</span>
+      </p>
+      <p style="font-size:13px;color:#6b7280;margin:0;">
+        If you did not create this account, you can safely ignore this email.
+      </p>
+    """
+
+    html = _email_wrapper(
+        title="Confirm Your Mullen Analytics Email",
+        preheader="Confirm your email to activate your Mullen Analytics trial",
+        body_html=body,
+    )
+    return await send_email(to_email, "Confirm Your Mullen Analytics Email", html)

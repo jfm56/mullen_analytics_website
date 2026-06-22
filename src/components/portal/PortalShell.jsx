@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   Home, Upload, BarChart3, Search, FileText,
   MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
-  Activity, ExternalLink,
+  Activity, ExternalLink, MailWarning,
 } from 'lucide-react';
 import { auth, emsQa } from '@/lib/api';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
@@ -25,7 +25,7 @@ const NAV = [
   { label: 'Settings',      href: '/portal/settings',       Icon: Settings },
 ];
 
-const BYPASS = ['/portal/login', '/portal/reset-password'];
+const BYPASS = ['/portal/login', '/portal/reset-password', '/portal/verify-email'];
 
 export default function PortalShell({ children }) {
   const pathname = usePathname();
@@ -34,6 +34,9 @@ export default function PortalShell({ children }) {
   const [ready, setReady] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [verifyNeeded, setVerifyNeeded] = useState(false);
+  const [verifyAddr, setVerifyAddr] = useState('');
+  const [resendState, setResendState] = useState('idle'); // idle | sending | sent | error
 
   const bypass = BYPASS.some(r => pathname.startsWith(r));
 
@@ -42,11 +45,25 @@ export default function PortalShell({ children }) {
     auth.getSession().then((s) => {
       if (!s.authenticated) { router.replace('/portal/login'); return; }
       setProfile(s.profile);
+      // Nudge unverified self-serve users (not admins, not while impersonating).
+      const needs = s.user?.email_confirmed === false && !s.impersonating && s.profile?.role !== 'admin';
+      setVerifyNeeded(!!needs);
+      setVerifyAddr(s.user?.email || s.profile?.email || '');
       setReady(true);
       fetch('/api/proxy/messages/unread-count', { credentials: 'include' })
         .then(r => r.json()).then(d => setUnread(d.count || 0)).catch(() => {});
     }).catch(() => router.replace('/portal/login'));
   }, [router, bypass]);
+
+  const handleResend = async () => {
+    setResendState('sending');
+    try {
+      await auth.resendVerification();
+      setResendState('sent');
+    } catch {
+      setResendState('error');
+    }
+  };
 
   if (!ready) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -193,6 +210,28 @@ export default function PortalShell({ children }) {
         {/* Main content */}
         <div className="flex-1 min-w-0 md:overflow-auto">
           <main className="md:mt-0 mt-14 p-4 md:p-6 max-w-5xl mx-auto">
+            {verifyNeeded && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                <MailWarning size={20} className="text-amber-600 flex-shrink-0" />
+                <div className="flex-1 min-w-0 text-sm">
+                  <p className="font-semibold text-amber-900">Verify your email to enable data uploads.</p>
+                  <p className="text-amber-800">
+                    We sent a link to <span className="font-medium">{verifyAddr}</span>. Your 14-day trial is active in the meantime.
+                  </p>
+                  {resendState === 'error' && (
+                    <p className="text-red-700 mt-1">Couldn’t resend right now — please try again shortly.</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendState === 'sending' || resendState === 'sent'}
+                  className="flex-shrink-0 inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+                >
+                  {resendState === 'sent' ? 'Email sent ✓' : resendState === 'sending' ? 'Sending…' : 'Resend email'}
+                </button>
+              </div>
+            )}
             {children}
           </main>
         </div>

@@ -12,13 +12,17 @@ from ..schemas.auth import (
     PasswordResetRequest, PasswordResetResponse,
     PasswordResetConfirm,
     RegisterRequest, RegisterResponse,
+    EmailVerificationConfirm, EmailVerificationResponse,
+    ResendVerificationResponse,
 )
 from ..services.auth import (
     authenticate_user, create_session, validate_session,
     delete_session, get_user_profile, create_user_with_profile,
     create_password_reset_token, use_password_reset_token,
+    create_email_verification_token, use_email_verification_token,
 )
-from ..services.email import send_password_reset_email
+from ..services.email import send_password_reset_email, send_verification_email
+from ..services.signup_guard import check_rate_limit, is_disposable_email
 from ..services.audit import log_action
 from ..models.user import User, Profile
 
@@ -92,11 +96,11 @@ async def login(
 
     # Set cookie
     set_session_cookie(response, raw_token)
-    
+
     return LoginResponse(
         success=True,
         message="Login successful",
-        user=UserResponse(id=user.id, email=user.email),
+        user=UserResponse(id=user.id, email=user.email, email_confirmed=user.email_confirmed),
     )
 
 
@@ -108,10 +112,32 @@ async def register(
     db: Session = Depends(get_db),
 ):
     """Public self-serve signup: create an agency account on a 14-day trial with
-    the chosen plan, auto-login, and queue paid tiers for admin activation."""
+    the chosen plan, auto-login, send an email-verification link, and queue paid
+    tiers for admin activation.
+
+    The account is created unverified (email_confirmed=False). The trial is
+    immediately usable (they can log in and explore), but data uploads are gated
+    on verification (see require_verified_email / the upload endpoint) to limit
+    spam/abuse from fake or typo'd addresses.
+    """
     from ..services.plans import is_valid_plan, TRIAL_DAYS
 
+    ip_address = request.client.host if request.client else None
+
+    # Basic abuse guards (best-effort first line of defense; the real gate is
+    # email verification before uploads). 6 signups / hour / IP.
+    if not check_rate_limit(f"register:{ip_address}", max_calls=6, window_seconds=3600):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many sign-up attempts from your network. Please try again later.",
+        )
+
     email = (data.email or "").strip().lower()
+    if is_disposable_email(email):
+        raise HTTPException(
+            status_code=400,
+            detail="Please sign up with a permanent work email address.",
+        )
     if len((data.password or "")) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
     plan = data.plan if is_valid_plan(data.plan) else "free_trial"
@@ -119,9 +145,11 @@ async def register(
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=409, detail="An account with this email already exists — try logging in.")
 
+    # Unverified by default — a verification email is sent below.
     user = create_user_with_profile(
         db, email=email, password=data.password,
         full_name=data.full_name, company=data.company, role="client",
+        email_confirmed=False,
     )
 
     now = datetime.utcnow()
@@ -133,13 +161,28 @@ async def register(
         profile.trial_ends_at = now + timedelta(days=TRIAL_DAYS)
         profile.plan_selected_at = now
         profile.client_status = "trial"
-        profile.upload_enabled = True   # trial is functional — they can upload + analyze
+        profile.upload_enabled = True   # trial is functional once email is verified
         profile.last_login = now
         db.commit()
 
-    ip_address = request.client.host if request.client else None
     _, raw_token = create_session(db, str(user.id), ip_address, request.headers.get("user-agent"))
     set_session_cookie(response, raw_token)
+
+    # Send the verification email (non-blocking; never let email break signup).
+    verify_token = create_email_verification_token(db, str(user.id))
+    email_to = user.email
+    full_name = data.full_name
+
+    async def _send_verification():
+        try:
+            await asyncio.wait_for(
+                send_verification_email(to_email=email_to, full_name=full_name, verify_token=verify_token),
+                timeout=10.0,
+            )
+        except Exception as e:
+            print(f"[Email] Verification email failed (non-blocking): {e}")
+
+    asyncio.create_task(_send_verification())
 
     try:
         log_action(db, action="signup", user_id=str(user.id),
@@ -148,14 +191,15 @@ async def register(
         pass
 
     requires_activation = plan != "free_trial"
+    base_msg = (
+        "Welcome! Your 14-day trial is ready."
+        if not requires_activation
+        else "Welcome! Your 14-day trial is ready — our team will reach out to activate your plan."
+    )
     return RegisterResponse(
         success=True,
-        message=(
-            "Welcome! Your 14-day trial is ready."
-            if not requires_activation
-            else "Welcome! Your 14-day trial is ready — our team will reach out to activate your plan."
-        ),
-        user=UserResponse(id=user.id, email=user.email),
+        message=f"{base_msg} We've emailed a link to {user.email} — please verify your email to start uploading data.",
+        user=UserResponse(id=user.id, email=user.email, email_confirmed=user.email_confirmed),
         plan=plan,
         plan_status=(profile.plan_status if profile else None),
         requires_activation=requires_activation,
@@ -221,7 +265,7 @@ async def get_session(
     
     return FullSessionResponse(
         authenticated=True,
-        user=UserResponse(id=user.id, email=user.email),
+        user=UserResponse(id=user.id, email=user.email, email_confirmed=user.email_confirmed),
         profile=ProfileResponse.model_validate(profile) if profile else None,
     )
 
@@ -288,6 +332,60 @@ async def reset_password(
     )
 
 
+def _do_verify_email(db: Session, token: str) -> EmailVerificationResponse:
+    """Shared logic for the GET/POST verify-email endpoints."""
+    if not token:
+        raise HTTPException(status_code=400, detail="Invalid or missing verification token.")
+
+    user = use_email_verification_token(db, token)
+    if user:
+        return EmailVerificationResponse(
+            success=True,
+            message="Your email has been verified. You're all set!",
+        )
+
+    # The token wasn't valid as a fresh token. Distinguish "already verified"
+    # (link clicked twice) from a genuinely bad/expired token so a re-click is
+    # not shown as an error.
+    from ..services.auth import hash_token
+    from ..models.user import EmailVerificationToken
+
+    existing = db.query(EmailVerificationToken).filter(
+        EmailVerificationToken.token_hash == hash_token(token)
+    ).first()
+    if existing:
+        u = db.query(User).filter(User.id == existing.user_id).first()
+        if u and u.email_confirmed:
+            return EmailVerificationResponse(
+                success=True,
+                message="Your email is already verified.",
+                already_verified=True,
+            )
+
+    raise HTTPException(
+        status_code=400,
+        detail="This verification link is invalid or has expired. Please request a new one.",
+    )
+
+
+@router.post("/verify-email", response_model=EmailVerificationResponse)
+async def verify_email(
+    data: EmailVerificationConfirm,
+    db: Session = Depends(get_db),
+):
+    """Verify an email address using the token from the verification email."""
+    return _do_verify_email(db, data.token)
+
+
+@router.get("/verify-email", response_model=EmailVerificationResponse)
+async def verify_email_get(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Verify an email address via a direct GET link (token as a query param)."""
+    return _do_verify_email(db, token)
+
+
 # Dependency for protected routes
 async def get_current_user(
     request: Request,
@@ -326,8 +424,47 @@ async def require_admin(
 ) -> User:
     """Dependency to require admin role."""
     profile = get_user_profile(db, str(current_user.id))
-    
+
     if not profile or profile.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    
+
     return current_user
+
+
+@router.post("/resend-verification", response_model=ResendVerificationResponse)
+async def resend_verification(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Re-send the email-verification link for the signed-in user (banner button)."""
+    if current_user.email_confirmed:
+        return ResendVerificationResponse(success=True, message="Your email is already verified.")
+
+    # Rate-limit resends per user (3 / hour) to avoid inbox flooding.
+    if not check_rate_limit(f"resend:{current_user.id}", max_calls=3, window_seconds=3600):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests. Please check your inbox or try again in a bit.",
+        )
+
+    verify_token = create_email_verification_token(db, str(current_user.id))
+    profile = get_user_profile(db, str(current_user.id))
+    full_name = profile.full_name if profile else None
+    email_to = current_user.email
+
+    async def _send():
+        try:
+            await asyncio.wait_for(
+                send_verification_email(to_email=email_to, full_name=full_name, verify_token=verify_token),
+                timeout=10.0,
+            )
+        except Exception as e:
+            print(f"[Email] Resend verification email failed (non-blocking): {e}")
+
+    asyncio.create_task(_send())
+
+    return ResendVerificationResponse(
+        success=True,
+        message=f"We've sent a new verification link to {email_to}.",
+    )
