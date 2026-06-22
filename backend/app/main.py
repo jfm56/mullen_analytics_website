@@ -120,6 +120,7 @@ async def on_startup():
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)",
+            "ALTER TABLE messages ADD COLUMN IF NOT EXISTS direction VARCHAR(20) DEFAULT 'outbound'",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE",
         ]
         with engine.begin() as conn:

@@ -853,11 +853,26 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
         <div className="text-xs text-blue-500 animate-pulse px-1">Applying filters…</div>
       )}
 
-      {showFiltered
-        ? <FilteredMetricsView metrics={filteredMetrics} />
-        : <StaticDashboardView metrics={metrics} generatedAt={generatedAt}
-            uploadInfo={uploadInfo} onMap={uploadId ? () => setMappingOpen(true) : null} />
-      }
+      {showFiltered ? (
+        (filteredMetrics.error || filteredMetrics.empty) ? (
+          <FilteredMetricsView metrics={filteredMetrics} />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 flex-wrap text-xs bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+              <span className="font-semibold text-blue-700">Filtered view</span>
+              <span className="text-blue-500">· {Number(filteredMetrics.row_count || 0).toLocaleString()} rows</span>
+              {(filteredMetrics.filters_applied || []).map((f, i) => (
+                <span key={i} className="bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full">{f}</span>
+              ))}
+            </div>
+            <StaticDashboardView metrics={filteredMetrics} generatedAt={null}
+              uploadInfo={uploadInfo} onMap={uploadId ? () => setMappingOpen(true) : null} />
+          </div>
+        )
+      ) : (
+        <StaticDashboardView metrics={metrics} generatedAt={generatedAt}
+          uploadInfo={uploadInfo} onMap={uploadId ? () => setMappingOpen(true) : null} />
+      )}
 
       {mappingOpen && (
         <ColumnMappingModal uploadId={uploadId} onClose={() => setMappingOpen(false)} onSaved={handleMappingSaved} />

@@ -255,6 +255,11 @@ export const messages = {
   async list() {
     return apiFetch('/api/messages/');
   },
+
+  /** Client → admin: send a message to the Mullen Analytics team */
+  contact(data) {
+    return apiFetch('/api/messages/contact', { method: 'POST', body: JSON.stringify(data) });
+  },
   
   /**
    * Get unread message count
