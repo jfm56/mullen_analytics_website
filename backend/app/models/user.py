@@ -72,6 +72,14 @@ class Profile(Base):
     tags = Column(JSON, default=list)
     notes = Column(Text, nullable=True)
     last_login = Column(DateTime, nullable=True)
+
+    # Self-serve membership / plan (chosen at public signup; activated by an admin
+    # or, later, by Stripe subscription billing).
+    plan = Column(String(50), default="free_trial")       # free_trial|starter|professional|enterprise
+    plan_status = Column(String(50), default="trialing")   # trialing|pending|active|canceled
+    trial_ends_at = Column(DateTime, nullable=True)
+    plan_selected_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

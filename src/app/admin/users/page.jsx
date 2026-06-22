@@ -239,6 +239,19 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleActivatePlan(u) {
+    setError('');
+    try {
+      const res = await fetch(`/api/proxy/admin/users/${u.id}/plan?plan_status=active`, {
+        method: 'PATCH', credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      loadUsers();
+    } catch (e) {
+      setError(e.message || 'Failed to activate plan');
+    }
+  }
+
   if (!authOk) {
     return (
       <div className="flex items-center justify-center h-64 text-sm text-gray-400">
@@ -314,6 +327,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Company</th>
                   <th className="px-4 py-3 font-medium">Role</th>
+                  <th className="px-4 py-3 font-medium">Plan</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Created</th>
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -335,6 +349,20 @@ export default function AdminUsersPage() {
                       }`}>
                         {u.role === 'admin' ? 'Admin' : 'Client'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {u.plan ? (
+                        <div className="leading-tight">
+                          <div className="text-[11px] font-medium text-gray-700 capitalize">{u.plan.replace(/_/g, ' ')}</div>
+                          <div className={`text-[10px] ${
+                            u.plan_status === 'active' ? 'text-green-600'
+                              : u.plan_status === 'pending' ? 'text-amber-600'
+                              : u.plan_status === 'trialing' ? 'text-blue-600' : 'text-gray-400'
+                          }`}>
+                            {u.plan_status || '—'}
+                          </div>
+                        </div>
+                      ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
@@ -402,6 +430,15 @@ export default function AdminUsersPage() {
                             className="text-[10px] px-2 py-1 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
                           >
                             → Client
+                          </button>
+                        )}
+                        {u.plan_status === 'pending' && (
+                          <button
+                            onClick={() => handleActivatePlan(u)}
+                            title="Activate paid plan (billing arranged)"
+                            className="text-[10px] px-2 py-1 border border-green-300 text-green-700 rounded-md hover:bg-green-50 transition-colors"
+                          >
+                            Activate
                           </button>
                         )}
                         <button

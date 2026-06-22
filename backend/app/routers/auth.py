@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, Cookie
 from sqlalchemy.orm import Session
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 
 from ..database import get_db
@@ -11,10 +11,11 @@ from ..schemas.auth import (
     FullSessionResponse, UserResponse, ProfileResponse,
     PasswordResetRequest, PasswordResetResponse,
     PasswordResetConfirm,
+    RegisterRequest, RegisterResponse,
 )
 from ..services.auth import (
     authenticate_user, create_session, validate_session,
-    delete_session, get_user_profile,
+    delete_session, get_user_profile, create_user_with_profile,
     create_password_reset_token, use_password_reset_token,
 )
 from ..services.email import send_password_reset_email
@@ -96,6 +97,68 @@ async def login(
         success=True,
         message="Login successful",
         user=UserResponse(id=user.id, email=user.email),
+    )
+
+
+@router.post("/register", response_model=RegisterResponse)
+async def register(
+    data: RegisterRequest,
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Public self-serve signup: create an agency account on a 14-day trial with
+    the chosen plan, auto-login, and queue paid tiers for admin activation."""
+    from ..services.plans import is_valid_plan, TRIAL_DAYS
+
+    email = (data.email or "").strip().lower()
+    if len((data.password or "")) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+    plan = data.plan if is_valid_plan(data.plan) else "free_trial"
+
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=409, detail="An account with this email already exists — try logging in.")
+
+    user = create_user_with_profile(
+        db, email=email, password=data.password,
+        full_name=data.full_name, company=data.company, role="client",
+    )
+
+    now = datetime.utcnow()
+    profile = get_user_profile(db, str(user.id))
+    if profile:
+        profile.plan = plan
+        # Free trial is immediately active; paid tiers trial now + await admin activation/billing.
+        profile.plan_status = "trialing" if plan == "free_trial" else "pending"
+        profile.trial_ends_at = now + timedelta(days=TRIAL_DAYS)
+        profile.plan_selected_at = now
+        profile.client_status = "trial"
+        profile.upload_enabled = True   # trial is functional — they can upload + analyze
+        profile.last_login = now
+        db.commit()
+
+    ip_address = request.client.host if request.client else None
+    _, raw_token = create_session(db, str(user.id), ip_address, request.headers.get("user-agent"))
+    set_session_cookie(response, raw_token)
+
+    try:
+        log_action(db, action="signup", user_id=str(user.id),
+                   details={"plan": plan, "company": data.company}, ip_address=ip_address)
+    except Exception:
+        pass
+
+    requires_activation = plan != "free_trial"
+    return RegisterResponse(
+        success=True,
+        message=(
+            "Welcome! Your 14-day trial is ready."
+            if not requires_activation
+            else "Welcome! Your 14-day trial is ready — our team will reach out to activate your plan."
+        ),
+        user=UserResponse(id=user.id, email=user.email),
+        plan=plan,
+        plan_status=(profile.plan_status if profile else None),
+        requires_activation=requires_activation,
     )
 
 

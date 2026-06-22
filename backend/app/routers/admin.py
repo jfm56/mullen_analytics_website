@@ -369,6 +369,8 @@ async def admin_monitoring(
                 "company": prof.company,
                 "role": prof.role,
                 "client_status": prof.client_status,
+                "plan": getattr(prof, "plan", None),
+                "plan_status": getattr(prof, "plan_status", None),
                 "last_login": last_login.isoformat() if last_login else None,
                 "active_sessions": sess_by_user.get(uid, 0),
             })
@@ -597,6 +599,35 @@ async def admin_user_logins(
         "total_logins": _q_count(db, UserSession, UserSession.user_id == user_id),
         "logins": logins,
     }
+
+
+@router.patch("/users/{user_id}/plan")
+async def admin_set_user_plan(
+    user_id: UUID,
+    plan: Optional[str] = None,
+    plan_status: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set or activate a user's membership plan (admin). e.g. mark a pending paid
+    signup 'active' once billing is arranged."""
+    _require_admin(db, current_user)
+    from ..services.plans import is_valid_plan
+    prof = db.query(Profile).filter(Profile.id == user_id).first()
+    if not prof:
+        raise HTTPException(status_code=404, detail="User not found")
+    if plan is not None:
+        if not is_valid_plan(plan):
+            raise HTTPException(status_code=400, detail="Invalid plan")
+        prof.plan = plan
+    if plan_status is not None:
+        if plan_status not in ("trialing", "pending", "active", "canceled"):
+            raise HTTPException(status_code=400, detail="Invalid plan_status")
+        prof.plan_status = plan_status
+        if plan_status == "active":
+            prof.client_status = "active"
+    db.commit()
+    return {"success": True, "plan": prof.plan, "plan_status": prof.plan_status}
 
 
 # ============================================================================

@@ -101,6 +101,23 @@ export const auth = {
       body: JSON.stringify({ token, new_password: newPassword }),
     });
   },
+
+  /**
+   * Public self-serve signup: { email, password, full_name, company, plan }
+   */
+  async register(data) {
+    return apiFetch('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+/**
+ * Membership plans — public catalog for /pricing and /signup
+ */
+export const plans = {
+  list: () => apiFetch('/api/plans'),
 };
 
 /**
@@ -756,6 +773,7 @@ export default {
   documents,
   impersonation,
   admin,
+  plans,
   invoices,
   uploads,
   reports,

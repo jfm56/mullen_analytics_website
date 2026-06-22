@@ -11,6 +11,7 @@ from .routers import data as data_router
 from .routers import settings as settings_router
 from .routers import datasets as datasets_router
 from .routers import sso
+from .routers import plans as plans_router
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
 from .models import error_log as _error_log_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
@@ -68,6 +69,7 @@ app.include_router(settings_router.router, prefix="/api")
 app.include_router(datasets_router.router, prefix="/api")
 app.include_router(errors.router, prefix="/api")
 app.include_router(sso.router, prefix="/api")
+app.include_router(plans_router.router, prefix="/api")
 
 
 @app.on_event("startup")
@@ -112,6 +114,10 @@ async def on_startup():
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ems_qa_enabled BOOLEAN DEFAULT FALSE",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ems_agency_slug VARCHAR(255)",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ems_role VARCHAR(50)",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free_trial'",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_status VARCHAR(50) DEFAULT 'trialing'",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:

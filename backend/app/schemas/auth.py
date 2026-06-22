@@ -53,6 +53,10 @@ class ProfileResponse(BaseModel):
     tableau_open_url: Optional[str] = None
     last_login: Optional[datetime] = None
     created_at: Optional[datetime] = None
+    # Membership / plan
+    plan: Optional[str] = None
+    plan_status: Optional[str] = None
+    trial_ends_at: Optional[datetime] = None
     # EMS QA add-on — lets the portal show the "QA Platform" SSO tile.
     ems_qa_enabled: bool = False
     ems_agency_slug: Optional[str] = None
@@ -89,6 +93,16 @@ class RegisterRequest(BaseModel):
     password: str
     full_name: Optional[str] = None
     company: Optional[str] = None
+    plan: Optional[str] = "free_trial"
+
+
+class RegisterResponse(BaseModel):
+    success: bool
+    message: str
+    user: Optional["UserResponse"] = None
+    plan: Optional[str] = None
+    plan_status: Optional[str] = None
+    requires_activation: bool = False
 
 
 # Update forward references
