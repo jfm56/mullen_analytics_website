@@ -101,6 +101,50 @@ export const auth = {
       body: JSON.stringify({ token, new_password: newPassword }),
     });
   },
+
+  /**
+   * Public self-serve signup: { email, password, full_name, company, plan }
+   */
+  async register(data) {
+    return apiFetch('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+/**
+ * Membership plans — public catalog for /pricing and /signup
+ */
+export const plans = {
+  list: () => apiFetch('/api/plans'),
+};
+
+/**
+ * EMS QA single sign-on — mint a one-time token and hand the browser off to the
+ * EMS QA app (no second login). Only members with the add-on can call this.
+ */
+export const emsQa = {
+  /** Ask the portal to mint a signed SSO token: { sso_url, token }. */
+  async launch() {
+    return apiFetch('/api/sso/launch-ems-qa', { method: 'POST' });
+  },
+  /** Mint a token and POST it to the EMS QA app as a top-level navigation, so the
+   *  session cookie is set first-party on the EMS QA domain. */
+  async open() {
+    const { sso_url, token } = await emsQa.launch();
+    if (typeof document === 'undefined') return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = sso_url;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'token';
+    input.value = token;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+  },
 };
 
 /**
@@ -516,6 +560,40 @@ export const impersonation = {
 };
 
 /**
+ * Admin IT/monitoring API — errors, issues, and per-user login history
+ */
+export const admin = {
+  monitoring: () => apiFetch('/api/admin/monitoring'),
+  errors: ({ source, resolved } = {}) => {
+    const q = new URLSearchParams();
+    if (source) q.set('source', source);
+    if (resolved != null) q.set('resolved', String(resolved));
+    const s = q.toString();
+    return apiFetch(`/api/admin/errors${s ? `?${s}` : ''}`);
+  },
+  errorDetail: (id) => apiFetch(`/api/admin/errors/${id}`),
+  resolveError: (id) => apiFetch(`/api/admin/errors/${id}/resolve`, { method: 'PATCH' }),
+  userLogins: (userId, limit = 50) => apiFetch(`/api/admin/users/${userId}/logins?limit=${limit}`),
+};
+
+/**
+ * Report a client-side (browser) error. Fire-and-forget; never throws and never
+ * redirects (raw fetch, not apiFetch) so background reporting can't disrupt the user.
+ */
+export function reportClientError(payload) {
+  try {
+    return fetch('/api/proxy/errors/client', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Invoices API
  */
 export const invoices = {
@@ -687,12 +765,15 @@ export { apiFetch };
  */
 export default {
   auth,
+  emsQa,
   users,
   messages,
   projects,
   clients,
   documents,
   impersonation,
+  admin,
+  plans,
   invoices,
   uploads,
   reports,

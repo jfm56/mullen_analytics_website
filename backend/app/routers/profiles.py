@@ -34,6 +34,9 @@ class ProfileUpdate(BaseModel):
     max_upload_mb: Optional[int] = None
     notes: Optional[str] = None
     tags: Optional[List[str]] = None
+    ems_qa_enabled: Optional[bool] = None
+    ems_agency_slug: Optional[str] = None
+    ems_role: Optional[str] = None
 
 
 class ProfileResponse(BaseModel):
@@ -64,7 +67,10 @@ class ProfileResponse(BaseModel):
     last_login: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    
+    ems_qa_enabled: bool = False
+    ems_agency_slug: Optional[str] = None
+    ems_role: Optional[str] = None
+
     class Config:
         from_attributes = True
 

@@ -26,8 +26,7 @@ const TIERS = [
       'AI reviewer (up to 50 charts)',
     ],
     cta: 'Start free trial',
-    href: CALENDAR_URL,
-    external: true,
+    href: '/signup?plan=free_trial',
     highlight: false,
   },
   {
@@ -47,7 +46,7 @@ const TIERS = [
     ],
     note: 'AI reviewer available as an add-on',
     cta: 'Get started',
-    href: '/contact',
+    href: '/signup?plan=starter',
     highlight: false,
   },
   {
@@ -69,7 +68,7 @@ const TIERS = [
       'Priority support',
     ],
     cta: 'Start with Professional',
-    href: '/contact',
+    href: '/signup?plan=professional',
     highlight: true,
     badge: 'Most popular',
   },
@@ -90,8 +89,8 @@ const TIERS = [
       'Dedicated onboarding',
       '24-hour support',
     ],
-    cta: 'Talk to sales',
-    href: '/contact',
+    cta: 'Get started',
+    href: '/signup?plan=enterprise',
     highlight: false,
   },
 ];

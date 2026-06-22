@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, Plus, Search, RefreshCw, UserCog, Trash2, KeyRound, Eye } from 'lucide-react';
+import { Users, Plus, Search, RefreshCw, UserCog, Trash2, KeyRound, Eye, LogIn, History } from 'lucide-react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
+import { impersonation, admin } from '@/lib/api';
 
 function Modal({ title, onClose, children }) {
   return (
@@ -43,6 +44,13 @@ export default function AdminUsersPage() {
 
   const [resetUser, setResetUser] = useState(null);
   const [resetting, setResetting] = useState(false);
+
+  // Work-as (impersonation) + login history
+  const [impersonateUser, setImpersonateUser] = useState(null);
+  const [impersonating, setImpersonating] = useState(false);
+  const [loginUser, setLoginUser] = useState(null);
+  const [logins, setLogins] = useState(null);
+  const [loginsLoading, setLoginsLoading] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -202,6 +210,48 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleImpersonate() {
+    if (!impersonateUser) return;
+    setImpersonating(true);
+    setError('');
+    try {
+      await impersonation.start(impersonateUser.id);
+      // Full navigation so the ma_impersonate cookie is picked up and the portal
+      // re-resolves the session as the client.
+      window.location.href = '/portal/dashboard';
+    } catch (e) {
+      setError(e.message || 'Failed to start "work as user"');
+      setImpersonating(false);
+    }
+  }
+
+  async function openLogins(u) {
+    setLoginUser(u);
+    setLogins(null);
+    setLoginsLoading(true);
+    try {
+      setLogins(await admin.userLogins(u.id, 50));
+    } catch (e) {
+      setError(e.message || 'Failed to load login history');
+      setLoginUser(null);
+    } finally {
+      setLoginsLoading(false);
+    }
+  }
+
+  async function handleActivatePlan(u) {
+    setError('');
+    try {
+      const res = await fetch(`/api/proxy/admin/users/${u.id}/plan?plan_status=active`, {
+        method: 'PATCH', credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      loadUsers();
+    } catch (e) {
+      setError(e.message || 'Failed to activate plan');
+    }
+  }
+
   if (!authOk) {
     return (
       <div className="flex items-center justify-center h-64 text-sm text-gray-400">
@@ -277,6 +327,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Company</th>
                   <th className="px-4 py-3 font-medium">Role</th>
+                  <th className="px-4 py-3 font-medium">Plan</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Created</th>
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -298,6 +349,20 @@ export default function AdminUsersPage() {
                       }`}>
                         {u.role === 'admin' ? 'Admin' : 'Client'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {u.plan ? (
+                        <div className="leading-tight">
+                          <div className="text-[11px] font-medium text-gray-700 capitalize">{u.plan.replace(/_/g, ' ')}</div>
+                          <div className={`text-[10px] ${
+                            u.plan_status === 'active' ? 'text-green-600'
+                              : u.plan_status === 'pending' ? 'text-amber-600'
+                              : u.plan_status === 'trialing' ? 'text-blue-600' : 'text-gray-400'
+                          }`}>
+                            {u.plan_status || '—'}
+                          </div>
+                        </div>
+                      ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
@@ -334,6 +399,22 @@ export default function AdminUsersPage() {
                         >
                           <KeyRound size={13} />
                         </button>
+                        <button
+                          onClick={() => openLogins(u)}
+                          title="Login history"
+                          className="p-1.5 rounded-md text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        >
+                          <History size={13} />
+                        </button>
+                        {u.role !== 'admin' && (
+                          <button
+                            onClick={() => setImpersonateUser({ id: u.id, name: u.full_name || u.email, email: u.email })}
+                            title="Work as this user (IT view)"
+                            className="p-1.5 rounded-md text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                          >
+                            <LogIn size={13} />
+                          </button>
+                        )}
                         {u.role !== 'admin' ? (
                           <button
                             onClick={() => setConfirmRole({ id: u.id, name: u.full_name || u.email, newRole: 'admin' })}
@@ -349,6 +430,15 @@ export default function AdminUsersPage() {
                             className="text-[10px] px-2 py-1 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
                           >
                             → Client
+                          </button>
+                        )}
+                        {u.plan_status === 'pending' && (
+                          <button
+                            onClick={() => handleActivatePlan(u)}
+                            title="Activate paid plan (billing arranged)"
+                            className="text-[10px] px-2 py-1 border border-green-300 text-green-700 rounded-md hover:bg-green-50 transition-colors"
+                          >
+                            Activate
                           </button>
                         )}
                         <button
@@ -509,6 +599,61 @@ export default function AdminUsersPage() {
             <button onClick={handleResetPassword} disabled={resetting} className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 disabled:opacity-50">
               {resetting ? 'Sending…' : 'Send Reset Email'}
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Work as user (impersonation) ── */}
+      {impersonateUser && (
+        <Modal title="Work as user (IT view)" onClose={() => !impersonating && setImpersonateUser(null)}>
+          <p className="text-sm text-gray-600 mb-3">
+            Open the client portal exactly as <strong>{impersonateUser.name}</strong> sees it, to troubleshoot what they’re experiencing.
+          </p>
+          <div className="mb-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
+            <p>• A banner will show you’re in their view — click <strong>Exit Client View</strong> to return to admin.</p>
+            <p>• The session lasts up to 1 hour and every action is logged.</p>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button onClick={() => setImpersonateUser(null)} disabled={impersonating} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+            <button onClick={handleImpersonate} disabled={impersonating} className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm hover:bg-orange-700 disabled:opacity-50 flex items-center gap-1.5">
+              <LogIn size={14} /> {impersonating ? 'Starting…' : 'Work as user'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Login history ── */}
+      {loginUser && (
+        <Modal title={`Login history — ${loginUser.full_name || loginUser.email}`} onClose={() => setLoginUser(null)}>
+          {loginsLoading ? (
+            <div className="flex items-center justify-center h-24 text-sm text-gray-400">
+              <RefreshCw size={14} className="animate-spin mr-2" /> Loading…
+            </div>
+          ) : !logins?.logins?.length ? (
+            <p className="text-sm text-gray-500 mb-4">No logins recorded for this user yet.</p>
+          ) : (
+            <div className="space-y-2 mb-4">
+              <p className="text-xs text-gray-500">
+                {logins.total_logins} total login{logins.total_logins === 1 ? '' : 's'} · showing latest {logins.logins.length}
+              </p>
+              <div className="max-h-72 overflow-y-auto divide-y border rounded-lg">
+                {logins.logins.map((l) => (
+                  <div key={l.id} className="px-3 py-2 text-xs flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-gray-800">{l.created_at ? new Date(l.created_at).toLocaleString() : '—'}</div>
+                      <div className="text-gray-400 truncate" title={l.user_agent}>{l.user_agent || 'Unknown device'}</div>
+                    </div>
+                    <div className="text-right whitespace-nowrap flex-shrink-0">
+                      <div className="text-gray-500">{l.ip_address || '—'}</div>
+                      {l.active && <span className="text-[10px] text-green-600">● active</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <button onClick={() => setLoginUser(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Close</button>
           </div>
         </Modal>
       )}

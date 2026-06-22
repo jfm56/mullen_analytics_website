@@ -445,10 +445,18 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
           <StatCard icon={TrendingUp} label="Avg Calls / Week" value={cv.avg_calls_per_week}      color="indigo" />
           <StatCard icon={Clock}     label="Median Response"  value={fmtMin(rt.median_minutes)}   color="purple"
             tooltip="The middle response time. Half of calls were faster, half were slower." />
-          <StatCard icon={Activity}  label="Avg Response"     value={fmtMin(rt.mean_minutes)}     color="purple" />
+          <StatCard icon={Activity}  label="Avg Response"     value={fmtMin(rt.mean_minutes)}     color="purple"
+            tooltip="Dispatch → on-scene (total response time, includes turnout). Travel-only time is in the Response Times section." />
           <StatCard icon={Zap}       label="P90 Response"     value={fmtMin(rt.p90_minutes)}      color="orange"
             tooltip="90% of calls were completed at or below this response time." />
         </div>
+        {cv.count_basis && (
+          <p className="text-[11px] text-gray-400 mt-2 px-0.5">
+            Counting <strong>{cv.count_basis}</strong>
+            {cv.emergency_calls != null && <> · {fmt(cv.emergency_calls)} emergency</>}
+            {cv.interfacility_calls != null && <> · {fmt(cv.interfacility_calls)} interfacility</>}
+          </p>
+        )}
       </div>
 
       {/* ── Executive Insights ── */}
@@ -556,7 +564,10 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                       </div>
                     </div>
                   )}
-                  <p className="text-xs text-gray-400">Metric: {rt.metric?.replace(/_/g, ' ')}</p>
+                  <p className="text-xs text-gray-500">
+                    Headline figures are <strong>{rt.metric_label || rt.metric?.replace(/_/g, ' ')}</strong>.
+                    {rt.travel_time && <> Travel time (en route → on-scene) median is {fmtMin(rt.travel_time.median_minutes)}; total response also includes ~{fmtMin(rt.turnout_median_minutes)} turnout.</>}
+                  </p>
                   <p className="text-xs text-gray-400 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
                     <strong>P90</strong> is often more useful than average because it shows the slower end of your response performance.
                   </p>

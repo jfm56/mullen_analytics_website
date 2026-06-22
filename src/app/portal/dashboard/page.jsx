@@ -2,14 +2,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { dataUploads, dashboardFilter } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
+import AiInsights from '@/components/AiInsights';
 import PredictiveAnalytics from '@/components/PredictiveAnalytics';
+import TurnoverRisk from '@/components/TurnoverRisk';
+import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
+import IftOutlook from '@/components/IftOutlook';
+import PageTabs from '@/components/ui/PageTabs';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
 import ResponseTimeRisk from '@/components/ResponseTimeRisk';
 import MvaHotspots from '@/components/MvaHotspots';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonCard } from '@/components/ui/LoadingSkeleton';
 import Link from 'next/link';
-import { BarChart2, X, Plus, SlidersHorizontal, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { BarChart2, X, Plus, SlidersHorizontal, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Search, LayoutDashboard, CalendarClock, MapPin } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend
@@ -276,6 +281,7 @@ export default function PortalDashboardPage() {
   const [loading, setLoading]     = useState(true);
   const [dashLoading, setDashLoading] = useState(false);
   const [error, setError]         = useState('');
+  const [dashTab, setDashTab]     = useState('overview');
 
   // Compare mode
   const [compareMode, setCompareMode]   = useState(false);
@@ -500,27 +506,61 @@ export default function PortalDashboardPage() {
         <div className="space-y-4"><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
       ) : dashboard ? (
         <>
-        <div className="bg-white border rounded-xl shadow-sm p-6">
-          <EMSDashboard
-            metrics={dashboard.metrics}
-            generatedAt={dashboard.generated_at}
-            uploadId={selectedId}
-            uploadInfo={uploads.find(u => u.id === selectedId)}
-            onRefresh={() => {
-              setDashLoading(true);
-              dataUploads.getDashboard(selectedId).then(setDashboard).finally(() => setDashLoading(false));
-            }}
-          />
-          <div className="mt-4 pt-4 border-t flex justify-end">
-            <Link href={`/portal/data-explorer/${selectedId}`} className="text-sm bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-medium">
-              🔍 Explore Full Dataset
-            </Link>
+        <PageTabs
+          activeTab={dashTab}
+          onChange={setDashTab}
+          tabs={[
+            { id: 'overview',    label: 'Overview',    icon: <LayoutDashboard size={15} /> },
+            { id: 'predictions', label: 'Predictions', icon: <TrendingUp size={15} /> },
+            { id: 'scheduling',  label: 'Scheduling',  icon: <CalendarClock size={15} /> },
+            { id: 'geographic',  label: 'Geographic',  icon: <MapPin size={15} /> },
+          ]}
+        />
+
+        {dashTab === 'overview' && (
+          <div className="space-y-5">
+          <AiInsights uploadId={selectedId} />
+          <div className="bg-white border rounded-xl shadow-sm p-6">
+            <EMSDashboard
+              metrics={dashboard.metrics}
+              generatedAt={dashboard.generated_at}
+              uploadId={selectedId}
+              uploadInfo={uploads.find(u => u.id === selectedId)}
+              onRefresh={() => {
+                setDashLoading(true);
+                dataUploads.getDashboard(selectedId).then(setDashboard).finally(() => setDashLoading(false));
+              }}
+            />
+            <div className="mt-4 pt-4 border-t flex justify-end">
+              <Link href={`/portal/data-explorer/${selectedId}`} className="text-sm bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-medium">
+                🔍 Explore Full Dataset
+              </Link>
+            </div>
           </div>
-        </div>
-        <PredictiveAnalytics uploadId={selectedId} />
-        <GeographicHeatMap uploadId={selectedId} />
-        <ResponseTimeRisk uploadId={selectedId} />
-        <MvaHotspots uploadId={selectedId} />
+          </div>
+        )}
+
+        {dashTab === 'predictions' && (
+          <div className="space-y-5">
+            <PredictiveAnalytics uploadId={selectedId} />
+            <TurnoverRisk uploadId={selectedId} />
+            <WeatherTrafficForecast uploadId={selectedId} />
+          </div>
+        )}
+
+        {dashTab === 'scheduling' && (
+          <div className="space-y-5">
+            <IftOutlook uploadId={selectedId} />
+            <ResponseTimeRisk uploadId={selectedId} />
+          </div>
+        )}
+
+        {dashTab === 'geographic' && (
+          <div className="space-y-5">
+            <GeographicHeatMap uploadId={selectedId} />
+            <MvaHotspots uploadId={selectedId} />
+          </div>
+        )}
         </>
       ) : null}
     </div>

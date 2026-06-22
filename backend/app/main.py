@@ -1,15 +1,19 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .config import get_settings
 from .database import engine, Base
-from .routers import auth, users, messages, profiles, invoices, uploads, tasks, feedback
+from .routers import auth, users, messages, profiles, invoices, uploads, tasks, feedback, errors
 from .routers import projects, documents, impersonation, reports, dashboard_refresh, quickbooks
 from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder, payments, clients
 from .routers import data as data_router
 from .routers import settings as settings_router
 from .routers import datasets as datasets_router
+from .routers import sso
+from .routers import plans as plans_router
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
+from .models import error_log as _error_log_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
 
 settings = get_settings()
@@ -63,6 +67,9 @@ app.include_router(clients.router,         prefix="/api")
 app.include_router(data_router.router,     prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(datasets_router.router, prefix="/api")
+app.include_router(errors.router, prefix="/api")
+app.include_router(sso.router, prefix="/api")
+app.include_router(plans_router.router, prefix="/api")
 
 
 @app.on_event("startup")
@@ -104,6 +111,13 @@ async def on_startup():
             "CREATE INDEX IF NOT EXISTS ix_data_uploads_dataset_group_id ON data_uploads(dataset_group_id)",
             "CREATE INDEX IF NOT EXISTS ix_data_uploads_reporting_year ON data_uploads(reporting_year)",
             "ALTER TABLE data_cleaning_results ADD COLUMN IF NOT EXISTS cleaned_data_gz BYTEA",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ems_qa_enabled BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ems_agency_slug VARCHAR(255)",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ems_role VARCHAR(50)",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free_trial'",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_status VARCHAR(50) DEFAULT 'trialing'",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:
@@ -124,3 +138,48 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.exception_handler(Exception)
+async def _log_unhandled_exception(request: Request, exc: Exception):
+    """Capture unhandled server errors to error_logs (admin IT visibility), then
+    return a clean 500. FastAPI's own handlers take precedence for HTTPException /
+    validation errors, so only genuine 500s land here — expected 4xx are not logged."""
+    import logging
+    import traceback
+    log = logging.getLogger("app.unhandled")
+    log.error("Unhandled error on %s %s: %s", request.method, request.url.path, exc)
+    try:
+        from .database import SessionLocal
+        from .models.error_log import ErrorLog
+        db = SessionLocal()
+        try:
+            uid = None
+            try:  # best-effort: attribute the error to the signed-in user
+                from .routers.auth import get_session_token
+                from .services.auth import validate_session
+                token = get_session_token(request)
+                if token:
+                    u = validate_session(db, token)
+                    uid = u.id if u else None
+            except Exception:  # noqa: BLE001
+                uid = None
+            db.add(ErrorLog(
+                user_id=uid,
+                source="server",
+                level="error",
+                error_type=type(exc).__name__,
+                message=str(exc)[:2000] or type(exc).__name__,
+                path=str(request.url.path)[:500],
+                method=request.method,
+                status_code=500,
+                stacktrace=traceback.format_exc()[:8000],
+                user_agent=request.headers.get("user-agent"),
+                ip_address=request.client.host if request.client else None,
+            ))
+            db.commit()
+        finally:
+            db.close()
+    except Exception:  # noqa: BLE001
+        log.exception("Failed to persist error log")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})

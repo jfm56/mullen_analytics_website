@@ -5,6 +5,7 @@ import { auth } from '@/lib/api';
 import AdminSidebar from './AdminSidebar';
 import AdminTopbar from './AdminTopbar';
 import AdminBreadcrumbs from './AdminBreadcrumbs';
+import ClientErrorReporter from '@/components/ClientErrorReporter';
 
 const PAGE_TITLES = {
   '/admin':                'Admin Home',
@@ -15,6 +16,7 @@ const PAGE_TITLES = {
   '/admin/column-mapping': 'Column Mapping',
   '/admin/messages':       'Messages',
   '/admin/users':          'Users & Roles',
+  '/admin/errors':         'Errors & Issues',
   '/admin/projects':       'Projects',
   '/admin/invoices':       'Invoices',
   '/admin/audit-logs':     'Audit Logs',
@@ -61,6 +63,8 @@ export default function AdminShell({ children }) {
   if (isLoginPage) return <>{children}</>;
 
   return (
+    <>
+    <ClientErrorReporter />
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
       <div className="flex flex-col flex-1 min-w-0">
@@ -71,5 +75,6 @@ export default function AdminShell({ children }) {
         </main>
       </div>
     </div>
+    </>
   );
 }

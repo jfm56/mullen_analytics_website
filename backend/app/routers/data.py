@@ -626,6 +626,92 @@ async def get_upload_mva_hotspots(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/forecast/weather-traffic
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/forecast/weather-traffic")
+async def get_upload_weather_traffic_forecast(
+    upload_id: UUID,
+    horizon: int = 14,
+    weather: bool = True,
+    traffic: bool = True,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Weather- & traffic-aware EMS call forecast, by day and by area."""
+    horizon = max(1, min(31, horizon))
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_weather_traffic_forecast_service import forecast_calls_by_day_and_area
+    return forecast_calls_by_day_and_area(upload, db, horizon_days=horizon, weather=weather, traffic=traffic)
+
+
+# ============================================================================
+# GET /api/data/uploads/{upload_id}/forecast/ift
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/forecast/ift")
+async def get_upload_ift_outlook(
+    upload_id: UUID,
+    horizon: int = 14,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Interfacility-transport outlook — patterns, day-of-week forecast, and a schedule recommendation."""
+    horizon = max(1, min(31, horizon))
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_ift_service import get_ift_outlook
+    return get_ift_outlook(upload, db, horizon_days=horizon)
+
+
+# ============================================================================
+# GET /api/data/uploads/{upload_id}/ai-insights
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/ai-insights")
+async def get_upload_ai_insights(
+    upload_id: UUID,
+    refresh: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """AI executive interpretation of the dashboard — what's important, what it
+    means, and recommendations, grounded in the agency's computed metrics."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_ai_insights_service import interpret_dashboard
+    return await interpret_dashboard(upload, db, refresh=refresh)
+
+
+# ============================================================================
+# GET /api/data/uploads/{upload_id}/turnover
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/turnover")
+async def get_upload_turnover(
+    upload_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Staffing turnover/attrition outlook — an operational risk proxy from the
+    dispatch data, or the trained SBEMS termination forecast when HR separation
+    history is available."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_turnover_service import get_turnover_outlook
+    return get_turnover_outlook(upload, db)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 

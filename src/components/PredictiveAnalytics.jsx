@@ -218,12 +218,30 @@ function PatternsTab({ data }) {
 function StaffingTab({ data }) {
   const s = data.staffing || {};
   const riskCls = { High: 'bg-red-100 text-red-700', Moderate: 'bg-yellow-100 text-yellow-700', Low: 'bg-green-100 text-green-700' };
+  const rt = s.response_time || {};
+  const ift = s.ift_crew || {};
+  const hr = (h) => (h == null ? '' : h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`);
+  const emerg = s.emergency_units ?? s.recommended_units_peak;
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-        <Kpi label="Recommended peak units" value={s.recommended_units_peak ?? '—'} Icon={Users} />
-        <Kpi label="Avg calls / day" value={s.avg_calls_per_day ?? '—'} Icon={Activity} />
-        <Kpi label="Shift length" value={`${s.assumptions?.shift_length_hours ?? 12}h`} Icon={Clock} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <Kpi label="Emergency peak units" value={emerg ?? '—'} Icon={Users} />
+        <Kpi label="+ Dedicated IFT crew" value={ift.recommended ? `${ift.units} unit${ift.units > 1 ? 's' : ''}` : 'Not needed'} Icon={Activity} />
+        <Kpi label="Response P90" value={rt.p90_minutes != null ? `${rt.p90_minutes} min` : '—'} Icon={Clock} />
+        <Kpi label="Utilization" value={s.projected_unit_hour_utilization != null ? `${Math.round(s.projected_unit_hour_utilization * 100)}%` : '—'} Icon={Activity} />
+      </div>
+
+      <div className="mb-5 rounded-lg border bg-gray-50/70 px-4 py-3 text-xs text-gray-600 space-y-1">
+        <p>
+          <strong className="text-gray-800">{emerg} emergency units</strong> = {s.coverage_units} for station coverage
+          {rt.adjustment_units > 0 && <> {' + '}{rt.adjustment_units} for response time (P90 {rt.p90_minutes} min vs {rt.target_p90_minutes} min target)</>}
+          {rt.adjustment_units === 0 && rt.meeting_target === true && <> (response time on target)</>}.
+        </p>
+        {ift.recommended && (
+          <p>
+            <strong className="text-indigo-700">+ {ift.units} dedicated IFT crew</strong>, {ift.window_days} {hr(ift.window_start)}–{hr(ift.window_end)} (~{ift.weekly_transfers} transfers/wk) — keeps emergency units free. Total in the transfer window: <strong>{s.total_units_in_ift_window}</strong>.
+          </p>
+        )}
       </div>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm">

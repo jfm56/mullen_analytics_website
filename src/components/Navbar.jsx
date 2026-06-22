@@ -59,17 +59,15 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          <a
-            href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/signup"
             className="px-4 py-2 rounded text-sm font-semibold transition-all duration-200"
             style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
           >
-            Schedule a Call
-          </a>
+            Get started
+          </Link>
         </div>
 
         <button
@@ -102,16 +100,14 @@ export default function Navbar() {
                 {label}
               </Link>
             ))}
-            <a
-              href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/signup"
               className="mt-4 py-3 px-6 rounded text-sm font-semibold text-center transition-all duration-200"
               style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
               onClick={() => setOpen(false)}
             >
-              Schedule a Strategy Call
-            </a>
+              Get started
+            </Link>
           </div>
         </div>
       )}

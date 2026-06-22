@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.agency import Agency, AgencyFile, AuditLog, PipelineRun
-from ..models.user import User, Profile
+from ..models.user import User, Profile, Session as UserSession
 from ..models.data_upload import DataUpload, EMSDashboardMetrics
 from ..models.message import Message
 from ..models.task import EnhancedTask
@@ -314,6 +314,320 @@ async def list_audit_logs(
     if action:
         query = query.filter(AuditLog.action == action)
     return query.order_by(AuditLog.created_at.desc()).limit(limit).all()
+
+
+@router.get("/monitoring")
+async def admin_monitoring(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Unified monitoring — user roster/activity, recent audit log, and auth/security events."""
+    _require_admin(db, current_user)
+    now = datetime.utcnow()
+    day_ago = now - timedelta(days=1)
+    week_ago = now - timedelta(days=7)
+
+    def _safe(q, default=0):
+        try:
+            return q.scalar() or 0
+        except Exception:
+            return default
+
+    kpis = {
+        "total_users": _safe(db.query(func.count(Profile.id))),
+        "admins": _safe(db.query(func.count(Profile.id)).filter(Profile.role == "admin")),
+        "clients": _safe(db.query(func.count(Profile.id)).filter(Profile.role == "client")),
+        "active_24h": _safe(db.query(func.count(Profile.id)).filter(Profile.last_login >= day_ago)),
+        "active_7d": _safe(db.query(func.count(Profile.id)).filter(Profile.last_login >= week_ago)),
+        "active_sessions": _safe(db.query(func.count(UserSession.id)).filter(UserSession.expires_at > now)),
+        "logins_24h": _safe(db.query(func.count(UserSession.id)).filter(UserSession.created_at >= day_ago)),
+        "failed_24h": _safe(
+            db.query(func.count(AuditLog.id)).filter(AuditLog.action == "login_failed", AuditLog.created_at >= day_ago)
+        ),
+    }
+
+    try:
+        sess_by_user = {
+            str(r.user_id): int(r.n)
+            for r in db.query(UserSession.user_id, func.count(UserSession.id).label("n"))
+            .filter(UserSession.expires_at > now)
+            .group_by(UserSession.user_id)
+            .all()
+        }
+    except Exception:
+        sess_by_user = {}
+
+    users = []
+    try:
+        for prof, usr in db.query(Profile, User).outerjoin(User, Profile.id == User.id).all():
+            uid = str(prof.id)
+            last_login = prof.last_login or (usr.last_sign_in_at if usr else None)
+            users.append({
+                "id": uid,
+                "email": prof.email,
+                "full_name": prof.full_name,
+                "company": prof.company,
+                "role": prof.role,
+                "client_status": prof.client_status,
+                "plan": getattr(prof, "plan", None),
+                "plan_status": getattr(prof, "plan_status", None),
+                "last_login": last_login.isoformat() if last_login else None,
+                "active_sessions": sess_by_user.get(uid, 0),
+            })
+        users.sort(key=lambda u: (u["last_login"] or ""), reverse=True)
+    except Exception:
+        users = []
+
+    name_by_id = {u["id"]: (u["full_name"] or u["email"]) for u in users}
+
+    recent_activity = []
+    try:
+        for a in db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(40).all():
+            recent_activity.append({
+                "id": str(a.id),
+                "action": a.action,
+                "user": name_by_id.get(str(a.user_id)) if a.user_id else None,
+                "resource_type": a.resource_type,
+                "resource_id": a.resource_id,
+                "details": a.details,
+                "ip_address": a.ip_address,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+    except Exception:
+        recent_activity = []
+
+    security_events = []
+    try:
+        sec = ("login", "login_failed", "logout", "password_reset", "role_changed", "account_created")
+        for a in (
+            db.query(AuditLog).filter(AuditLog.action.in_(sec))
+            .order_by(AuditLog.created_at.desc()).limit(40).all()
+        ):
+            security_events.append({
+                "type": a.action,
+                "user": name_by_id.get(str(a.user_id)) if a.user_id else (a.details or {}).get("email"),
+                "ip_address": a.ip_address,
+                "details": a.details,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+    except Exception:
+        pass
+    try:
+        from ..models.impersonation import ImpersonationLog
+        for im in db.query(ImpersonationLog).order_by(ImpersonationLog.created_at.desc()).limit(20).all():
+            security_events.append({
+                "type": f"impersonation_{im.action}",
+                "user": name_by_id.get(str(im.admin_id)),
+                "target": name_by_id.get(str(im.client_id)),
+                "ip_address": im.ip_address,
+                "details": {"page_path": im.page_path},
+                "created_at": im.created_at.isoformat() if im.created_at else None,
+            })
+    except Exception:
+        pass
+    security_events.sort(key=lambda e: (e.get("created_at") or ""), reverse=True)
+    security_events = security_events[:40]
+
+    alerts = []
+    if kpis["failed_24h"] >= 5:
+        alerts.append({
+            "level": "warning",
+            "title": "Failed logins",
+            "message": f"{kpis['failed_24h']} failed login attempts in the last 24h.",
+        })
+
+    return {
+        "generated_at": now.isoformat(),
+        "kpis": kpis,
+        "alerts": alerts,
+        "users": users,
+        "recent_activity": recent_activity,
+        "security_events": security_events,
+    }
+
+
+# ============================================================================
+# Admin — Errors / issues + per-user login history (IT support visibility)
+# ============================================================================
+
+@router.get("/errors")
+async def admin_errors(
+    source: Optional[str] = None,
+    resolved: Optional[bool] = None,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Application errors (server 500s + client JS) plus user-reported issues, newest first."""
+    _require_admin(db, current_user)
+    from ..models.error_log import ErrorLog
+
+    name_by_id = {}
+    try:
+        for prof in db.query(Profile).all():
+            name_by_id[str(prof.id)] = prof.full_name or prof.email
+    except Exception:
+        pass
+
+    q = db.query(ErrorLog)
+    if source:
+        q = q.filter(ErrorLog.source == source)
+    if resolved is not None:
+        q = q.filter(ErrorLog.resolved == resolved)
+    errors = []
+    for e in q.order_by(ErrorLog.created_at.desc()).limit(min(limit, 500)).all():
+        errors.append({
+            "id": str(e.id),
+            "source": e.source,
+            "level": e.level,
+            "error_type": e.error_type,
+            "message": e.message,
+            "path": e.path,
+            "method": e.method,
+            "status_code": e.status_code,
+            "user": name_by_id.get(str(e.user_id)) if e.user_id else None,
+            "user_id": str(e.user_id) if e.user_id else None,
+            "ip_address": e.ip_address,
+            "resolved": bool(e.resolved),
+            "has_stacktrace": bool(e.stacktrace),
+            "created_at": e.created_at.isoformat() if e.created_at else None,
+        })
+
+    # User-reported issues (Feedback type='issue') surfaced alongside.
+    issues = []
+    try:
+        from ..models.feedback import Feedback
+        for f in (
+            db.query(Feedback).filter(Feedback.type == "issue")
+            .order_by(Feedback.created_at.desc()).limit(50).all()
+        ):
+            issues.append({
+                "id": str(f.id),
+                "title": f.title,
+                "body": f.body,
+                "status": f.status,
+                "user": name_by_id.get(str(f.user_id)) if f.user_id else None,
+                "admin_response": f.admin_response,
+                "created_at": f.created_at.isoformat() if f.created_at else None,
+            })
+    except Exception:
+        pass
+
+    day_ago = datetime.utcnow() - timedelta(days=1)
+    counts = {
+        "open_errors": _q_count(db, ErrorLog, ErrorLog.resolved.is_(False)),
+        "errors_24h": _q_count(db, ErrorLog, ErrorLog.created_at >= day_ago),
+        "open_issues": len([i for i in issues if i["status"] in ("open", "in_review")]),
+    }
+    return {"errors": errors, "issues": issues, "counts": counts}
+
+
+def _q_count(db, model, *filters) -> int:
+    try:
+        return db.query(func.count(model.id)).filter(*filters).scalar() or 0
+    except Exception:
+        return 0
+
+
+@router.get("/errors/{error_id}")
+async def admin_error_detail(
+    error_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Full error detail including stacktrace."""
+    _require_admin(db, current_user)
+    from ..models.error_log import ErrorLog
+    e = db.query(ErrorLog).filter(ErrorLog.id == error_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Error not found")
+    prof = db.query(Profile).filter(Profile.id == e.user_id).first() if e.user_id else None
+    return {
+        "id": str(e.id), "source": e.source, "level": e.level, "error_type": e.error_type,
+        "message": e.message, "path": e.path, "method": e.method, "status_code": e.status_code,
+        "stacktrace": e.stacktrace, "user_agent": e.user_agent, "ip_address": e.ip_address,
+        "user": (prof.full_name or prof.email) if prof else None,
+        "resolved": bool(e.resolved),
+        "created_at": e.created_at.isoformat() if e.created_at else None,
+    }
+
+
+@router.patch("/errors/{error_id}/resolve")
+async def admin_resolve_error(
+    error_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Toggle an error's resolved/reviewed state."""
+    _require_admin(db, current_user)
+    from ..models.error_log import ErrorLog
+    e = db.query(ErrorLog).filter(ErrorLog.id == error_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Error not found")
+    e.resolved = not bool(e.resolved)
+    db.commit()
+    return {"success": True, "resolved": bool(e.resolved)}
+
+
+@router.get("/users/{user_id}/logins")
+async def admin_user_logins(
+    user_id: UUID,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Per-user login history — each session row is one login (when, IP, device)."""
+    _require_admin(db, current_user)
+    now = datetime.utcnow()
+    prof = db.query(Profile).filter(Profile.id == user_id).first()
+    rows = (
+        db.query(UserSession).filter(UserSession.user_id == user_id)
+        .order_by(UserSession.created_at.desc()).limit(min(limit, 200)).all()
+    )
+    logins = [{
+        "id": str(s.id),
+        "created_at": s.created_at.isoformat() if s.created_at else None,
+        "ip_address": s.ip_address,
+        "user_agent": s.user_agent,
+        "active": bool(s.expires_at and s.expires_at > now),
+        "expires_at": s.expires_at.isoformat() if s.expires_at else None,
+    } for s in rows]
+    return {
+        "user_id": str(user_id),
+        "user": (prof.full_name or prof.email) if prof else None,
+        "email": prof.email if prof else None,
+        "total_logins": _q_count(db, UserSession, UserSession.user_id == user_id),
+        "logins": logins,
+    }
+
+
+@router.patch("/users/{user_id}/plan")
+async def admin_set_user_plan(
+    user_id: UUID,
+    plan: Optional[str] = None,
+    plan_status: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set or activate a user's membership plan (admin). e.g. mark a pending paid
+    signup 'active' once billing is arranged."""
+    _require_admin(db, current_user)
+    from ..services.plans import is_valid_plan
+    prof = db.query(Profile).filter(Profile.id == user_id).first()
+    if not prof:
+        raise HTTPException(status_code=404, detail="User not found")
+    if plan is not None:
+        if not is_valid_plan(plan):
+            raise HTTPException(status_code=400, detail="Invalid plan")
+        prof.plan = plan
+    if plan_status is not None:
+        if plan_status not in ("trialing", "pending", "active", "canceled"):
+            raise HTTPException(status_code=400, detail="Invalid plan_status")
+        prof.plan_status = plan_status
+        if plan_status == "active":
+            prof.client_status = "active"
+    db.commit()
+    return {"success": True, "plan": prof.plan, "plan_status": prof.plan_status}
 
 
 # ============================================================================

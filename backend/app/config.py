@@ -72,6 +72,16 @@ class Settings(BaseSettings):
     app_url: str = "http://localhost:3000"
     api_url: str = "http://localhost:8000"
     debug: bool = False
+
+    # SSO handoff to the EMS QA platform (one login). The portal signs a
+    # short-lived, single-use Ed25519 token; the EMS QA app verifies it with the
+    # matching public key and starts the member's session there. Set
+    # sso_private_key (PEM) in the environment; never commit it.
+    sso_private_key: str = ""  # PEM-encoded Ed25519 PRIVATE key (sign only)
+    sso_issuer: str = "mullen-portal"
+    sso_audience: str = "mullen-ems-qa"
+    sso_token_ttl_seconds: int = 60
+    ems_qa_sso_url: str = "https://app.mullenanalytics.com/api/auth/sso"
     
 
 
