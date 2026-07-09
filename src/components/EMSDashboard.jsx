@@ -4,7 +4,9 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   BarChart as RBarChart, Bar, LineChart as RLineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  ReferenceLine, LabelList,
 } from 'recharts';
+import CHART, { RESPONSE_TARGET_MIN } from '@/lib/chartTheme';
 import DashboardFilterBar from './DashboardFilterBar';
 import CompareMode from './CompareMode';
 import ColumnMappingModal from './ColumnMappingModal';
@@ -126,38 +128,37 @@ function ExportCSVButton({ data, filename = 'export.csv' }) {
 }
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
-function HBarChart({ data, labelKey = 'label', valueKey = 'count', color = '#3b82f6', top = 10, showAll = false }) {
+function HBarChart({ data, labelKey = 'label', valueKey = 'count', color, top = 10, showAll = false, refLine = null, unit = '' }) {
   const [expanded, setExpanded] = useState(false);
   if (!Array.isArray(data) || data.length === 0) return null;
   const displayCount = expanded || showAll ? data.length : top;
   const sliced = data.slice(0, displayCount);
-  const max = Math.max(...sliced.map(d => d[valueKey] || 0), 1);
-  const ROW_H = 32, LABEL_W = 180, BAR_AREA = 260, VALUE_W = 60;
-  const svgW = LABEL_W + BAR_AREA + VALUE_W;
-  const height = sliced.length * ROW_H + 8;
+  const barColor = color || CHART.primary;
+  const height = sliced.length * 30 + 24;
+  const truncate = (s) => { const r = String(s ?? ''); return r.length > 22 ? r.slice(0, 21) + '…' : r; };
+  const fmtValue = (v) => (typeof v === 'number' && !Number.isInteger(v)) ? v.toFixed(1) : v;
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <svg width={svgW} height={height} style={{ minWidth: Math.min(svgW, 500) }}>
-          {sliced.map((d, i) => {
-            const barW = Math.max(2, (d[valueKey] / max) * BAR_AREA);
-            const y = 4 + i * ROW_H;
-            const raw = String(d[labelKey] ?? '');
-            const label = raw.length > 28 ? raw.slice(0, 27) + '…' : raw;
-            const valStr = typeof d[valueKey] === 'number' && !Number.isInteger(d[valueKey])
-              ? d[valueKey].toFixed(1) : String(d[valueKey] ?? '');
-            return (
-              <g key={i}>
-                <text x={LABEL_W - 8} y={y + 20} textAnchor="end" fontSize={11} fill="#6b7280">{label}</text>
-                <rect x={LABEL_W} y={y + 6} width={barW} height={20} rx={3} fill={color} opacity={0.8} />
-                <text x={LABEL_W + barW + 6} y={y + 20} fontSize={11} fill="#374151" fontWeight="500">{valStr}</text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      {data.length > top && (
+      <ResponsiveContainer width="100%" height={height}>
+        <RBarChart data={sliced} layout="vertical" margin={{ top: 4, right: 54, left: 8, bottom: refLine ? 16 : 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} horizontal={false} />
+          <XAxis type="number" tick={CHART.tickSm} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey={labelKey} width={150} interval={0}
+            tick={CHART.tick} tickFormatter={truncate} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={CHART.tooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+            formatter={(v) => [`${fmtValue(v)}${unit}`, '']} />
+          {refLine != null && (
+            <ReferenceLine x={refLine.value} stroke={CHART.reference} strokeDasharray="4 3"
+              label={{ value: refLine.label, position: 'bottom', fontSize: 10, fill: CHART.reference }} />
+          )}
+          <Bar dataKey={valueKey} fill={barColor} radius={[0, 4, 4, 0]} maxBarSize={22}>
+            <LabelList dataKey={valueKey} position="right" formatter={fmtValue}
+              style={{ fontSize: 11, fill: '#374151', fontWeight: 500 }} />
+          </Bar>
+        </RBarChart>
+      </ResponsiveContainer>
+      {data.length > top && !showAll && (
         <button onClick={() => setExpanded(e => !e)}
           className="mt-2 text-xs text-blue-600 hover:underline">
           {expanded ? `Show Top ${top}` : `View All ${data.length} Categories`}
@@ -175,6 +176,7 @@ function TrendChart({ byDay, byWeek, byMonth }) {
   const [trend, setTrend] = useState(defaultTrend);
   const data = hasData(trend) ? datasets[trend] : [];
   const xKey = xKeys[trend];
+  const mean = data.length ? data.reduce((a, d) => a + (d.count || 0), 0) / data.length : 0;
   const fmtTick = (v) => !v ? '' : trend === 'month' ? String(v) : String(v).slice(5);
 
   return (
@@ -198,14 +200,18 @@ function TrendChart({ byDay, byWeek, byMonth }) {
         : (
           <ResponsiveContainer width="100%" height={300}>
             <RLineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey={xKey} tickFormatter={fmtTick} tick={{ fontSize: 11 }}
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+              <XAxis dataKey={xKey} tickFormatter={fmtTick} tick={CHART.tick}
                 angle={-30} textAnchor="end" interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 11 }} width={36} />
+              <YAxis tick={CHART.tick} width={36} />
               <Tooltip formatter={(v) => [v.toLocaleString(), 'Calls']}
                 labelFormatter={(l) => `${trend.charAt(0).toUpperCase() + trend.slice(1)}: ${l}`}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-              <Line type="monotone" dataKey="count" stroke="#3b82f6"
+                contentStyle={CHART.tooltip} />
+              {mean > 0 && (
+                <ReferenceLine y={mean} stroke={CHART.referenceAvg} strokeDasharray="4 3"
+                  label={{ value: `avg ${Math.round(mean)}`, position: 'right', fontSize: 10, fill: CHART.referenceAvg }} />
+              )}
+              <Line type="monotone" dataKey="count" stroke={CHART.primary}
                 strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
             </RLineChart>
           </ResponsiveContainer>
@@ -217,18 +223,23 @@ function TrendChart({ byDay, byWeek, byMonth }) {
 function DayOfWeekChart({ data }) {
   if (!Array.isArray(data) || !data.length) return null;
   const maxAvg = Math.max(...data.map(d => d.avg));
+  const mean = data.reduce((a, d) => a + (d.avg || 0), 0) / data.length;
   return (
     <div>
       <p className="text-xs text-gray-500 mb-3">Average daily calls per weekday</p>
       <ResponsiveContainer width="100%" height={240}>
         <RBarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="day" tickFormatter={(d) => d.slice(0, 3)} tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 11 }} width={36} />
-          <Tooltip formatter={(v) => [v, 'Avg Calls']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+          <XAxis dataKey="day" tickFormatter={(d) => d.slice(0, 3)} tick={CHART.tick} />
+          <YAxis tick={CHART.tick} width={36} />
+          <Tooltip formatter={(v) => [v, 'Avg Calls']} contentStyle={CHART.tooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
+          {mean > 0 && (
+            <ReferenceLine y={mean} stroke={CHART.referenceAvg} strokeDasharray="4 3"
+              label={{ value: `avg ${mean.toFixed(1)}`, position: 'right', fontSize: 10, fill: CHART.referenceAvg }} />
+          )}
           <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.avg === maxAvg ? '#2563eb' : '#93c5fd'} />
+              <Cell key={i} fill={entry.avg === maxAvg ? CHART.primary : CHART.primaryLight} />
             ))}
           </Bar>
         </RBarChart>
@@ -240,24 +251,80 @@ function DayOfWeekChart({ data }) {
 function HourBarChart({ data }) {
   if (!Array.isArray(data) || !data.length) return null;
   const maxVal = Math.max(...data.map(d => d.count));
+  const mean = data.reduce((a, d) => a + (d.count || 0), 0) / data.length;
   return (
     <div>
       <p className="text-xs text-gray-500 mb-3">Number of calls dispatched each hour</p>
       <ResponsiveContainer width="100%" height={240}>
         <RBarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} tick={{ fontSize: 10 }} interval={1} />
-          <YAxis tick={{ fontSize: 11 }} width={36} />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+          <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} tick={CHART.tickSm} interval={1} />
+          <YAxis tick={CHART.tick} width={36} />
           <Tooltip formatter={(v) => [v.toLocaleString(), 'Calls']}
             labelFormatter={(h) => `${h}:00 – ${(h + 1) % 24}:00`}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+            contentStyle={CHART.tooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
+          {mean > 0 && (
+            <ReferenceLine y={mean} stroke={CHART.referenceAvg} strokeDasharray="4 3"
+              label={{ value: `avg ${mean.toFixed(1)}`, position: 'right', fontSize: 10, fill: CHART.referenceAvg }} />
+          )}
           <Bar dataKey="count" radius={[3, 3, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.count === maxVal ? '#4f46e5' : '#a5b4fc'} />
+              <Cell key={i} fill={entry.count === maxVal ? CHART.accent : CHART.accentLight} />
             ))}
           </Bar>
         </RBarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ─── Response Lifecycle (ZOLL interval timeline) ───────────────────────────────
+// A proportional, single-bar timeline of where a median call's time goes —
+// chute → response → on-scene → transport → turnaround — so leadership can see
+// the whole call lifecycle at a glance, not just the headline response figure.
+function ResponseLifecycle({ intervals }) {
+  const SEGMENTS = [
+    { key: 'chute_time',      label: 'Chute' },
+    { key: 'response_time',   label: 'Response' },
+    { key: 'scene_time',      label: 'On scene' },
+    { key: 'transport_time',  label: 'Transport' },
+    { key: 'turnaround_time', label: 'Turnaround' },
+  ].map(s => ({ ...s, color: CHART.lifecycle[s.key] }));
+  const segs = SEGMENTS
+    .map(s => ({ ...s, min: intervals?.[s.key]?.median_minutes }))
+    .filter(s => typeof s.min === 'number' && s.min > 0);
+  if (segs.length < 2) return null;
+  const total = segs.reduce((a, s) => a + s.min, 0);
+  let cum = 0;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Median call lifecycle</p>
+        <p className="text-[11px] text-gray-400 tabular-nums">{fmtMin(total)} · dispatch → available</p>
+      </div>
+      <div className="flex w-full h-9 rounded-lg overflow-hidden ring-1 ring-black/5">
+        {segs.map((s) => {
+          const pct = (s.min / total) * 100;
+          cum += s.min;
+          return (
+            <div key={s.key}
+              title={`${s.label}: ${fmtMin(s.min)} median · cumulative ${fmtMin(cum)}`}
+              style={{ width: `${pct}%`, backgroundColor: s.color }}
+              className="flex items-center justify-center text-[10px] font-semibold text-white/95 overflow-hidden whitespace-nowrap select-none">
+              {pct > 9 ? fmtMin(s.min) : ''}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+        {segs.map(s => (
+          <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-gray-600">
+            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: s.color }} />
+            {s.label} <span className="text-gray-400 tabular-nums">{fmtMin(s.min)}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -446,7 +513,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
           <StatCard icon={Clock}     label="Median Response"  value={fmtMin(rt.median_minutes)}   color="purple"
             tooltip="The middle response time. Half of calls were faster, half were slower." />
           <StatCard icon={Activity}  label="Avg Response"     value={fmtMin(rt.mean_minutes)}     color="purple"
-            tooltip="Dispatch → on-scene (total response time, includes turnout). Travel-only time is in the Response Times section." />
+            tooltip="ZOLL response time: en route → on-scene. Chute time, dispatch → on-scene, and the full interval breakdown are in the Response Times section." />
           <StatCard icon={Zap}       label="P90 Response"     value={fmtMin(rt.p90_minutes)}      color="orange"
             tooltip="90% of calls were completed at or below this response time." />
         </div>
@@ -513,7 +580,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
               {cvTab === 'type' && (
                 <>
                   <MappingWarning reason={cv.by_incident_type?.reason} onMap={onMap} />
-                  <HBarChart data={cv.by_incident_type} color="#f59e0b" top={10} />
+                  <HBarChart data={cv.by_incident_type} color={CHART.warn} top={10} />
                   <div className="flex justify-end mt-2">
                     <ExportCSVButton data={cv.by_incident_type} filename="calls_by_type.csv" />
                   </div>
@@ -522,7 +589,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
               {cvTab === 'muni' && (
                 <>
                   <MappingWarning reason={cv.by_municipality?.reason} onMap={onMap} />
-                  <HBarChart data={cv.by_municipality} color="#10b981" top={10} />
+                  <HBarChart data={cv.by_municipality} color={CHART.good} top={10} />
                   <div className="flex justify-end mt-2">
                     <ExportCSVButton data={cv.by_municipality} filename="calls_by_municipality.csv" />
                   </div>
@@ -553,7 +620,21 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                       tooltip="90% of calls completed at or below this time." />
                     <StatCard label="Longest"     value={fmtMin(rt.max_minutes)}    color="red" />
                   </div>
-                  {(rt.dispatch_to_enroute_median != null || rt.enroute_to_arrival_median != null || rt.received_to_dispatch_median != null) && (
+                  {rt.intervals && <ResponseLifecycle intervals={rt.intervals} />}
+                  {rt.intervals && Object.keys(rt.intervals).length > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        ZOLL interval breakdown <span className="font-normal normal-case text-gray-400">(median · P90)</span>
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {Object.entries(rt.intervals).map(([k, v]) => (
+                          <StatCard key={k} label={v.label}
+                            value={`${fmtMin(v.median_minutes)} · ${fmtMin(v.p90_minutes)}`}
+                            color={k === 'response_time' ? 'purple' : k === 'dispatch_to_arrival' ? 'blue' : 'indigo'} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (rt.dispatch_to_enroute_median != null || rt.enroute_to_arrival_median != null || rt.received_to_dispatch_median != null) && (
                     <div>
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Response Time Breakdown</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -565,8 +646,8 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                     </div>
                   )}
                   <p className="text-xs text-gray-500">
-                    Headline figures are <strong>{rt.metric_label || rt.metric?.replace(/_/g, ' ')}</strong>.
-                    {rt.travel_time && <> Travel time (en route → on-scene) median is {fmtMin(rt.travel_time.median_minutes)}; total response also includes ~{fmtMin(rt.turnout_median_minutes)} turnout.</>}
+                    Headline figures are <strong>{rt.metric_label || rt.metric?.replace(/_/g, ' ')}</strong>, aligned with ZOLL emsCharts (en route → on-scene).
+                    {rt.intervals?.dispatch_to_arrival && <> Dispatch → on-scene (chute + response) median is {fmtMin(rt.intervals.dispatch_to_arrival.median_minutes)}.</>}
                   </p>
                   <p className="text-xs text-gray-400 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
                     <strong>P90</strong> is often more useful than average because it shows the slower end of your response performance.
@@ -577,7 +658,8 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                 <div>
                   <p className="text-xs text-gray-500 mb-3">Average response time per unit (minutes)</p>
                   <HBarChart data={up.avg_response_time_by_unit} labelKey="unit"
-                    valueKey="avg_response_time_minutes" color="#f59e0b" top={10} />
+                    valueKey="avg_response_time_minutes" color={CHART.warn} unit=" min" top={10}
+                    refLine={{ value: RESPONSE_TARGET_MIN, label: `${RESPONSE_TARGET_MIN}m target` }} />
                 </div>
               )}
             </div>
@@ -605,13 +687,14 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-medium text-gray-600 mb-2">Calls per Unit</p>
-                <HBarChart data={unitsToShow} labelKey="unit" valueKey="calls" color="#3b82f6" showAll={true} />
+                <HBarChart data={unitsToShow} labelKey="unit" valueKey="calls" color={CHART.primary} showAll={true} />
               </div>
               {rtByUnitToShow.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-2">Avg Response Time (min)</p>
                   <HBarChart data={rtByUnitToShow} labelKey="unit" valueKey="avg_response_time_minutes"
-                    color="#f59e0b" showAll={true} />
+                    color={CHART.warn} unit=" min" showAll={true}
+                    refLine={{ value: RESPONSE_TARGET_MIN, label: `${RESPONSE_TARGET_MIN}m target` }} />
                 </div>
               )}
             </div>
@@ -725,6 +808,23 @@ function FilteredMetricsView({ metrics }) {
   const cv = metrics.call_volume    || {};
   const rt = metrics.response_times || {};
 
+  // Distinguish "data can't be loaded" (cleaned bytes missing on the server)
+  // from "filter matched nothing" — otherwise the KPIs render as blank "—".
+  const unavailable = !!metrics.error;
+  const noMatch = !unavailable && (metrics.empty || (cv.total == null && cv.total_calls == null));
+  if (unavailable || noMatch) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+        <span>
+          {unavailable
+            ? "This upload's cleaned data isn't available on the server, so filtered views can't be computed. Re-upload the CSV to restore filtering, predictions, and outlooks for it."
+            : 'No calls match the selected filters.'}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {metrics.filters_applied && Object.keys(metrics.filters_applied).length > 0 && (
@@ -836,11 +936,26 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
         <div className="text-xs text-blue-500 animate-pulse px-1">Applying filters…</div>
       )}
 
-      {showFiltered
-        ? <FilteredMetricsView metrics={filteredMetrics} />
-        : <StaticDashboardView metrics={metrics} generatedAt={generatedAt}
-            uploadInfo={uploadInfo} onMap={uploadId ? () => setMappingOpen(true) : null} />
-      }
+      {showFiltered ? (
+        (filteredMetrics.error || filteredMetrics.empty) ? (
+          <FilteredMetricsView metrics={filteredMetrics} />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 flex-wrap text-xs bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+              <span className="font-semibold text-blue-700">Filtered view</span>
+              <span className="text-blue-500">· {Number(filteredMetrics.row_count || 0).toLocaleString()} rows</span>
+              {(filteredMetrics.filters_applied || []).map((f, i) => (
+                <span key={i} className="bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full">{f}</span>
+              ))}
+            </div>
+            <StaticDashboardView metrics={filteredMetrics} generatedAt={null}
+              uploadInfo={uploadInfo} onMap={uploadId ? () => setMappingOpen(true) : null} />
+          </div>
+        )
+      ) : (
+        <StaticDashboardView metrics={metrics} generatedAt={generatedAt}
+          uploadInfo={uploadInfo} onMap={uploadId ? () => setMappingOpen(true) : null} />
+      )}
 
       {mappingOpen && (
         <ColumnMappingModal uploadId={uploadId} onClose={() => setMappingOpen(false)} onSaved={handleMappingSaved} />

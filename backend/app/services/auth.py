@@ -7,7 +7,10 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..models.user import User, Profile, Session as UserSession, PasswordResetToken
+from ..models.user import (
+    User, Profile, Session as UserSession, PasswordResetToken,
+    EmailVerificationToken,
+)
 
 settings = get_settings()
 
@@ -159,6 +162,62 @@ def use_password_reset_token(db: Session, token: str, new_password: str) -> Opti
     return user
 
 
+def create_email_verification_token(db: Session, user_id: str) -> str:
+    """Create an email verification token. Returns the raw token."""
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hash_token(raw_token)
+
+    expires_at = datetime.utcnow() + timedelta(hours=settings.email_verification_expire_hours)
+
+    verification_token = EmailVerificationToken(
+        user_id=user_id,
+        token_hash=token_hash,
+        expires_at=expires_at,
+    )
+
+    db.add(verification_token)
+    db.commit()
+
+    return raw_token
+
+
+def validate_email_verification_token(db: Session, token: str) -> Optional[EmailVerificationToken]:
+    """Validate an email verification token (unexpired and unused)."""
+    token_hash = hash_token(token)
+
+    return db.query(EmailVerificationToken).filter(
+        EmailVerificationToken.token_hash == token_hash,
+        EmailVerificationToken.expires_at > datetime.utcnow(),
+        EmailVerificationToken.used_at.is_(None),
+    ).first()
+
+
+def use_email_verification_token(db: Session, token: str) -> Optional[User]:
+    """Consume an email verification token and mark the user's email confirmed.
+
+    Returns the User on success, or None if the token is invalid/expired/used.
+    Idempotent-friendly: if the user is already confirmed, still succeeds.
+    """
+    verification_token = validate_email_verification_token(db, token)
+
+    if not verification_token:
+        return None
+
+    user = db.query(User).filter(User.id == verification_token.user_id).first()
+
+    if not user:
+        return None
+
+    user.email_confirmed = True
+    user.updated_at = datetime.utcnow()
+    verification_token.used_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """Authenticate a user by email and password."""
     user = db.query(User).filter(User.email == email.lower()).first()
@@ -188,11 +247,18 @@ def create_user_with_profile(
     full_name: Optional[str] = None,
     company: Optional[str] = None,
     role: str = "client",
+    email_confirmed: bool = False,
 ) -> User:
-    """Create a new user with profile."""
+    """Create a new user with profile.
+
+    email_confirmed defaults to False so public self-serve signups must verify.
+    Admin-created/invited users (and seed/admin scripts) pass True since a human
+    has already vouched for the address.
+    """
     user = User(
         email=email.lower(),
         password_hash=hash_password(password),
+        email_confirmed=email_confirmed,
     )
     
     db.add(user)

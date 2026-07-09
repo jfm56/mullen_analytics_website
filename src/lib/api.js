@@ -111,6 +111,25 @@ export const auth = {
       body: JSON.stringify(data),
     });
   },
+
+  /**
+   * Verify an email address using the token from the verification email (public)
+   */
+  async verifyEmail(token) {
+    return apiFetch('/api/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  /**
+   * Resend the verification email for the signed-in user
+   */
+  async resendVerification() {
+    return apiFetch('/api/auth/resend-verification', {
+      method: 'POST',
+    });
+  },
 };
 
 /**
@@ -118,6 +137,14 @@ export const auth = {
  */
 export const plans = {
   list: () => apiFetch('/api/plans'),
+};
+
+/**
+ * Billing — self-serve subscription checkout (Stripe)
+ */
+export const billing = {
+  config: () => apiFetch('/api/billing/config'),
+  checkout: (plan) => apiFetch('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) }),
 };
 
 /**
@@ -227,6 +254,11 @@ export const messages = {
    */
   async list() {
     return apiFetch('/api/messages/');
+  },
+
+  /** Client → admin: send a message to the Mullen Analytics team */
+  contact(data) {
+    return apiFetch('/api/messages/contact', { method: 'POST', body: JSON.stringify(data) });
   },
   
   /**
@@ -756,6 +788,15 @@ export const dataExplorer = {
 };
 
 /**
+ * Date-range comparison across "like" files (pooled, sliced by FROM/TO)
+ */
+export const dateRange = {
+  groups: () => apiFetch('/api/data/combinable-groups'),
+  compare: (body) =>
+    apiFetch('/api/data/date-range-compare', { method: 'POST', body: JSON.stringify(body) }),
+};
+
+/**
  * Generic API fetch for other endpoints
  */
 export { apiFetch };
@@ -774,12 +815,14 @@ export default {
   impersonation,
   admin,
   plans,
+  billing,
   invoices,
   uploads,
   reports,
   dataUploads,
   dataExplorer,
   dashboardFilter,
+  dateRange,
   columnMapping,
   fetch: apiFetch,
 };

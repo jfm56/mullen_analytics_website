@@ -9,18 +9,20 @@ import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
 import IftOutlook from '@/components/IftOutlook';
 import PageTabs from '@/components/ui/PageTabs';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
-import ResponseTimeRisk from '@/components/ResponseTimeRisk';
+import EmergencyTransportOutlook from '@/components/EmergencyTransportOutlook';
 import MvaHotspots from '@/components/MvaHotspots';
+import DateRangeCompare from '@/components/DateRangeCompare';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonCard } from '@/components/ui/LoadingSkeleton';
 import Link from 'next/link';
-import { BarChart2, X, Plus, SlidersHorizontal, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Search, LayoutDashboard, CalendarClock, MapPin } from 'lucide-react';
+import { BarChart2, X, Plus, SlidersHorizontal, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Search, LayoutDashboard, CalendarClock, MapPin, CalendarRange } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend
 } from 'recharts';
+import CHART from '@/lib/chartTheme';
 
-const SLOT_COLORS = ['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED'];
+const SLOT_COLORS = CHART.series;
 
 async function apiFetch(path, opts) {
   const res = await fetch(`/api/proxy${path}`, { credentials: 'include', ...opts });
@@ -237,7 +239,7 @@ function CompareCharts({ slots, slotUploads, slotMetrics }) {
   const hasData = slots.some(id => slotMetrics[id] && Object.keys(slotMetrics[id]).length > 0);
   if (!hasData) return <div className="bg-white border rounded-xl p-8 text-center text-sm text-gray-400">Loading chart data…</div>;
 
-  const tooltipStyle = { fontSize: 11, borderRadius: 8 };
+  const tooltipStyle = CHART.tooltip;
 
   return (
     <div className="space-y-4">
@@ -246,7 +248,7 @@ function CompareCharts({ slots, slotUploads, slotMetrics }) {
         <h3 className="text-sm font-semibold text-gray-900 mb-4">Call Volume</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={callVolData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid}/>
             <XAxis dataKey="name" tick={{ fontSize: 11 }}/>
             <YAxis tick={{ fontSize: 10 }}/>
             <Tooltip contentStyle={tooltipStyle}/>
@@ -261,7 +263,7 @@ function CompareCharts({ slots, slotUploads, slotMetrics }) {
         <h3 className="text-sm font-semibold text-gray-900 mb-1">Response Time Breakdown <span className="text-xs font-normal text-gray-400">(minutes)</span></h3>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={rtData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid}/>
             <XAxis dataKey="name" tick={{ fontSize: 10 }}/>
             <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `${v}m`}/>
             <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [rtFmt(v), n]}/>
@@ -514,6 +516,7 @@ export default function PortalDashboardPage() {
             { id: 'predictions', label: 'Predictions', icon: <TrendingUp size={15} /> },
             { id: 'scheduling',  label: 'Scheduling',  icon: <CalendarClock size={15} /> },
             { id: 'geographic',  label: 'Geographic',  icon: <MapPin size={15} /> },
+            { id: 'dateranges',  label: 'Compare Dates', icon: <CalendarRange size={15} /> },
           ]}
         />
 
@@ -551,7 +554,7 @@ export default function PortalDashboardPage() {
         {dashTab === 'scheduling' && (
           <div className="space-y-5">
             <IftOutlook uploadId={selectedId} />
-            <ResponseTimeRisk uploadId={selectedId} />
+            <EmergencyTransportOutlook uploadId={selectedId} />
           </div>
         )}
 
@@ -559,6 +562,12 @@ export default function PortalDashboardPage() {
           <div className="space-y-5">
             <GeographicHeatMap uploadId={selectedId} />
             <MvaHotspots uploadId={selectedId} />
+          </div>
+        )}
+
+        {dashTab === 'dateranges' && (
+          <div className="space-y-5">
+            <DateRangeCompare />
           </div>
         )}
         </>

@@ -23,6 +23,7 @@ class User(Base):
     profile = relationship("Profile", back_populates="user", uselist=False)
     sessions = relationship("Session", back_populates="user")
     password_reset_tokens = relationship("PasswordResetToken", back_populates="user")
+    email_verification_tokens = relationship("EmailVerificationToken", back_populates="user")
 
 
 class Profile(Base):
@@ -76,9 +77,13 @@ class Profile(Base):
     # Self-serve membership / plan (chosen at public signup; activated by an admin
     # or, later, by Stripe subscription billing).
     plan = Column(String(50), default="free_trial")       # free_trial|starter|professional|enterprise
-    plan_status = Column(String(50), default="trialing")   # trialing|pending|active|canceled
+    plan_status = Column(String(50), default="trialing")   # trialing|pending|active|past_due|canceled
     trial_ends_at = Column(DateTime, nullable=True)
     plan_selected_at = Column(DateTime, nullable=True)
+    # Stripe subscription linkage (set by the billing webhook; no card data stored)
+    stripe_customer_id = Column(String(255), nullable=True)
+    stripe_subscription_id = Column(String(255), nullable=True)
+    extra_dataset_slots = Column(Integer, default=0)  # add-on: each adds +1 active-dataset slot
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -116,3 +121,22 @@ class PasswordResetToken(Base):
     
     # Relationships
     user = relationship("User", back_populates="password_reset_tokens")
+
+
+class EmailVerificationToken(Base):
+    """Email verification tokens for public self-serve signups.
+
+    Mirrors PasswordResetToken: the raw token is emailed, only its sha256 hash is
+    stored, and it is single-use (used_at) with an expiry.
+    """
+    __tablename__ = "email_verification_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(255), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="email_verification_tokens")

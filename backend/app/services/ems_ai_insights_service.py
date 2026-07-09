@@ -42,8 +42,10 @@ _SYSTEM = (
     "Rules:\n"
     "- Ground EVERY statement in the provided numbers. Never invent figures, trends, or causes.\n"
     "- Be specific and quantitative — cite the actual values, days, hours, and percentages.\n"
-    "- Distinguish RESPONSE time (dispatch -> on-scene, includes crew turnout) from TRAVEL time "
-    "(en route -> on-scene). Do not conflate them.\n"
+    "- Response-time terms follow ZOLL emsCharts. RESPONSE time = en route -> on-scene (the "
+    "headline figure). CHUTE time = dispatch -> en route (crew turnout). DISPATCH-TO-ON-SCENE = "
+    "chute + response, and it is THIS interval the ~9-minute time-to-scene target is measured "
+    "against — not the shorter headline response. Cite the interval you mean; never conflate them.\n"
     "- Respect data caveats: if history is short or a sample is small, say so and soften claims.\n"
     "- Recommendations must be concrete, tied to the data (staffing windows, station coverage, "
     "IFT scheduling, response-time targets), and prioritized.\n"
@@ -65,8 +67,19 @@ _JSON_CONTRACT = (
 )
 
 
+def _api_key() -> str:
+    """Resolve the Anthropic key, ensuring the config .env -> os.environ bridge has
+    run first (pydantic-settings loads .env into Settings, not os.environ)."""
+    try:
+        from ..config import get_settings
+        get_settings()
+    except Exception:  # noqa: BLE001
+        pass
+    return os.getenv("ANTHROPIC_API_KEY", "").strip()
+
+
 def is_insights_available() -> bool:
-    return bool(os.getenv("ANTHROPIC_API_KEY", "").strip())
+    return bool(_api_key())
 
 
 def _top_labels(obj: Any, n: int = 5) -> List[str]:
@@ -139,17 +152,32 @@ def _build_summary(upload, db) -> Dict[str, Any]:
     resp = None
     if rt.get("available"):
         st_rt = staffing.get("response_time") or {}
-        travel = rt.get("travel_time") or {}
+        ivs = rt.get("intervals") or {}
+
+        def _iv(name: str) -> Optional[Dict[str, Any]]:
+            v = ivs.get(name)
+            return {"median_min": v.get("median_minutes"), "p90_min": v.get("p90_minutes")} if v else None
+
+        d2a = ivs.get("dispatch_to_arrival") or {}
         resp = {
-            "metric": rt.get("metric_label") or rt.get("metric"),
-            "median_min": rt.get("median_minutes"),
-            "p90_min": rt.get("p90_minutes"),
+            # Headline = ZOLL response (en route -> on-scene).
+            "headline_metric": rt.get("metric_label") or rt.get("metric"),
+            "response_median_min": rt.get("median_minutes"),
+            "response_p90_min": rt.get("p90_minutes"),
+            "sample_size": rt.get("sample_size"),
+            # Full ZOLL interval set so the read can describe the call lifecycle.
+            "intervals_min": {
+                k: _iv(k) for k in (
+                    "chute_time", "response_time", "scene_time", "transport_time",
+                    "turnaround_time", "total_time", "dispatch_to_arrival",
+                ) if ivs.get(k)
+            },
+            # The time-to-scene target is measured on DISPATCH -> on-scene, not the
+            # shorter headline response — keep these explicitly distinct for the model.
+            "time_to_scene_p90_min": d2a.get("p90_minutes"),
+            "target_metric": "dispatch_to_on_scene_p90",
             "target_p90_min": st_rt.get("target_p90_minutes"),
             "meeting_target": st_rt.get("meeting_target"),
-            "turnout_median_min": rt.get("turnout_median_minutes"),
-            "travel_median_min": travel.get("median_minutes"),
-            "travel_p90_min": travel.get("p90_minutes"),
-            "sample_size": rt.get("sample_size"),
         }
 
     staff = None
@@ -303,7 +331,7 @@ async def interpret_dashboard(upload, db, refresh: bool = False) -> Dict[str, An
     if not refresh and cache_key in _CACHE:
         return {**_CACHE[cache_key], "cached": True}
 
-    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    api_key = _api_key()
     summary_json = json.dumps(summary, indent=2, default=str)
     payload = {
         "model": _MODEL,

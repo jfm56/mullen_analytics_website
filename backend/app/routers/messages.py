@@ -24,17 +24,23 @@ class MessageResponse(BaseModel):
     id: UUID
     user_id: UUID
     from_name: Optional[str] = None
+    direction: Optional[str] = "outbound"
     subject: str
     body: str
     read_at: Optional[datetime] = None
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class MessageUpdate(BaseModel):
     read_at: Optional[datetime] = None
+
+
+class MessageContact(BaseModel):
+    subject: Optional[str] = "Message from client"
+    body: str
 
 
 @router.get("/", response_model=List[MessageResponse])
@@ -154,6 +160,31 @@ async def get_all_messages(
     """Get all messages (admin only)."""
     messages = db.query(Message).order_by(Message.created_at.desc()).limit(100).all()
     return messages
+
+
+@router.post("/contact", response_model=MessageResponse)
+async def contact_admin(
+    payload: MessageContact,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Client → admin: send a message to the Mullen Analytics team. Stored as an
+    inbound message so it surfaces in the admin Messages view."""
+    if not (payload.body or "").strip():
+        raise HTTPException(status_code=400, detail="Message body is required")
+    profile = db.query(Profile).filter(Profile.id == current_user.id).first()
+    sender = (profile.full_name or profile.company or current_user.email) if profile else current_user.email
+    msg = Message(
+        user_id=current_user.id,
+        from_name=sender,
+        direction="inbound",
+        subject=(payload.subject or "Message from client").strip()[:500] or "Message from client",
+        body=payload.body.strip(),
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
 
 
 @router.post("/admin", response_model=MessageResponse)

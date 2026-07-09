@@ -53,7 +53,9 @@ from ..services.ems_filter_service import (
     bulk_ignore_columns,
     restore_columns,
 )
+from ..services.ems_daterange_service import combinable_groups, daterange_compare
 from ..models.user import Profile, User
+from ..services.plan_access import require_feature, enforce_dataset_limit
 from ..models.project import Project
 from .auth import get_current_user
 
@@ -83,6 +85,23 @@ def _assert_upload_access(db: Session, upload: DataUpload, user: User) -> None:
     """Raise 403 if a non-admin user tries to access another client's upload."""
     if not _is_admin(db, user) and str(upload.client_id) != str(user.id):
         raise HTTPException(status_code=403, detail="Access denied")
+
+
+def _effective_client_id(request: Request, current_user: User, db: Session) -> Optional[str]:
+    """The client whose data the caller is acting on: their own id, or the
+    impersonation target when an admin is using the client portal."""
+    if _is_admin(db, current_user):
+        return request.cookies.get("ma_impersonate")
+    return str(current_user.id)
+
+
+def _client_cleaned_uploads(db: Session, client_id: str) -> List[DataUpload]:
+    return (
+        db.query(DataUpload)
+        .filter(DataUpload.client_id == client_id, DataUpload.upload_status == "CLEANED")
+        .order_by(DataUpload.created_at)
+        .all()
+    )
 
 
 def _upload_dir(client_id: str) -> Path:
@@ -138,6 +157,13 @@ class CompareGroupSpec(BaseModel):
 class CompareRequest(BaseModel):
     group_a: CompareGroupSpec
     group_b: CompareGroupSpec
+
+
+class DateRangeCompareRequest(BaseModel):
+    # Files to pool (must be "like" files the caller can access) + FROM/TO windows.
+    # Each window is {label?, from, to} (keys read directly by the service).
+    upload_ids: List[str]
+    windows: List[Dict[str, Any]]
 
 
 class ColumnSettingPatch(BaseModel):
@@ -207,6 +233,17 @@ async def upload_csv(
 ):
     """Upload a CSV file. Admin must supply client_id; clients auto-use their own id."""
     admin = _is_admin(db, current_user)
+
+    # Email-verification gate: unverified self-serve trial users can log in and
+    # explore the portal, but uploading (storage + compute) is gated until they
+    # verify their email — this limits abuse from fake/typo'd signups. Admins
+    # (including admins uploading on behalf of a client) bypass this check.
+    if not admin and not current_user.email_confirmed:
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email address to upload data. Check your inbox for the "
+                   "verification link, or use the Resend button on the banner.",
+        )
 
     # Resolve effective client_id
     if admin:
@@ -425,6 +462,7 @@ async def clean_upload(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    enforce_dataset_limit(db, current_user, upload)
 
     if not Path(upload.file_path).exists():
         raise HTTPException(status_code=404, detail="Original file not found on disk")
@@ -712,6 +750,28 @@ async def get_upload_turnover(
 
 
 # ============================================================================
+# GET /api/data/uploads/{upload_id}/emergency-transport
+# ============================================================================
+
+@router.get("/uploads/{upload_id}/emergency-transport")
+async def get_upload_emergency_transport(
+    upload_id: UUID,
+    horizon: int = 14,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Emergency-transport outlook — emergency call volume, transport split,
+    day/hour patterns, scene areas, and a near-term demand forecast."""
+    horizon = max(1, min(31, horizon))
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_emergency_transport_service import get_emergency_transport_outlook
+    return get_emergency_transport_outlook(upload, db, horizon_days=horizon)
+
+
+# ============================================================================
 # GET /api/data/clients/{client_id}/dashboard
 # ============================================================================
 
@@ -879,6 +939,7 @@ async def get_data_profile(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "data_explorer")
 
     cached = db.query(DataProfile).filter(DataProfile.data_upload_id == upload_id).first()
     if cached and not refresh:
@@ -1012,6 +1073,7 @@ async def query_upload(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "data_explorer")
     limit = min(body.limit, 500)
     return query_dataset(
         upload, db,
@@ -1040,6 +1102,7 @@ async def get_upload_chart_data(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "data_explorer")
     return get_chart_data(
         upload, db,
         x_col=body.x_col,
@@ -1103,6 +1166,7 @@ async def dashboard_compare(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
+    require_feature(db, current_user, "compare_years")
     return compare_dashboard(
         upload, db,
         group_a_label=body.group_a.label,
@@ -1110,6 +1174,48 @@ async def dashboard_compare(
         group_b_label=body.group_b.label,
         group_b_filters=body.group_b.filters.model_dump(exclude_none=False),
     )
+
+
+# ============================================================================
+# GET  /api/data/combinable-groups   — cleaned files grouped by matching schema
+# POST /api/data/date-range-compare  — full metrics per FROM/TO window (pooled)
+# ============================================================================
+
+@router.get("/combinable-groups")
+async def get_combinable_groups(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Group the caller's cleaned uploads by identical column structure, so only
+    compatible ("like") files get pooled for date-range comparison."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        return {"groups": []}
+    uploads = _client_cleaned_uploads(db, client_id)
+    return {"groups": combinable_groups(uploads, db)}
+
+
+@router.post("/date-range-compare")
+async def post_date_range_compare(
+    body: DateRangeCompareRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Pool the selected (like) files and return full dashboard metrics for each
+    user-defined FROM/TO window, for side-by-side comparison."""
+    if not body.upload_ids:
+        raise HTTPException(status_code=400, detail="Select at least one file to compare.")
+    if not body.windows:
+        raise HTTPException(status_code=400, detail="Add at least one date window.")
+    uploads: List[DataUpload] = []
+    for uid in body.upload_ids:
+        up = db.query(DataUpload).filter(DataUpload.id == uid).first()
+        if not up:
+            raise HTTPException(status_code=404, detail=f"Upload {uid} not found")
+        _assert_upload_access(db, up, current_user)
+        uploads.append(up)
+    return daterange_compare(uploads, body.windows, db)
 
 
 # ============================================================================

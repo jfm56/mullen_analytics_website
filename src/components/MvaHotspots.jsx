@@ -5,6 +5,7 @@ import { Car, Clock, CalendarDays, CloudRain } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
+import CHART from '@/lib/chartTheme';
 
 const TownshipMap = dynamic(() => import('./TownshipMap'), {
   ssr: false,
@@ -99,7 +100,7 @@ export default function MvaHotspots({ uploadId }) {
 
         {points.length > 0 && (
           <div>
-            <TownshipMap center={data.center} points={points} color="#DC2626" />
+            <TownshipMap center={data.center} points={points} color={CHART.bad} />
             <p className="text-[11px] text-gray-500 mt-2"><span className="font-medium text-gray-600">Circle size = collision volume.</span> Red = MVA concentration by township.</p>
           </div>
         )}
@@ -109,12 +110,12 @@ export default function MvaHotspots({ uploadId }) {
             <p className="text-xs font-semibold text-gray-600 mb-2">Collisions per day by weather</p>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={weather} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v, n, p) => [`${v} / day`, `${p.payload.total_mvas} over ${p.payload.days} days`]} />
                 <Bar dataKey="mvas_per_day" radius={[4, 4, 0, 0]}>
-                  {weather.map((w) => <Cell key={w.condition} fill={clear && w.mvas_per_day > clear.mvas_per_day ? '#DC2626' : '#F59E0B'} />)}
+                  {weather.map((w) => <Cell key={w.condition} fill={clear && w.mvas_per_day > clear.mvas_per_day ? CHART.bad : CHART.warn} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -132,11 +133,11 @@ export default function MvaHotspots({ uploadId }) {
             <p className="text-xs font-semibold text-gray-600 mb-2">Collisions by hour of day</p>
             <ResponsiveContainer width="100%" height={170}>
               <BarChart data={byHour} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={2} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [v, 'MVAs']} />
-                <Bar dataKey="count" fill="#DC2626" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="count" fill={CHART.bad} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

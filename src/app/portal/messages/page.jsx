@@ -14,6 +14,10 @@ export default function PortalMessagesPage() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeBody, setComposeBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
 
   const allSelected = selectedIds.length > 0 && selectedIds.length === messages.length;
 
@@ -68,6 +72,22 @@ export default function PortalMessagesPage() {
     };
 
     void deleteSelected();
+  };
+
+  const handleSend = async () => {
+    if (!composeBody.trim()) return;
+    setSending(true);
+    setSendError('');
+    try {
+      const msg = await messagesApi.contact({ subject: composeSubject.trim() || undefined, body: composeBody.trim() });
+      setMessages((prev) => [msg, ...prev]);
+      setComposeBody('');
+      setComposeSubject('');
+    } catch (e) {
+      setSendError(e.message || 'Failed to send your message.');
+    } finally {
+      setSending(false);
+    }
   };
 
   useEffect(() => {
@@ -143,7 +163,41 @@ export default function PortalMessagesPage() {
       </div>
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
       <PortalSectionTabs active="messages" />
+
+      {/* Compose — message the Mullen Analytics team */}
+      <div className="border rounded-lg bg-white p-4 my-4">
+        <p className="text-sm font-semibold text-gray-900 mb-2">Send a message to Mullen Analytics</p>
+        <input
+          type="text"
+          value={composeSubject}
+          onChange={(e) => setComposeSubject(e.target.value)}
+          placeholder="Subject (optional)"
+          className="w-full border rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <textarea
+          value={composeBody}
+          onChange={(e) => setComposeBody(e.target.value)}
+          placeholder="Type your message to the Mullen Analytics team…"
+          rows={3}
+          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {sendError && <p className="text-xs text-red-600 mt-1">{sendError}</p>}
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={sending || !composeBody.trim()}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {sending ? 'Sending…' : 'Send message'}
+          </button>
+        </div>
+      </div>
+
       <div className="border rounded-lg bg-white divide-y">
+        {messages.length === 0 && (
+          <p className="px-4 py-6 text-sm text-gray-400 text-center">No messages yet — send one above to start the conversation.</p>
+        )}
         {messages.map((m) => (
           <div key={m.id} className="px-4 py-3 flex flex-col gap-1 text-sm">
             <div className="flex items-center justify-between gap-3">
@@ -165,7 +219,9 @@ export default function PortalMessagesPage() {
                 {m.created_at ? new Date(m.created_at).toLocaleString() : ''}
               </span>
             </div>
-            <div className="text-[11px] text-gray-500">From: {m.from_name || 'Mullen Analytics'}</div>
+            <div className="text-[11px] text-gray-500">
+              {m.direction === 'inbound' ? 'You → Mullen Analytics' : `From: ${m.from_name || 'Mullen Analytics'}`}
+            </div>
             <p className="text-xs text-gray-700 mt-1">{m.body}</p>
           </div>
         ))}

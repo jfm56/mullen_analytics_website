@@ -17,7 +17,7 @@ password = sys.argv[2] if len(sys.argv) > 2 else "admin123"
 
 db = SessionLocal()
 try:
-    user = create_user_with_profile(db, email, password, role="admin", full_name="Admin")
+    user = create_user_with_profile(db, email, password, role="admin", full_name="Admin", email_confirmed=True)
     db.commit()
     print(f"✓ Admin user created: {email}")
 except Exception as e:

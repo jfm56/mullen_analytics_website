@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import {
-  Truck, CalendarClock, Clock, Repeat, MapPin, TrendingUp, TrendingDown, Minus, AlertTriangle,
+  Activity, Phone, Truck, Clock, MapPin, AlertTriangle, TrendingUp, TrendingDown, Minus,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
@@ -14,7 +14,6 @@ async function apiFetch(path) {
   return res.json();
 }
 
-const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const fmtHour = (h) => (h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`);
 
 function Kpi({ label, value, Icon, sub }) {
@@ -27,7 +26,7 @@ function Kpi({ label, value, Icon, sub }) {
   );
 }
 
-export default function IftOutlook({ uploadId }) {
+export default function EmergencyTransportOutlook({ uploadId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,7 +34,7 @@ export default function IftOutlook({ uploadId }) {
   useEffect(() => {
     if (!uploadId) return;
     setLoading(true); setError(''); setData(null);
-    apiFetch(`/data/uploads/${uploadId}/forecast/ift?horizon=14`)
+    apiFetch(`/data/uploads/${uploadId}/emergency-transport?horizon=14`)
       .then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
   }, [uploadId]);
 
@@ -46,44 +45,43 @@ export default function IftOutlook({ uploadId }) {
   );
   if (error) return (
     <div className="bg-white border rounded-xl p-6">
-      <h2 className="text-base font-semibold text-gray-900 mb-1 flex items-center gap-2"><Truck size={18} /> Interfacility Transport Outlook</h2>
+      <h2 className="text-base font-semibold text-gray-900 mb-1 flex items-center gap-2"><Activity size={18} /> Emergency Transport Outlook</h2>
       <p className="text-sm text-red-600">{error}</p>
     </div>
   );
   if (!data?.available) return null;
-
-  // Not-applicable state (little/no IFT for this agency).
   if (!data.applicable) return (
     <div className="bg-white border rounded-xl p-6">
-      <h2 className="text-base font-semibold text-gray-900 mb-1 flex items-center gap-2"><Truck size={18} className="text-gray-400" /> Interfacility Transport Outlook</h2>
+      <h2 className="text-base font-semibold text-gray-900 mb-1 flex items-center gap-2"><Activity size={18} className="text-gray-400" /> Emergency Transport Outlook</h2>
       <p className="text-sm text-gray-500">{data.reason}</p>
-      <p className="text-xs text-gray-400 mt-1">{data.ift_count} IFT records · {data.ift_share_pct}% of volume.</p>
     </div>
   );
 
   const ctx = data.context || {};
-  const sched = data.schedule_recommendation || {};
   const TrendIcon = data.trend === 'rising' ? TrendingUp : data.trend === 'falling' ? TrendingDown : Minus;
+  const hasTransports = data.transports != null;
+  const eventNoun = data.event_label === 'emergency transports' ? 'transports' : 'calls';
 
   const dowData = (data.by_weekday || []).map((w) => ({ day: w.weekday.slice(0, 3), avg: w.avg_per_day }));
   const hourData = Array.from({ length: 24 }, (_, h) => ({ hour: h, label: `${h}`, calls: (data.by_hour || {})[h] || 0 }));
-  const inWindow = (h) => h >= sched.window_start && h < sched.window_end;
   const fc = data.forecast || [];
   const byLoc = data.by_location || [];
   const locMax = Math.max(1, ...byLoc.map((l) => l.count));
+  const r = data.response;
 
   return (
     <div className="bg-white border rounded-xl shadow-sm">
       <div className="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <Truck size={18} className="text-indigo-600" /> Interfacility Transport Outlook
+            <Activity size={18} className="text-rose-600" /> Emergency Transport Outlook
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Scheduled transfers · {data.ift_count} IFTs ({data.ift_share_pct}% of volume) · {ctx.history_start} → {ctx.history_end}
+            Emergency (911) demand · {data.emergency_calls?.toLocaleString()} emergency calls
+            {hasTransports ? ` · ${data.transports?.toLocaleString()} transports` : ''} · {ctx.history_start} → {ctx.history_end}
           </p>
         </div>
-        <span className="text-xs font-medium px-2.5 py-1 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1">
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full border bg-rose-50 text-rose-700 border-rose-200 flex items-center gap-1">
           <TrendIcon size={12} /> {data.trend}
         </span>
       </div>
@@ -97,63 +95,61 @@ export default function IftOutlook({ uploadId }) {
       )}
 
       <div className="p-5 space-y-6">
-        {/* Schedule recommendation — the headline */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-indigo-800 mb-1">
-            <CalendarClock size={16} /> Suggested transport schedule
-          </div>
-          <p className="text-sm text-indigo-900">
-            Staff a dedicated IFT crew <strong>{sched.window_days}, {fmtHour(sched.window_start)}–{fmtHour(sched.window_end)}</strong> —
-            this window covers <strong>{sched.pct_of_all_ift_covered}%</strong> of all transfers (~{sched.avg_ift_per_shift}/weekday).
-          </p>
-          <p className="text-xs text-indigo-700/80 mt-1">{sched.note}</p>
-        </div>
-
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Kpi label="IFTs / week (expected)" value={data.weekly_expected_ift} Icon={Repeat} />
-          <Kpi label="Share of all calls" value={`${data.ift_share_pct}%`} Icon={Truck} />
-          <Kpi label="Busiest IFT day" value={(data.by_weekday || []).reduce((b, w) => (w.avg_per_day > (b?.avg_per_day ?? -1) ? w : b), null)?.weekday || '—'} Icon={CalendarClock} />
-          <Kpi label="Peak window" value={`${fmtHour(sched.window_start)}–${fmtHour(sched.window_end)}`} Icon={Clock} sub={`${sched.window_days} · ${sched.shift_hours}h`} />
+          <Kpi label="Emergency calls" value={data.emergency_calls?.toLocaleString() ?? '—'} Icon={Phone} />
+          <Kpi
+            label={hasTransports ? 'Transport rate' : 'Transports'}
+            value={hasTransports ? `${data.transport_rate_pct}%` : '—'}
+            Icon={Truck}
+            sub={hasTransports ? `${data.transports?.toLocaleString()} of ${data.emergency_calls?.toLocaleString()}` : 'no disposition field'}
+          />
+          <Kpi label={`Expected / week`} value={data.weekly_expected} Icon={Activity} sub={data.event_label} />
+          <Kpi
+            label="Response (median · P90)"
+            value={r ? `${r.median_minutes}m · ${r.p90_minutes}m` : '—'}
+            Icon={Clock}
+            sub={r ? 'dispatch → on-scene' : undefined}
+          />
         </div>
 
         {/* Patterns */}
         <div className="grid lg:grid-cols-2 gap-6">
           <div>
-            <p className="text-xs font-semibold text-gray-600 mb-2">Avg transfers per day of week</p>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Avg emergency {eventNoun} per day of week</p>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={dowData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [`${v}/day`, 'avg IFT']} />
+                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [`${v}/day`, `avg ${eventNoun}`]} />
                 <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
-                  {dowData.map((d, i) => <Cell key={i} fill={i < 5 ? CHART.accent : CHART.accentLight} />)}
+                  {dowData.map((d, i) => <Cell key={i} fill={i < 5 ? CHART.bad : CHART.badLight} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-600 mb-2">Transfers by hour of day <span className="font-normal text-gray-400">(shaded = suggested window)</span></p>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Emergency {eventNoun} by hour of day</p>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={hourData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={2} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [v, 'transfers']} labelFormatter={(h) => fmtHour(Number(h))} />
+                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v) => [v, eventNoun]} labelFormatter={(h) => fmtHour(Number(h))} />
                 <Bar dataKey="calls" radius={[3, 3, 0, 0]}>
-                  {hourData.map((d) => <Cell key={d.hour} fill={inWindow(d.hour) ? CHART.accent : CHART.accentLight} />)}
+                  {hourData.map((d) => <Cell key={d.hour} fill={d.hour === data.peak_hour ? CHART.bad : CHART.badLight} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Where transfers originate */}
+        {/* Where emergencies occur */}
         {byLoc.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5">
-              <MapPin size={12} /> Where transfers originate (scene location)
+              <MapPin size={12} /> Where emergency {eventNoun} occur (scene area)
             </p>
             <div className="space-y-1.5">
               {byLoc.slice(0, 8).map((l) => (
@@ -165,21 +161,18 @@ export default function IftOutlook({ uploadId }) {
                     <span className="text-gray-500 whitespace-nowrap">{l.count} · {l.share_pct}%</span>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(l.count / locMax) * 100}%` }} />
+                    <div className="h-full bg-rose-500 rounded-full" style={{ width: `${(l.count / locMax) * 100}%` }} />
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-gray-400 mt-2">
-              Stage the transport crew near the top origin. Destination-facility routing would need a receiving-facility field, which this export doesn’t include.
-            </p>
           </div>
         )}
 
         {/* By type + 14-day forecast */}
         <div className="grid lg:grid-cols-2 gap-6">
           <div>
-            <p className="text-xs font-semibold text-gray-600 mb-2">Transfer types</p>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Top emergency call types</p>
             <div className="space-y-1.5">
               {(data.by_type || []).map((t) => (
                 <div key={t.type} className="flex justify-between text-xs">
@@ -191,19 +184,19 @@ export default function IftOutlook({ uploadId }) {
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-600 mb-2">Next 14 days (expected transfers)</p>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Next 14 days (expected emergency {eventNoun})</p>
             <div className="grid grid-cols-7 gap-1">
               {fc.map((f) => (
-                <div key={f.date} className="text-center" title={`${f.weekday} ${f.date}: ~${f.expected_ift}`}>
+                <div key={f.date} className="text-center" title={`${f.weekday} ${f.date}: ~${f.expected}`}>
                   <div className="text-[9px] text-gray-400">{f.weekday.slice(0, 1)}</div>
                   <div className="h-10 flex items-end justify-center">
-                    <div className="w-4 bg-indigo-400 rounded-t" style={{ height: `${Math.min(100, (f.expected_ift / 2) * 100)}%` }} />
+                    <div className="w-4 bg-rose-400 rounded-t" style={{ height: `${Math.min(100, (f.expected / Math.max(1, ...fc.map((x) => x.expected))) * 100)}%` }} />
                   </div>
-                  <div className="text-[9px] text-gray-600">{f.expected_ift}</div>
+                  <div className="text-[9px] text-gray-600">{f.expected}</div>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-gray-400 mt-2">Day-of-week seasonal estimate (scheduled demand) · {ctx.method}</p>
+            <p className="text-[11px] text-gray-400 mt-2">Day-of-week seasonal estimate · {ctx.method}</p>
           </div>
         </div>
       </div>

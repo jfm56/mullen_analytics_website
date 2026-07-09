@@ -122,16 +122,28 @@ def _load_cleaned_df(upload: DataUpload, db: Session) -> Optional[pd.DataFrame]:
         .order_by(DataCleaningResult.created_at.desc())
         .first()
     )
-    if not result or not result.cleaned_file_path:
+    if not result:
         return None
-    p = Path(result.cleaned_file_path)
-    if not p.exists():
-        return None
-    try:
-        return pd.read_csv(p, dtype=str, low_memory=False)
-    except Exception as exc:
-        logger.error("Failed to load cleaned CSV for upload %s: %s", upload.id, exc)
-        return None
+    # 1) On-disk cleaned CSV (fast path).
+    if result.cleaned_file_path:
+        p = Path(result.cleaned_file_path)
+        if p.exists():
+            try:
+                return pd.read_csv(p, dtype=str, low_memory=False)
+            except Exception as exc:  # noqa: BLE001
+                logger.error("Failed to load cleaned CSV for upload %s: %s", upload.id, exc)
+    # 2) Fallback: cleaned CSV persisted in the DB as a gzip blob. The on-disk
+    #    path is often stale (ephemeral storage / a different machine), so this
+    #    keeps filters working — mirrors ems_predictive_service._load_df.
+    blob = getattr(result, "cleaned_data_gz", None)
+    if blob:
+        try:
+            import gzip
+            import io
+            return pd.read_csv(io.BytesIO(gzip.decompress(blob)), dtype=str, low_memory=False)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("filter: DB cleaned-data load failed for upload %s: %s", upload.id, exc)
+    return None
 
 
 def _get_ignored_columns(upload_id: UUID, db: Session) -> set:
@@ -419,13 +431,52 @@ def _compute_filtered_metrics(df: pd.DataFrame, label: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def filtered_dashboard(upload: DataUpload, db: Session, filters: Dict[str, Any]) -> Dict[str, Any]:
-    """Return dashboard metrics for a single filtered view."""
+    """Return dashboard metrics for a single filtered view.
+
+    Runs the SAME full metrics pipeline (compute_ems_metrics) on the filtered rows
+    so the filtered view is the complete dashboard (all charts/breakdowns), not a
+    sparse summary — it just reflects the filter. Falls back to the lightweight
+    snapshot if the full pipeline can't run."""
     df = _load_cleaned_df(upload, db)
     if df is None:
         return {"error": "Cleaned file not available"}
 
     df, applied = apply_dashboard_filters(df, filters)
-    metrics = _compute_filtered_metrics(df, label="filtered")
+    if df.empty:
+        return {"empty": True, "total_calls": 0, "filters_applied": applied, "row_count": 0}
+
+    metrics: Optional[Dict[str, Any]] = None
+    try:
+        import os
+        import tempfile
+        from .ems_analytics_service import compute_ems_metrics
+        overrides = get_column_overrides(upload, db)
+        fd, tmp_path = tempfile.mkstemp(suffix=".csv")
+        os.close(fd)
+        try:
+            df.to_csv(tmp_path, index=False)
+            metrics = compute_ems_metrics(
+                tmp_path,
+                {
+                    "file_name": getattr(upload, "original_filename", None),
+                    "row_count_original": len(df),
+                    "row_count_cleaned": len(df),
+                },
+                {"duplicate_rows_count": 0, "removed_rows_count": 0, "missing_values_summary": {}},
+                overrides,
+            )
+        finally:
+            try:
+                os.remove(tmp_path)
+            except Exception:  # noqa: BLE001
+                pass
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("filtered_dashboard: full pipeline failed, using snapshot: %s", exc)
+        metrics = None
+
+    if not isinstance(metrics, dict) or metrics.get("error"):
+        metrics = _compute_filtered_metrics(df, label="filtered")
+
     metrics["filters_applied"] = applied
     metrics["row_count"] = len(df)
     return metrics

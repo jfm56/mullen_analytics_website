@@ -7,6 +7,7 @@ import {
   ResponsiveContainer, ComposedChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
 } from 'recharts';
+import CHART from '@/lib/chartTheme';
 
 async function apiFetch(path) {
   const res = await fetch(`/api/proxy${path}`, { credentials: 'include' });
@@ -137,14 +138,14 @@ export default function WeatherTrafficForecast({ uploadId }) {
           <div style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={daily} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                 <Tooltip content={<DailyTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="upper" stroke="#93C5FD" strokeWidth={1} strokeDasharray="2 3" dot={false} name="Upper" />
-                <Line type="monotone" dataKey="lower" stroke="#93C5FD" strokeWidth={1} strokeDasharray="2 3" dot={false} name="Lower" />
-                <Line type="monotone" dataKey="predicted" stroke="#2563EB" strokeWidth={2.5} dot={{ r: 2 }} name="Predicted" />
+                <Line type="monotone" dataKey="upper" stroke={CHART.primaryLight} strokeWidth={1} strokeDasharray="2 3" dot={false} name="Upper" />
+                <Line type="monotone" dataKey="lower" stroke={CHART.primaryLight} strokeWidth={1} strokeDasharray="2 3" dot={false} name="Lower" />
+                <Line type="monotone" dataKey="predicted" stroke={CHART.primary} strokeWidth={2.5} dot={{ r: 2 }} name="Predicted" />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -164,13 +165,13 @@ export default function WeatherTrafficForecast({ uploadId }) {
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={impact} layout="vertical" margin={{ top: 5, right: 24, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                   <XAxis type="number" tick={{ fontSize: 10 }} unit="%" />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={78} />
                   <Tooltip formatter={(v, n, p) => [`${v > 0 ? '+' : ''}${v}% (${p.payload.avg}/day, ${p.payload.days} days)`, 'vs baseline']}
                            contentStyle={{ fontSize: 11, borderRadius: 8 }} />
                   <Bar dataKey="delta" radius={[0, 3, 3, 0]}>
-                    {impact.map((d, i) => <Cell key={i} fill={d.delta >= 0 ? '#ef4444' : '#16a34a'} />)}
+                    {impact.map((d, i) => <Cell key={i} fill={d.delta >= 0 ? CHART.bad : CHART.good} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
