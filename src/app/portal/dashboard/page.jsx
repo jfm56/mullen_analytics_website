@@ -11,10 +11,11 @@ import PageTabs from '@/components/ui/PageTabs';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
 import EmergencyTransportOutlook from '@/components/EmergencyTransportOutlook';
 import MvaHotspots from '@/components/MvaHotspots';
+import DateRangeCompare from '@/components/DateRangeCompare';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonCard } from '@/components/ui/LoadingSkeleton';
 import Link from 'next/link';
-import { BarChart2, X, Plus, SlidersHorizontal, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Search, LayoutDashboard, CalendarClock, MapPin } from 'lucide-react';
+import { BarChart2, X, Plus, SlidersHorizontal, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Search, LayoutDashboard, CalendarClock, MapPin, CalendarRange } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend
@@ -515,6 +516,7 @@ export default function PortalDashboardPage() {
             { id: 'predictions', label: 'Predictions', icon: <TrendingUp size={15} /> },
             { id: 'scheduling',  label: 'Scheduling',  icon: <CalendarClock size={15} /> },
             { id: 'geographic',  label: 'Geographic',  icon: <MapPin size={15} /> },
+            { id: 'dateranges',  label: 'Compare Dates', icon: <CalendarRange size={15} /> },
           ]}
         />
 
@@ -560,6 +562,12 @@ export default function PortalDashboardPage() {
           <div className="space-y-5">
             <GeographicHeatMap uploadId={selectedId} />
             <MvaHotspots uploadId={selectedId} />
+          </div>
+        )}
+
+        {dashTab === 'dateranges' && (
+          <div className="space-y-5">
+            <DateRangeCompare />
           </div>
         )}
         </>

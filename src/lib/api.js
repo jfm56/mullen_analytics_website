@@ -788,6 +788,15 @@ export const dataExplorer = {
 };
 
 /**
+ * Date-range comparison across "like" files (pooled, sliced by FROM/TO)
+ */
+export const dateRange = {
+  groups: () => apiFetch('/api/data/combinable-groups'),
+  compare: (body) =>
+    apiFetch('/api/data/date-range-compare', { method: 'POST', body: JSON.stringify(body) }),
+};
+
+/**
  * Generic API fetch for other endpoints
  */
 export { apiFetch };
@@ -813,6 +822,7 @@ export default {
   dataUploads,
   dataExplorer,
   dashboardFilter,
+  dateRange,
   columnMapping,
   fetch: apiFetch,
 };
