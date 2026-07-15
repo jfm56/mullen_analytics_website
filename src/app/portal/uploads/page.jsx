@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, dataUploads } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 import EMSDashboard from '@/components/EMSDashboard';
 import PortalSectionTabs from '@/components/portal/PortalSectionTabs';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -261,7 +262,7 @@ export default function PortalUploadsPage() {
                     <p className="text-xs text-gray-500 mt-0.5">
                       {(u.file_size / 1024).toFixed(1)} KB
                       {u.notes && ` · ${u.notes}`}
-                      {u.created_at && ` · ${new Date(u.created_at).toLocaleDateString()}`}
+                      {u.created_at && ` · ${fmtDate(u.created_at)}`}
                     </p>
                     {u.row_count_original != null && (
                       <p className="text-xs text-gray-500 mt-0.5">{u.row_count_original} rows → {u.row_count_cleaned ?? '?'} cleaned</p>

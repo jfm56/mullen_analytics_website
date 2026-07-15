@@ -5,12 +5,13 @@ import {
 } from 'lucide-react';
 import { admin } from '@/lib/api';
 import ErrorAlert from '@/components/ui/ErrorAlert';
+import { fmtDateTime } from '@/lib/datetime';
 
 const SOURCE = {
   server: { label: 'Server', cls: 'bg-slate-100 text-slate-700 border-slate-200', Icon: Server },
   client: { label: 'Browser', cls: 'bg-sky-100 text-sky-700 border-sky-200', Icon: Monitor },
 };
-const fmt = (s) => (s ? new Date(s).toLocaleString() : '—');
+const fmt = (s) => (s ? fmtDateTime(s) : '—');
 
 function Stat({ label, value, tone }) {
   return (

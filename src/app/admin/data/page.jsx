@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { auth, dataUploads } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 import EMSDashboard from '@/components/EMSDashboard';
 
 const STATUS_COLORS = {
@@ -356,7 +357,7 @@ export default function AdminDataPage() {
                   {u.row_count_original != null ? `${u.row_count_original} → ${u.row_count_cleaned ?? '?'}` : '—'}
                 </td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
-                  {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                  {u.created_at ? fmtDate(u.created_at) : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">

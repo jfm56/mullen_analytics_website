@@ -48,14 +48,12 @@ function WindowRow({ win, index, bounds, onChange, onRemove, canRemove }) {
       />
       <span className="text-xs font-semibold text-gray-400">FROM</span>
       <input
-        type="date" value={win.from} min={bounds?.min} max={bounds?.max}
-        onChange={(e) => onChange({ ...win, from: e.target.value })}
+        type="date" value={win.from}        onChange={(e) => onChange({ ...win, from: e.target.value })}
         className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
       <span className="text-xs font-semibold text-gray-400">TO</span>
       <input
-        type="date" value={win.to} min={bounds?.min} max={bounds?.max}
-        onChange={(e) => onChange({ ...win, to: e.target.value })}
+        type="date" value={win.to}        onChange={(e) => onChange({ ...win, to: e.target.value })}
         className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
       {canRemove && (

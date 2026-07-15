@@ -15,6 +15,7 @@ import PipelineStepper from '@/components/ui/PipelineStepper';
 import StatusBadge from '@/components/ui/StatusBadge';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { getAdminDashboardSummary } from '@/lib/api/adminDashboard';
+import { fmtDate } from '@/lib/datetime';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -235,7 +236,7 @@ export default function AdminDashboardPage() {
                         <td className="py-2 pr-3 font-medium text-gray-800">{u.client_name}</td>
                         <td className="py-2 pr-3 text-gray-500 truncate max-w-[160px]">{u.original_filename}</td>
                         <td className="py-2 pr-3"><StatusBadge status={u.upload_status} type="upload" /></td>
-                        <td className="py-2 pr-3 text-gray-400">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                        <td className="py-2 pr-3 text-gray-400">{u.created_at ? fmtDate(u.created_at) : '—'}</td>
                         <td className="py-2 flex items-center gap-2">
                           <Link href={`/admin/data-explorer/${u.id}`} className="text-blue-600 hover:underline">Explore</Link>
                           {u.upload_status === 'CLEANED' && (
@@ -282,7 +283,7 @@ export default function AdminDashboardPage() {
                             <AlertTriangle size={9} /> {c.issue}
                           </span>
                         </td>
-                        <td className="py-2 pr-3 text-gray-400">{c.last_upload ? new Date(c.last_upload).toLocaleDateString() : 'Never'}</td>
+                        <td className="py-2 pr-3 text-gray-400">{c.last_upload ? fmtDate(c.last_upload) : 'Never'}</td>
                         <td className="py-2">
                           <Link href={`/admin/clients/${c.id}`} className="text-blue-600 hover:underline">View</Link>
                         </td>
@@ -316,7 +317,7 @@ export default function AdminDashboardPage() {
                       <p className="text-[10px] text-gray-400 truncate">{m.preview}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[10px] text-gray-400">{m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</p>
+                      <p className="text-[10px] text-gray-400">{m.created_at ? fmtDate(m.created_at) : '—'}</p>
                       <Link href="/admin/messages" className="text-[10px] text-blue-600 hover:underline">Open</Link>
                     </div>
                   </div>
@@ -409,7 +410,7 @@ export default function AdminDashboardPage() {
                       <p className="text-[10px] text-gray-400">{t.client_name}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[10px] text-gray-500">{t.due_date ? new Date(t.due_date).toLocaleDateString() : '—'}</p>
+                      <p className="text-[10px] text-gray-500">{t.due_date ? fmtDate(t.due_date) : '—'}</p>
                       <StatusBadge status={t.status} type="task" />
                     </div>
                   </div>

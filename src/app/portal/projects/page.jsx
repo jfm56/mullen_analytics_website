@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { fmtDate } from '@/lib/datetime';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -130,7 +131,7 @@ export default function ProjectsPage() {
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span>Started {new Date(project.start_date).toLocaleDateString()}</span>
+                          <span>Started {fmtDate(project.start_date)}</span>
                         </div>
                       )}
                       {project.deadline && (
@@ -138,7 +139,7 @@ export default function ProjectsPage() {
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span>Due {new Date(project.deadline).toLocaleDateString()}</span>
+                          <span>Due {fmtDate(project.deadline)}</span>
                         </div>
                       )}
                     </div>

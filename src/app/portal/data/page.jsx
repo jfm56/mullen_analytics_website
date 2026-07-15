@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 async function apiFetch(path, opts = {}) {
@@ -245,7 +246,7 @@ export default function PortalDataPage() {
                     <p className="text-xs text-gray-500 mt-0.5">
                       {(u.file_size / 1024).toFixed(1)} KB
                       {u.notes && ` · ${u.notes}`}
-                      {u.created_at && ` · ${new Date(u.created_at).toLocaleDateString()}`}
+                      {u.created_at && ` · ${fmtDate(u.created_at)}`}
                     </p>
                     {u.row_count_original != null && (
                       <p className="text-xs text-gray-500 mt-0.5">

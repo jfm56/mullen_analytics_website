@@ -1,5 +1,7 @@
 'use client';
 
+import { fmtDate } from '@/lib/datetime';
+
 export default function ClientPortalViewTab({
   client,
   projects,
@@ -93,7 +95,7 @@ export default function ClientPortalViewTab({
                     <p className="text-xs text-gray-500">{doc.document_type}</p>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(doc.created_at).toLocaleDateString()}
+                    {fmtDate(doc.created_at)}
                   </span>
                 </div>
               ))}

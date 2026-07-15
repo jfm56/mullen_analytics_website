@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { documents } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 
 const DOCUMENT_TYPES = ['proposal', 'contract', 'invoice', 'report', 'deliverable', 'data', 'other'];
 const VISIBILITY_OPTIONS = [
@@ -325,7 +326,7 @@ export default function ClientDocumentsTab({ clientId, projects, documents: docu
                       {formatFileSize(doc.size_bytes)}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {fmtDate(doc.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-2 justify-end">

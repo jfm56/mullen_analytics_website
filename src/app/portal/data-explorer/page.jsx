@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { fmtDate } from '@/lib/datetime';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
 import ErrorAlert from '@/components/ui/ErrorAlert';
@@ -71,7 +72,7 @@ export default function PortalDataExplorerIndexPage() {
                       {u.row_count_cleaned != null ? `${u.row_count_cleaned} rows` : '—'}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                      {u.created_at ? fmtDate(u.created_at) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {u.upload_status === 'CLEANED' ? (

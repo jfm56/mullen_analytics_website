@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { projects } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 
 const PROJECT_STATUSES = ['PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'];
 const PROJECT_PHASES = ['discovery', 'planning', 'execution', 'review', 'completed'];
@@ -308,10 +309,10 @@ export default function ClientProjectsTab({ clientId, projects: projectList, onR
                       <span>${parseFloat(project.contract_value).toLocaleString()}</span>
                     )}
                     {project.start_date && (
-                      <span>Started: {new Date(project.start_date).toLocaleDateString()}</span>
+                      <span>Started: {fmtDate(project.start_date)}</span>
                     )}
                     {project.deadline && (
-                      <span>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                      <span>Due: {fmtDate(project.deadline)}</span>
                     )}
                   </div>
                   <div className="flex gap-4 text-xs text-gray-400 mt-1">

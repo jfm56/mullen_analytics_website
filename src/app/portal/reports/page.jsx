@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, dataUploads } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 import TableauEmbed from '@/components/TableauEmbed';
 import EMSDashboard from '@/components/EMSDashboard';
 import PortalSectionTabs from '@/components/portal/PortalSectionTabs';
@@ -112,7 +113,7 @@ export default function PortalReportsPage() {
                     <p className="font-medium text-gray-900 text-sm truncate">{u.original_filename}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {u.row_count_cleaned != null ? `${u.row_count_cleaned.toLocaleString()} rows` : ''}
-                      {u.created_at ? ` · ${new Date(u.created_at).toLocaleDateString()}` : ''}
+                      {u.created_at ? ` · ${fmtDate(u.created_at)}` : ''}
                     </p>
                   </div>
                   <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ready</span>

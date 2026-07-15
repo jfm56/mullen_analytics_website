@@ -152,17 +152,20 @@ export default function DashboardFilterBar({ uploadId, onFilterApply, onCompareO
       {/* Filter controls */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Date range */}
-        <div className="flex items-center gap-1 border rounded px-2 py-1 bg-white">
+        <div className="flex items-center gap-1 border rounded px-2 py-1 bg-white"
+          title={opts?.date_range?.min ? `Data available: ${opts.date_range.min} → ${opts.date_range.max}` : undefined}>
           <span className="text-xs text-gray-400">From</span>
-          <input type="date" value={filters.date_range?.[0] || opts?.date_range?.min || ''}
-            min={opts?.date_range?.min} max={opts?.date_range?.max}
-            onChange={e => setF('date_range', [e.target.value, filters.date_range?.[1] || opts?.date_range?.max || ''])}
+          <input type="date" value={filters.date_range?.[0] || ''}
+            onChange={e => setF('date_range', [e.target.value, filters.date_range?.[1] || ''])}
             className="text-xs border-none focus:outline-none w-32" />
           <span className="text-xs text-gray-400">–</span>
-          <input type="date" value={filters.date_range?.[1] || opts?.date_range?.max || ''}
-            min={opts?.date_range?.min} max={opts?.date_range?.max}
-            onChange={e => setF('date_range', [filters.date_range?.[0] || opts?.date_range?.min || '', e.target.value])}
+          <input type="date" value={filters.date_range?.[1] || ''}
+            onChange={e => setF('date_range', [filters.date_range?.[0] || '', e.target.value])}
             className="text-xs border-none focus:outline-none w-32" />
+          {(filters.date_range?.[0] || filters.date_range?.[1]) && (
+            <button type="button" onClick={() => setF('date_range', null)}
+              className="text-gray-300 hover:text-red-500 text-sm leading-none ml-0.5" title="Clear dates">×</button>
+          )}
         </div>
 
         <MultiSelect label="Units" options={opts?.units || []} selected={filters.units || []} onChange={v => setF('units', v)} />

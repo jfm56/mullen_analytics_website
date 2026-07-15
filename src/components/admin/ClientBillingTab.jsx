@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fmtDate } from '@/lib/datetime';
 
 const INVOICE_STATUSES = ['pending', 'paid', 'overdue', 'cancelled', 'draft'];
 
@@ -145,7 +146,7 @@ export default function ClientBillingTab({ clientId, projects, invoices, onRefre
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '—'}
+                      {invoice.due_date ? fmtDate(invoice.due_date) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {isQuickBooks ? (

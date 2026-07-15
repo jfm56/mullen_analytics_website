@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
+import { fmtDateTime } from '@/lib/datetime';
 
 export default function AdminAuditLogsPage() {
   const [logs, setLogs] = useState([]);
@@ -47,7 +48,7 @@ export default function AdminAuditLogsPage() {
                   <td className="px-4 py-2 text-xs text-gray-500 max-w-xs truncate">
                     {l.details ? (typeof l.details === 'object' ? JSON.stringify(l.details) : l.details) : '—'}
                   </td>
-                  <td className="px-4 py-2 text-xs text-gray-400">{l.created_at ? new Date(l.created_at).toLocaleString() : '—'}</td>
+                  <td className="px-4 py-2 text-xs text-gray-400">{l.created_at ? fmtDateTime(l.created_at) : '—'}</td>
                 </tr>
               ))}
             </tbody>

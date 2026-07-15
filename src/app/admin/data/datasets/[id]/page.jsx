@@ -8,6 +8,7 @@ import {
   BarChart2, Plus, ExternalLink, ArrowLeft,
 } from 'lucide-react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
+import { fmtDate } from '@/lib/datetime';
 
 const STATUS_COLORS = {
   CLEANED:  'bg-green-50 text-green-700 border-green-200',
@@ -260,7 +261,7 @@ export default function AdminDatasetDetailPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-400 capitalize">{u.upload_type?.replace(/_/g, ' ') || '—'}</td>
                     <td className="px-4 py-3 text-gray-400">
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                      {u.created_at ? fmtDate(u.created_at) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
@@ -316,7 +317,7 @@ export default function AdminDatasetDetailPage() {
                 <option value="">Select an upload…</option>
                 {allUploads.map(u => (
                   <option key={u.id} value={u.id}>
-                    {u.original_filename} ({u.upload_status}) — {u.created_at ? new Date(u.created_at).toLocaleDateString() : ''}
+                    {u.original_filename} ({u.upload_status}) — {u.created_at ? fmtDate(u.created_at) : ''}
                   </option>
                 ))}
               </select>
