@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { fmtDate as fmtDateET } from '@/lib/datetime';
 
 const STATUS_COLORS = {
   PLANNING:  'bg-purple-100 text-purple-800',
@@ -151,7 +152,7 @@ export default function AdminProjectDetailPage() {
     }
   };
 
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString() : '—';
+  const fmtDate = (d) => d ? fmtDateET(d) : '—';
   const fmtMoney = (cents) => cents != null
     ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100)
     : '—';

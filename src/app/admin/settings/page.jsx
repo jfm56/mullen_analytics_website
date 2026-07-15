@@ -12,6 +12,7 @@ import {
   getAdminSettings, updateAdminSettings,
   resetAdminSettingsToDefaults, runSettingsHealthCheck,
 } from '@/lib/api/settings';
+import { fmtTimeOnly } from '@/lib/datetime';
 
 // ── tiny helpers ─────────────────────────────────────────────────────────────
 
@@ -475,7 +476,7 @@ export default function AdminSettingsPage() {
                       </div>
                     ))}
                     <div className="pt-3 text-xs text-gray-400">
-                      Checked at: {health.checked_at ? new Date(health.checked_at).toLocaleTimeString() : '—'}
+                      Checked at: {health.checked_at ? fmtTimeOnly(health.checked_at) : '—'}
                       {' · '} Uploads root: {health.uploads_root_exists ? '✓ exists' : '✗ missing'}
                       {' · '} Storage root: {health.storage_root_exists ? '✓ exists' : '✗ missing'}
                     </div>

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
+import { fmtDate } from '@/lib/datetime';
 
 export default function AdminInvoicesPage() {
   const [invoices, setInvoices] = useState([]);
@@ -51,7 +52,7 @@ export default function AdminInvoicesPage() {
                       'bg-amber-100 text-amber-700'
                     }`}>{inv.status}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{inv.due_date ? fmtDate(inv.due_date) : '—'}</td>
                   <td className="px-4 py-3 text-xs">
                     <a href={`/api/proxy/invoices/${inv.id}/pdf`} className="text-blue-600 hover:text-blue-800">Download</a>
                   </td>

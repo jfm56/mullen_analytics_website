@@ -6,6 +6,7 @@ import MetricCard from '@/components/ui/MetricCard';
 import StatusBadge from '@/components/ui/StatusBadge';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
+import { fmtDate } from '@/lib/datetime';
 
 async function apiFetch(path) {
   const res = await fetch(`/api/proxy${path}`, { credentials: 'include' });
@@ -103,7 +104,7 @@ export default function AdminClientsPage() {
                       {c.has_failed && <span className="ml-1 text-xs text-red-500">⚠ failed</span>}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
-                      {c.last_upload ? new Date(c.last_upload).toLocaleDateString() : '—'}
+                      {c.last_upload ? fmtDate(c.last_upload) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {c.has_dashboard ? (

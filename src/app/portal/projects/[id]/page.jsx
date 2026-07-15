@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { fmtDateTime, fmtDate } from '@/lib/datetime';
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -223,7 +224,7 @@ export default function ProjectDetailPage() {
             </div>
             <div className="text-right text-sm text-gray-500">
               {project.deadline && (
-                <p>Due: {new Date(project.deadline).toLocaleDateString()}</p>
+                <p>Due: {fmtDate(project.deadline)}</p>
               )}
             </div>
           </div>
@@ -348,7 +349,7 @@ export default function ProjectDetailPage() {
                             <div>
                               <p className="font-medium text-gray-900">{upload.original_filename}</p>
                               <p className="text-sm text-gray-500">
-                                {formatFileSize(upload.size_bytes)} • {new Date(upload.uploaded_at).toLocaleString()}
+                                {formatFileSize(upload.size_bytes)} • {fmtDateTime(upload.uploaded_at)}
                               </p>
                             </div>
                           </div>
@@ -396,7 +397,7 @@ export default function ProjectDetailPage() {
                           <p className="font-medium text-gray-900 truncate">{doc.title}</p>
                           <p className="text-sm text-gray-500 truncate">{doc.original_filename}</p>
                           <p className="text-xs text-gray-400 mt-1">
-                            {formatFileSize(doc.size_bytes)} • {new Date(doc.created_at).toLocaleDateString()}
+                            {formatFileSize(doc.size_bytes)} • {fmtDate(doc.created_at)}
                           </p>
                         </div>
                       </a>
@@ -473,7 +474,7 @@ export default function ProjectDetailPage() {
                               <div>
                                 <p className="font-medium text-gray-900">{doc.title}</p>
                                 <p className="text-sm text-gray-500">
-                                  Generated {new Date(doc.created_at).toLocaleString()}
+                                  Generated {fmtDateTime(doc.created_at)}
                                 </p>
                               </div>
                             </div>
@@ -548,7 +549,7 @@ export default function ProjectDetailPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '-'}
+                              {invoice.due_date ? fmtDate(invoice.due_date) : '-'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               {invoice.hosted_invoice_url && (

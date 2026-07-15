@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
 import { Users, Activity, ShieldAlert, LogIn, Clock, AlertTriangle } from 'lucide-react';
+import { fmtDateTime, fmtDate as fmtDateET } from '@/lib/datetime';
 
-const fmtTime = (s) => (s ? new Date(s).toLocaleString() : '—');
-const fmtDate = (s) => (s ? new Date(s).toLocaleDateString() : 'Never');
+// Backend timestamps are naive UTC — these render them in Eastern (see lib/datetime).
+const fmtTime = (s) => fmtDateTime(s);
+const fmtDate = (s) => fmtDateET(s);
 
 const EVENT_BADGE = {
   login: 'bg-green-100 text-green-700',

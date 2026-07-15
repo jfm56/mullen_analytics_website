@@ -11,6 +11,7 @@ import DashboardFilterBar from './DashboardFilterBar';
 import CompareMode from './CompareMode';
 import ColumnMappingModal from './ColumnMappingModal';
 import { dashboardFilter } from '@/lib/api';
+import { fmtDateTime, fmtDate } from '@/lib/datetime';
 import {
   Phone, Clock, TrendingUp, AlertTriangle, CheckCircle,
   BarChart2, Activity, Users, Shield, FileText,
@@ -499,7 +500,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
           </div>
         </div>
         {generatedAt && (
-          <p className="text-[10px] text-blue-400 mt-2">Generated {new Date(generatedAt).toLocaleString()}</p>
+          <p className="text-[10px] text-blue-400 mt-2">Generated {fmtDateTime(generatedAt)}</p>
         )}
       </div>
 
@@ -795,7 +796,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
           <StatCard label="Rows Removed"   value={fmt(dq.rows_removed)}        color={dq.rows_removed > 0 ? 'red' : 'gray'} />
         </div>
         {sum.upload_date && (
-          <p className="text-xs text-gray-400">Uploaded: {new Date(sum.upload_date).toLocaleDateString()}</p>
+          <p className="text-xs text-gray-400">Uploaded: {fmtDate(sum.upload_date)}</p>
         )}
       </Section>
     </div>

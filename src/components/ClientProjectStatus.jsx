@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { fmtDate } from '@/lib/datetime';
 
 export default function ClientProjectStatus({ company }) {
   const [items, setItems] = useState([]);
@@ -36,7 +37,7 @@ export default function ClientProjectStatus({ company }) {
         status: task.status === 'completed' ? 'Complete' : 
                 task.status === 'in_progress' ? 'In progress' : 'Not started',
         owner: task.priority === 'high' ? 'Mullen Analytics' : 'Client',
-        target_date_text: task.due_date ? new Date(task.due_date).toLocaleDateString() : null,
+        target_date_text: task.due_date ? fmtDate(task.due_date) : null,
         progress_percent: task.status === 'completed' ? 100 : 
                          task.status === 'in_progress' ? 50 : 0,
       }));

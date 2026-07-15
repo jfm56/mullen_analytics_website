@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lightbulb, Flag, Send } from 'lucide-react';
 import { auth, feedback as feedbackApi } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 const TYPE_META = {
@@ -178,7 +179,7 @@ export default function PortalFeedbackPage() {
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.admin_response}</p>
                   </div>
                 )}
-                <p className="text-[11px] text-gray-400 mt-2">{item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}</p>
+                <p className="text-[11px] text-gray-400 mt-2">{item.created_at ? fmtDate(item.created_at) : ''}</p>
               </div>
             );
           })}

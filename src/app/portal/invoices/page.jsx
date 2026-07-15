@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 import PortalSectionTabs from '@/components/portal/PortalSectionTabs';
 
 const API_URL = '/api/proxy';
@@ -129,8 +130,8 @@ export default function PortalInvoicesPage() {
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
                   {inv.description && <span>{inv.description}</span>}
-                  {inv.invoice_date && <span> · Date: {new Date(inv.invoice_date).toLocaleDateString()}</span>}
-                  {inv.due_date && <span> · Due: {new Date(inv.due_date).toLocaleDateString()}</span>}
+                  {inv.invoice_date && <span> · Date: {fmtDate(inv.invoice_date)}</span>}
+                  {inv.due_date && <span> · Due: {fmtDate(inv.due_date)}</span>}
                 </div>
               </div>
               <div className="flex items-center gap-3">

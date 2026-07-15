@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { auth, users, projects, documents, invoices, uploads, impersonation } from '@/lib/api';
+import { fmtDateTime, fmtDate } from '@/lib/datetime';
 
 // Tab Components
 import ClientOverviewTab from '@/components/admin/ClientOverviewTab';
@@ -383,7 +384,7 @@ export default function AdminClientDetailPage() {
                         {u.row_count_cleaned != null && ` → ${u.row_count_cleaned} clean`}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                        {u.created_at ? fmtDate(u.created_at) : '—'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1.5 flex-wrap">
@@ -430,7 +431,7 @@ export default function AdminClientDetailPage() {
                 </Link>
               </div>
               {dashSummary.generated_at && (
-                <p className="text-xs text-gray-400">Generated {new Date(dashSummary.generated_at).toLocaleString()}</p>
+                <p className="text-xs text-gray-400">Generated {fmtDateTime(dashSummary.generated_at)}</p>
               )}
             </div>
           ) : (

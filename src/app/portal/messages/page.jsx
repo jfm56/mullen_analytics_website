@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, messages as messagesApi } from '@/lib/api';
+import { fmtDateTime } from '@/lib/datetime';
 import PortalSectionTabs from '@/components/portal/PortalSectionTabs';
 
 const API_URL = '/api/proxy';
@@ -216,7 +217,7 @@ export default function PortalMessagesPage() {
                 )}
               </div>
               <span className="text-[11px] text-gray-500">
-                {m.created_at ? new Date(m.created_at).toLocaleString() : ''}
+                {m.created_at ? fmtDateTime(m.created_at) : ''}
               </span>
             </div>
             <div className="text-[11px] text-gray-500">

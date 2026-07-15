@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Users, Plus, Search, RefreshCw, UserCog, Trash2, KeyRound, Eye, LogIn, History } from 'lucide-react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { impersonation, admin } from '@/lib/api';
+import { fmtDateTime, fmtDate } from '@/lib/datetime';
 
 function Modal({ title, onClose, children }) {
   return (
@@ -374,7 +375,7 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400">
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                      {u.created_at ? fmtDate(u.created_at) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1.5 flex-wrap">
@@ -640,7 +641,7 @@ export default function AdminUsersPage() {
                 {logins.logins.map((l) => (
                   <div key={l.id} className="px-3 py-2 text-xs flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-gray-800">{l.created_at ? new Date(l.created_at).toLocaleString() : '—'}</div>
+                      <div className="text-gray-800">{l.created_at ? fmtDateTime(l.created_at) : '—'}</div>
                       <div className="text-gray-400 truncate" title={l.user_agent}>{l.user_agent || 'Unknown device'}</div>
                     </div>
                     <div className="text-right whitespace-nowrap flex-shrink-0">

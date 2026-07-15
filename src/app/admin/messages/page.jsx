@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
+import { fmtDate } from '@/lib/datetime';
 
 export default function AdminMessagesPage() {
   const [messages, setMessages] = useState([]);
@@ -39,7 +40,7 @@ export default function AdminMessagesPage() {
                     <p className="text-sm text-gray-700 mt-0.5">{m.content}</p>
                   </div>
                   <span className="text-xs text-gray-400 whitespace-nowrap">
-                    {m.created_at ? new Date(m.created_at).toLocaleDateString() : ''}
+                    {m.created_at ? fmtDate(m.created_at) : ''}
                   </span>
                 </div>
               </div>

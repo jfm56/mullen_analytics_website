@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Search, Upload, BarChart2 } from 'lucide-react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { SkeletonTable } from '@/components/ui/LoadingSkeleton';
+import { fmtDate } from '@/lib/datetime';
 
 export default function AdminDataExplorerIndexPage() {
   const [uploads, setUploads] = useState([]);
@@ -90,7 +91,7 @@ export default function AdminDataExplorerIndexPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-400">
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                    {u.created_at ? fmtDate(u.created_at) : '—'}
                   </td>
                   <td className="px-4 py-3 flex items-center gap-3">
                     <Link

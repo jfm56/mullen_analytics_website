@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FolderOpen, Plus, Search, RefreshCw, ExternalLink, Archive } from 'lucide-react';
 import ErrorAlert from '@/components/ui/ErrorAlert';
+import { fmtDate } from '@/lib/datetime';
 
 const STATUS_STYLES = {
   PLANNING:  'bg-purple-50 text-purple-700 border-purple-200',
@@ -258,7 +259,7 @@ export default function AdminProjectsPage() {
                     <td className="px-4 py-3 text-gray-500">
                       {p.deadline ? (
                         <span className={new Date(p.deadline) < new Date() && p.status !== 'COMPLETED' ? 'text-red-600 font-medium' : ''}>
-                          {new Date(p.deadline).toLocaleDateString()}
+                          {fmtDate(p.deadline)}
                         </span>
                       ) : '—'}
                     </td>
@@ -270,7 +271,7 @@ export default function AdminProjectsPage() {
                         : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-400">
-                      {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
+                      {p.created_at ? fmtDate(p.created_at) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { users } from '@/lib/api';
+import { fmtDate } from '@/lib/datetime';
 
 export default function ClientOverviewTab({
   client,
@@ -128,7 +129,7 @@ export default function ClientOverviewTab({
               <p className="text-gray-500 mb-1">Last Login</p>
               <p className="font-medium">
                 {client.last_login
-                  ? new Date(client.last_login).toLocaleDateString()
+                  ? fmtDate(client.last_login)
                   : 'Never'}
               </p>
             </div>
@@ -259,7 +260,7 @@ export default function ClientOverviewTab({
                   <p className="font-medium">${parseFloat(project.contract_value || 0).toLocaleString()}</p>
                   {project.deadline && (
                     <p className="text-gray-500">
-                      Due {new Date(project.deadline).toLocaleDateString()}
+                      Due {fmtDate(project.deadline)}
                     </p>
                   )}
                 </div>
@@ -288,7 +289,7 @@ export default function ClientOverviewTab({
                   </p>
                 </div>
                 <p className="text-gray-500">
-                  {new Date(doc.created_at).toLocaleDateString()}
+                  {fmtDate(doc.created_at)}
                 </p>
               </div>
             ))}
@@ -313,7 +314,7 @@ export default function ClientOverviewTab({
                   <p className="text-gray-500">{upload.status}</p>
                 </div>
                 <p className="text-gray-500">
-                  {new Date(upload.uploaded_at).toLocaleDateString()}
+                  {fmtDate(upload.uploaded_at)}
                 </p>
               </div>
             ))}
