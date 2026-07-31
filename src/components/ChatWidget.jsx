@@ -66,7 +66,7 @@ export default function ChatWidget() {
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-sm">
             {messages.length === 0 && (
               <p className="text-gray-500 text-sm">
-                Hi! I&apos;m the assistant for Mullen Analytics &amp; AI Consulting LLC. I can answer questions about our
+                Hi! I&apos;m the assistant for Mullen Analytics &amp; Data Solutions LLC. I can answer questions about our
                 services, industries we support, and how to get in touch or schedule a call.
               </p>
             )}

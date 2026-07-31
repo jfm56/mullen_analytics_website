@@ -1,27 +1,49 @@
-'use client';
+import Link from 'next/link';
+import {
+  BarChart3, BrainCircuit, Zap, Check, ShieldCheck, BadgeCheck, ClipboardCheck, Lock,
+} from 'lucide-react';
 
-const CORE_SERVICES = [
+// Biomedical Research vertical page. Same FIXED palette as the home page — see
+// app/page.jsx. Focused on research institutions / clinical trials / life sciences.
+
+const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
+
+const TRUST_PILLARS = [
+  { Icon: ShieldCheck,    label: 'Veteran-Owned & Operated' },
+  { Icon: BadgeCheck,     label: 'Explainable Results You Can Trust' },
+  { Icon: ClipboardCheck, label: 'Regulatory-Aware (GCP · FDA · IRB)' },
+  { Icon: Lock,           label: 'Secure & Compliant' },
+];
+
+const VALUE_POINTS = [
+  'Faster discovery',
+  'Less reporting burden',
+  'Real-time trial visibility',
+  'Stronger data quality',
+];
+
+const SERVICES = [
   {
-    label: 'Research Analytics',
+    Icon: BarChart3,
     title: 'Research Analytics',
-    desc: 'Clinical trial dashboards, operational visibility, biomarker tracking, protocol monitoring, and research performance reporting.',
-    points: ['Clinical Trial Dashboards', 'Biomarker Tracking', 'Protocol Monitoring', 'Operational Visibility', 'Research Performance Reporting', 'Longitudinal Data Analysis'],
+    desc: 'Full visibility into your studies — trial dashboards, biomarker tracking, protocol monitoring, and research performance reporting.',
+    tags: ['Clinical trial dashboards', 'Biomarker tracking', 'Protocol monitoring', 'Performance reporting', 'Longitudinal analysis'],
   },
   {
-    label: 'Predictive Modeling',
+    Icon: BrainCircuit,
     title: 'Predictive Modeling',
-    desc: 'Enrollment forecasting, trial risk identification, dropout prediction, anomaly detection, and real-world evidence analysis.',
-    points: ['Enrollment Forecasting', 'Trial Risk Identification', 'Dropout Prediction', 'Anomaly Detection', 'Real-World Evidence Analysis', 'Adverse Event Modeling'],
+    desc: 'Get ahead of the risks — forecast enrollment, predict dropout, flag anomalies, and analyze real-world evidence, all from your own data.',
+    tags: ['Enrollment forecasting', 'Trial risk', 'Dropout prediction', 'Anomaly detection', 'Real-world evidence'],
   },
   {
-    label: 'AI & Automation',
-    title: 'AI Automation',
-    desc: 'Document processing, protocol support, reporting automation, research workflow optimization, and intelligent data structuring.',
-    points: ['Document Processing', 'Protocol Support', 'Reporting Automation', 'Workflow Optimization', 'Intelligent Data Structuring', 'AI-Assisted Review'],
+    Icon: Zap,
+    title: 'Automation & Decision Support',
+    desc: 'Cut the manual work — document processing, protocol support, reporting automation, and automated review that structures your data.',
+    tags: ['Document processing', 'Reporting automation', 'Workflow optimization', 'Automated review'],
   },
 ];
 
-const BENEFITS = [
+const IMPROVEMENTS = [
   'Faster research decisions',
   'Better trial performance',
   'Improved enrollment visibility',
@@ -34,103 +56,76 @@ const BENEFITS = [
   'Stronger research outcomes',
 ];
 
-const USE_CASES = [
-  { title: 'Clinical Trial Analytics', desc: 'End-to-end visibility into trial performance, protocol adherence, site activity, and outcomes data.' },
-  { title: 'Enrollment Forecasting', desc: 'Predict enrollment velocity, identify bottlenecks, and optimize recruitment strategy with data-driven models.' },
-  { title: 'Biomarker Monitoring', desc: 'Track biomarker patterns across cohorts and timepoints with automated flagging and visualization.' },
-  { title: 'Real-World Evidence Analysis', desc: 'Analyze large-scale observational datasets to support regulatory submissions, publications, and decisions.' },
-  { title: 'Research Reporting Automation', desc: 'Reduce manual reporting burden with automated pipelines that produce consistent, audit-ready outputs.' },
-  { title: 'Protocol Compliance Tracking', desc: 'Monitor adherence to study protocols, flag deviations early, and support GCP compliance workflows.' },
-  { title: 'Operational Research Dashboards', desc: 'Give research leadership and operations teams real-time visibility across studies, sites, and budgets.' },
-  { title: 'AI-Assisted Document Processing', desc: 'Accelerate document review, data extraction, and annotation tasks using AI-powered workflows.' },
-];
-
 export default function BiomedicalResearchPage() {
   return (
-    <div>
+    <div className="bg-white">
 
-      {/* HERO IMAGE */}
-      <section className="w-full overflow-hidden">
-        <img
-          src="/biomedical%20research.jpeg"
-          alt="Biomedical Research Analytics and AI"
-          className="w-full"
-          style={{ display: 'block' }}
-        />
-      </section>
-
-      {/* HERO TEXT */}
-      <section>
-        <div style={{ background: 'linear-gradient(180deg, #071829 0%, #0D2035 100%)' }}>
-          <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
-            <div className="max-w-3xl">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" style={{ color: '#FFFFFF', lineHeight: 1.08, letterSpacing: '-0.025em' }}>
-                Biomedical Research Analytics &amp; AI
-              </h1>
-              <p className="text-lg mb-4 leading-relaxed" style={{ color: '#94A3B8', maxWidth: '640px' }}>
-                Helping research institutions, clinical trial teams, and biomedical organizations accelerate discovery through advanced analytics, machine learning, and AI-driven decision systems.
-              </p>
-              <p className="text-base mb-10 leading-relaxed" style={{ color: '#64748B', maxWidth: '600px' }}>
-                We build data pipelines, predictive models, research dashboards, and AI-powered systems that improve trial performance, operational visibility, and research outcomes.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-4 rounded font-semibold text-base text-center transition-all duration-200"
-                  style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
-                >
-                  Schedule a Strategy Call
-                </a>
-                <a
-                  href="/capabilities"
-                  className="px-8 py-4 rounded font-semibold text-base text-center transition-all duration-200"
-                  style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A6FA5'; e.currentTarget.style.color = '#FFFFFF'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3A58'; e.currentTarget.style.color = '#E2E8F0'; }}
-                >
-                  Explore Research Solutions
-                </a>
+      {/* HERO — navy band */}
+      <section className="bg-navy-deep">
+        <div className="max-w-7xl mx-auto px-6 py-24 md:py-28">
+          <div className="max-w-3xl mb-14">
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">Biomedical Research</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.05] tracking-tight mb-6">
+              Faster discovery, stronger evidence
+            </h1>
+            <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
+              For research institutions, clinical trial teams, and biomedical organizations, we turn
+              complex study data into faster insights, cleaner data, and outcomes you can defend — from
+              early discovery through regulatory submission.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-navy-border pt-10 max-w-4xl">
+            {TRUST_PILLARS.map(({ Icon, label }) => (
+              <div key={label} className="flex flex-col items-start gap-2.5">
+                <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                  <Icon size={20} strokeWidth={1.75} className="text-sky-400" />
+                </div>
+                <p className="text-xs font-semibold text-slate-300 leading-snug">{label}</p>
               </div>
-            </div>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+              className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
+              Schedule a Strategy Call
+            </a>
+            <a href="#services"
+              className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
+              See what we build
+            </a>
           </div>
         </div>
       </section>
 
-      {/* WHY IT MATTERS */}
-      <section className="py-24" style={{ backgroundColor: '#F8FAFD' }}>
+      {/* WHY IT MATTERS — white */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#071829' }}>
-                Why Analytics Matters in Biomedical Research
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Why It Matters</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-6">
+                Complex data, high stakes, no room for error
               </h2>
-              <div className="space-y-4">
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  Research organizations manage massive amounts of complex data across trials, studies, operations, and regulatory environments.
+              <div className="space-y-5">
+                <p className="text-base text-slate-700 leading-relaxed">
+                  Research organizations manage huge amounts of complex data across trials, studies,
+                  operations, and regulatory requirements.
                 </p>
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  Analytics and AI help improve speed, accuracy, visibility, and decision-making across the full research lifecycle — from early discovery through regulatory submission.
+                <p className="text-base text-slate-700 leading-relaxed">
+                  Good analytics and automation improve speed, accuracy, and visibility across the whole research
+                  lifecycle — from early discovery through regulatory submission.
                 </p>
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  This means stronger trial performance, better data quality, faster insights, and more defensible scientific outcomes.
+                <p className="text-base text-slate-700 leading-relaxed">
+                  That means stronger trial performance, cleaner data, faster insights, and more
+                  defensible scientific outcomes.
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { num: '↑', label: 'Discovery Speed', sub: 'Faster insights from complex data' },
-                { num: '↓', label: 'Reporting Burden', sub: 'Automated, audit-ready outputs' },
-                { num: '↑', label: 'Trial Visibility', sub: 'Real-time enrollment and performance' },
-                { num: '↓', label: 'Data Quality Risk', sub: 'Automated validation and flagging' },
-              ].map((stat) => (
-                <div key={stat.label} className="p-6 rounded-xl" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E1E8F5', boxShadow: '0 2px 12px rgba(7,24,41,0.06)' }}>
-                  <p className="text-2xl font-black mb-1" style={{ color: '#1D4ED8' }}>{stat.num}</p>
-                  <p className="text-sm font-bold mb-1" style={{ color: '#071829' }}>{stat.label}</p>
-                  <p className="text-xs leading-snug" style={{ color: '#64748B' }}>{stat.sub}</p>
+            <div className="grid gap-3 lg:mt-4">
+              {VALUE_POINTS.map((item) => (
+                <div key={item} className="flex items-center gap-3 px-5 py-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <Check size={16} strokeWidth={2.5} className="text-blue-700 flex-shrink-0" />
+                  <span className="text-sm font-medium text-slate-700">{item}</span>
                 </div>
               ))}
             </div>
@@ -138,30 +133,26 @@ export default function BiomedicalResearchPage() {
         </div>
       </section>
 
-      {/* THREE CORE SERVICES */}
-      <section className="py-24" style={{ background: 'linear-gradient(180deg, #071829 0%, #0A1F35 100%)' }}>
+      {/* WHAT WE BUILD — slate-50 */}
+      <section id="services" className="py-24 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#FFFFFF' }}>What We Build for Research</h2>
+          <div className="max-w-2xl mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">What We Build</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+              Three ways we help your research
+            </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {CORE_SERVICES.map((service) => (
-              <div
-                key={service.title}
-                className="rounded-xl p-8"
-                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderTop: '3px solid #1D4ED8' }}
-              >
-                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#0EA5E9' }}>{service.label}</p>
-                <h3 className="text-lg font-bold mb-4" style={{ color: '#F1F5F9' }}>{service.title}</h3>
-                <p className="text-sm leading-relaxed mb-6" style={{ color: '#64748B' }}>{service.desc}</p>
-                <div className="grid grid-cols-1 gap-2">
-                  {service.points.map((pt) => (
-                    <div key={pt} className="flex items-center gap-2">
-                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-xs font-medium" style={{ color: '#94A3B8' }}>{pt}</span>
-                    </div>
+            {SERVICES.map(({ Icon, title, desc, tags }) => (
+              <div key={title} className="bg-white border border-slate-200 rounded-xl p-7 shadow-sm">
+                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4">
+                  <Icon size={20} strokeWidth={1.75} className="text-blue-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
+                <p className="text-sm text-slate-700 leading-relaxed mb-5">{desc}</p>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <span key={tag} className="text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2.5 py-1">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -170,133 +161,43 @@ export default function BiomedicalResearchPage() {
         </div>
       </section>
 
-      {/* WHAT THIS IMPROVES */}
-      <section className="py-24" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* WHAT THIS IMPROVES — white */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#071829' }}>What This Improves</h2>
+          <div className="max-w-2xl mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">The Payoff</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+              What it adds up to
+            </h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
-            {BENEFITS.map((benefit) => (
-              <div
-                key={benefit}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg"
-                style={{ backgroundColor: '#F8FAFD', border: '1px solid #E1E8F5' }}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#1D4ED8" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-xs font-medium leading-snug" style={{ color: '#1E293B' }}>{benefit}</span>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {IMPROVEMENTS.map((item) => (
+              <div key={item} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 border border-slate-200">
+                <Check size={15} strokeWidth={2.5} className="text-blue-700 flex-shrink-0" />
+                <span className="text-sm font-medium text-slate-700">{item}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* WHY MULLEN ANALYTICS */}
-      <section className="py-24" style={{ backgroundColor: '#F8FAFD' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-start">
-            <div>
-              <h2
-                className="text-3xl md:text-4xl font-bold mb-8"
-                style={{ color: '#071829', borderLeft: '3px solid #0EA5E9', paddingLeft: '1.25rem' }}
-              >
-                Why Mullen Analytics
-              </h2>
-              <div className="space-y-5">
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  We combine advanced analytics and AI engineering with operational understanding of healthcare and biomedical systems.
-                </p>
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  Our focus is not theoretical AI. It is practical, explainable systems that improve research operations, trial execution, and scientific decision-making.
-                </p>
-                <p className="text-base leading-relaxed font-semibold" style={{ color: '#071829' }}>
-                  We build systems organizations can trust.
-                </p>
-              </div>
-              <div className="mt-10 flex flex-wrap gap-3">
-                {['Veteran-Owned', 'Explainable AI', 'Regulatory-Aware', 'Procurement-Ready', 'Research Domain Expertise'].map((badge) => (
-                  <span key={badge} className="px-4 py-2 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: '#F0F4FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-4">
-              {[
-                { title: 'Healthcare & Biomedical Domain Knowledge', desc: 'We understand the research lifecycle — from trial design through regulatory submission — and build systems that match operational reality.' },
-                { title: 'Explainable, Defensible AI', desc: 'Every model we deploy is built to be understood, audited, and defended. No black boxes in high-stakes research environments.' },
-                { title: 'Regulatory-Aware Systems', desc: 'Our pipelines and dashboards are designed with GCP, FDA, and IRB compliance considerations built in from the start.' },
-                { title: 'Practical, Not Theoretical', desc: 'We deliver working systems — not white papers. Our focus is on operational impact, measurable outcomes, and research acceleration.' },
-              ].map((item) => (
-                <div key={item.title} className="p-5 rounded-xl" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E1E8F5' }}>
-                  <h4 className="text-sm font-bold mb-2" style={{ color: '#071829' }}>{item.title}</h4>
-                  <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* COMMON USE CASES */}
-      <section className="py-24" style={{ background: 'linear-gradient(180deg, #071829 0%, #0A1F35 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#FFFFFF' }}>Common Biomedical Research Use Cases</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {USE_CASES.map((uc) => (
-              <div
-                key={uc.title}
-                className="p-6 rounded-xl"
-                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(14,165,233,0.15)' }}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                  </svg>
-                </div>
-                <h3 className="text-sm font-bold mb-2" style={{ color: '#E2E8F0' }}>{uc.title}</h3>
-                <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>{uc.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="py-28" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2
-            className="text-4xl md:text-5xl font-bold mb-6 mx-auto"
-            style={{ color: '#FFFFFF', lineHeight: 1.12, maxWidth: '680px', letterSpacing: '-0.02em' }}
-          >
-            Better Research Starts with Better Systems
+      {/* FINAL CTA — navy band */}
+      <section className="py-28 bg-navy-deep">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight mb-6">
+            Better research starts with better systems
           </h2>
-          <p className="text-lg mb-12 mx-auto leading-relaxed" style={{ color: '#475569', maxWidth: '540px' }}>
-            If your organization is ready to improve visibility, accelerate discovery, and strengthen research outcomes, we should talk.
+          <p className="text-lg text-slate-300 mb-12 leading-relaxed mx-auto max-w-xl">
+            If your organization is ready to improve visibility, accelerate discovery, and strengthen
+            research outcomes, let&apos;s talk.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/contact"
-              className="px-10 py-5 rounded font-semibold text-base text-center transition-all duration-200"
-              style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
-            >
+            <Link href="/contact"
+              className="px-10 py-5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
               Start a Conversation
-            </a>
-            <a
-              href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-10 py-5 rounded font-semibold text-base text-center transition-all duration-200"
-              style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A6FA5'; e.currentTarget.style.color = '#FFFFFF'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3A58'; e.currentTarget.style.color = '#E2E8F0'; }}
-            >
+            </Link>
+            <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+              className="px-10 py-5 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
               Schedule a Strategy Call
             </a>
           </div>

@@ -1,299 +1,191 @@
 import Link from 'next/link';
+import {
+  Package, RefreshCw, Compass, Check, ShieldCheck,
+} from 'lucide-react';
+
+// Pricing — simple & quote-first. Same FIXED palette as the home page (see
+// app/page.jsx). Most work is custom-scoped, so we show a few plain "ways to
+// work together" with light starting-at ranges rather than a wall of prices.
 
 export const metadata = {
-  title: 'Pricing | Mullen Analytics & AI Consulting',
+  title: 'Pricing | Mullen Analytics & Data Solutions',
   description:
-    'Mullen Analytics EMS Intelligence Platform pricing — QA/QI, staffing forecasts, operational analytics, and protocol compliance. Start free, scale by call volume, with cloud and on-prem (PHI) deployment options.',
+    'Simple, quote-first pricing for analytics, data engineering, drone, and automation work — plus ready-to-use platforms. Most engagements are custom-scoped to what you actually need. Start with a strategy call.',
 };
 
 const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
 
-// ── Cloud subscription tiers ─────────────────────────────────────────────────
-const TIERS = [
+const WAYS = [
   {
-    name: 'Free Trial',
-    badge: '14 days',
-    price: '$0',
-    period: '',
-    annual: 'No card required',
-    sub: 'Full access on your own data for 14 days.',
-    features: [
-      'Clean + dashboard your data',
-      'Data Explorer',
-      'Up to 3 active datasets',
-      'No credit card',
+    Icon: Package,
+    cadence: 'One-time',
+    name: 'Projects',
+    price: 'Starting at $2,500',
+    sub: 'A defined piece of work with a clear finish line.',
+    points: [
+      'A dashboard or report built around your data',
+      'Getting your data cleaned up, connected, and reliable',
+      'A drone survey, map, or inspection',
+      'A forecasting or prediction model',
+      'Automating a manual, repetitive task',
     ],
-    cta: 'Start free trial',
-    href: '/signup?plan=free_trial',
-    highlight: false,
+    cta: 'Scope a project',
   },
   {
-    name: 'Essential',
-    price: '$249',
-    period: '/mo',
-    annual: 'Clean data + a live dashboard',
-    sub: 'For agencies that want clean data + a live dashboard.',
-    features: [
-      'One active dataset at a time',
-      'Dashboard + downloadable cleaned files',
-      'Standard email & portal notifications',
-      'Support via portal messaging & feedback',
+    Icon: RefreshCw,
+    cadence: 'Monthly',
+    name: 'Ongoing analytics & support',
+    price: 'From $249/mo',
+    sub: 'Continuous insight and a team you can reach — not a one-off.',
+    points: [
+      'Managed dashboards and regular reporting',
+      'New questions answered as they come up',
+      'Models kept accurate and up to date',
+      'Message our team whenever you need us',
     ],
-    cta: 'Get started',
-    href: '/signup?plan=essential',
-    highlight: false,
-  },
-  {
-    name: 'Professional',
-    price: '$599',
-    period: '/mo',
-    annual: 'Self-service analysis',
-    sub: 'For agencies that need self-service analysis and more datasets.',
-    features: [
-      'Everything in Essential',
-      'Up to 5 active datasets / dashboards',
-      'Data Explorer (ad-hoc slice-and-dice)',
-      'Preference controls (PHI hiding, exclusions, defaults)',
-      'Same-business-day support',
-    ],
-    cta: 'Start with Professional',
-    href: '/signup?plan=professional',
+    cta: 'Talk about ongoing work',
     highlight: true,
-    badge: 'Most popular',
+    badge: 'Most common',
   },
   {
-    name: 'Enterprise',
-    price: '$1,499',
-    period: '/mo',
-    annual: 'Continuous reporting + comparisons',
-    sub: 'For agencies doing continuous reporting + management comparisons.',
-    features: [
-      'Everything in Professional',
-      'Year-over-year groups + Compare Years',
-      'Higher dataset limits (fair-use)',
-      'Custom deliverables on a cadence',
-      'Dedicated account manager + monthly check-in',
+    Icon: Compass,
+    cadence: 'Hourly',
+    name: 'Advisory & strategy',
+    price: '$150/hr',
+    sub: 'Direction and expertise, on demand.',
+    points: [
+      'Strategy sessions and planning',
+      'A second opinion on your data or approach',
+      'Hands-on help when your team is stretched',
+      'Clear guidance on where to start',
     ],
-    cta: 'Get started',
-    href: '/signup?plan=enterprise',
-    highlight: false,
+    cta: 'Book advisory time',
   },
 ];
 
-// ── Modular products (bundle) ────────────────────────────────────────────────
-const MODULES = [
-  { name: 'EMS Analytics Suite', price: '$299/mo', desc: 'Dashboards, call-volume & response-time analytics.' },
-  { name: 'EMS QA Platform', price: '$799/mo', desc: 'Automated chart review against your protocols.' },
-  { name: 'Staffing Forecasting', price: '$299/mo', desc: 'Forecast demand & staffing by day, hour, and location.' },
+const PRICE_FACTORS = [
+  'How much data you have, and what shape it’s in',
+  'How much is a one-time build versus ongoing work',
+  'Whether it runs in our secure cloud or inside your own walls',
+  'How hands-on you need us to be',
 ];
-
-// ── On-prem PHI license by call volume ───────────────────────────────────────
-const ONPREM_LICENSE = [
-  { calls: 'Under 10,000', price: '$12,000 / yr' },
-  { calls: '10,000 – 25,000', price: '$18,000 / yr' },
-  { calls: '25,000 – 50,000', price: '$30,000 / yr' },
-  { calls: '50,000+', price: '$50,000+ / yr' },
-];
-
-// ── Add-ons ──────────────────────────────────────────────────────────────────
-const ADDONS = [
-  { name: 'AI Reviewer Pack', price: '$99 / mo', desc: 'Additional 1,000 AI-reviewed charts.' },
-  { name: 'Additional Storage', price: '$25 / mo', desc: 'Per 100 GB.' },
-  { name: 'Additional Agency', price: '$199 / mo', desc: 'Add another agency or tenant.' },
-  { name: 'White-Label Branding', price: '$2,500 + $50/mo', desc: 'Your brand, your domain.' },
-  { name: 'Custom Protocol Buildout', price: '$1,500–$5,000', desc: 'One-time protocol configuration.' },
-  { name: 'Advanced Consulting', price: '$150 / hr', desc: 'Hands-on analytics & QA expertise.' },
-];
-
-function Check() {
-  return (
-    <span
-      className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
-      style={{ backgroundColor: 'rgba(14,165,233,0.12)' }}
-    >
-      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={3}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    </span>
-  );
-}
-
-function TierCard({ t }) {
-  return (
-    <div
-      className="flex flex-col rounded-2xl p-6 h-full"
-      style={{
-        backgroundColor: '#FFFFFF',
-        border: t.highlight ? '2px solid #1D4ED8' : '1px solid #E1E8F5',
-        boxShadow: t.highlight ? '0 18px 50px rgba(29,78,216,0.16)' : '0 8px 28px rgba(7,24,41,0.06)',
-      }}
-    >
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <h3 className="text-lg font-bold" style={{ color: '#071829' }}>{t.name}</h3>
-        {t.badge && (
-          <span
-            className="rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider"
-            style={
-              t.highlight
-                ? { backgroundColor: '#1D4ED8', color: '#FFFFFF' }
-                : { backgroundColor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }
-            }
-          >
-            {t.badge}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-end gap-1 mt-2">
-        <span className="text-4xl font-bold" style={{ color: '#071829', letterSpacing: '-0.02em' }}>{t.price}</span>
-        {t.period && <span className="text-sm font-medium mb-1" style={{ color: '#64748B' }}>{t.period}</span>}
-      </div>
-      <p className="text-xs mt-1" style={{ color: '#0EA5E9' }}>{t.annual}</p>
-
-      <p className="text-sm mt-3 leading-relaxed" style={{ color: '#475569' }}>{t.sub}</p>
-
-      <ul className="space-y-2 mt-5 mb-6 flex-1">
-        {t.features.map((f) => (
-          <li key={f} className="flex items-start gap-2.5">
-            <Check />
-            <span className="text-sm" style={{ color: '#1E293B' }}>{f}</span>
-          </li>
-        ))}
-        {t.note && (
-          <li className="text-xs italic pt-1" style={{ color: '#94A3B8' }}>{t.note}</li>
-        )}
-      </ul>
-
-      {t.external ? (
-        <a
-          href={t.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-center px-5 py-3 rounded font-semibold text-sm transition-colors"
-          style={
-            t.highlight
-              ? { backgroundColor: '#1D4ED8', color: '#FFFFFF' }
-              : { backgroundColor: '#F1F5F9', color: '#0F2440', border: '1px solid #E1E8F5' }
-          }
-        >
-          {t.cta}
-        </a>
-      ) : (
-        <Link
-          href={t.href}
-          className="block text-center px-5 py-3 rounded font-semibold text-sm transition-colors"
-          style={
-            t.highlight
-              ? { backgroundColor: '#1D4ED8', color: '#FFFFFF' }
-              : { backgroundColor: '#F1F5F9', color: '#0F2440', border: '1px solid #E1E8F5' }
-          }
-        >
-          {t.cta}
-        </Link>
-      )}
-    </div>
-  );
-}
 
 export default function PricingPage() {
   return (
-    <div>
-      {/* HERO */}
-      <section style={{ background: 'linear-gradient(180deg, #071829 0%, #0D2035 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6 py-20 md:py-24">
+    <div className="bg-white">
+
+      {/* HERO — navy band */}
+      <section className="bg-navy-deep">
+        <div className="max-w-7xl mx-auto px-6 py-24 md:py-28">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#0EA5E9' }}>Pricing</p>
-            <h1
-              className="text-4xl md:text-5xl font-bold mb-6"
-              style={{ color: '#FFFFFF', lineHeight: 1.1, letterSpacing: '-0.025em' }}
-            >
-              One platform for QA, staffing, and operations
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">Pricing</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.05] tracking-tight mb-6">
+              Pricing scoped to what you actually need
             </h1>
-            <p className="text-lg mb-10 leading-relaxed" style={{ color: '#94A3B8', maxWidth: '640px' }}>
-              QA/QI, staffing forecasts, operational analytics, protocol compliance, and executive
-              reporting — in a single platform. Start free, then scale by call volume, in the cloud or on-prem.
+            <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
+              Most of what we do is built for you, so most engagements are custom-quoted. Here is how we
+              structure the work — and exactly what a fair quote is built on. No surprises.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href={CALENDAR_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-8 py-4 rounded font-semibold text-base text-center text-white transition-colors"
-                style={{ backgroundColor: '#1D4ED8' }}
-              >
-                Start free trial
+              <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+                className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
+                Schedule a strategy call
               </a>
-              <Link
-                href="/contact"
-                className="px-8 py-4 rounded font-semibold text-base text-center transition-colors"
-                style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
-              >
-                Talk to sales
+              <Link href="/contact"
+                className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
+                Contact us
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CLOUD TIERS */}
-      <section className="py-16 md:py-20" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* WAYS TO WORK TOGETHER — white */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-4 mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#0EA5E9' }}>Cloud plans</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: '#E1E8F5' }} />
+          <div className="max-w-2xl mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Ways to Work Together</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-4">
+              Three simple ways to start
+            </h2>
+            <p className="text-base text-slate-700 leading-relaxed">
+              Whether you need one thing built, ongoing help, or just a little direction — there is a
+              straightforward way in. Prices below are starting points; most work is quoted to fit.
+            </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            {TIERS.map((t) => <TierCard key={t.name} t={t} />)}
-          </div>
-          <p className="text-xs mt-6" style={{ color: '#94A3B8' }}>
-            Annual billing is 10× the monthly rate — two months free. Charts are billed per month; overage add-ons available.
-          </p>
-        </div>
-      </section>
-
-      {/* PLATFORM BUNDLE */}
-      <section className="py-16 md:py-20" style={{ backgroundColor: '#F8FAFD' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#0EA5E9' }}>Best value</p>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#071829', letterSpacing: '-0.02em' }}>
-                Full EMS Intelligence Platform
-              </h2>
-              <p className="text-base leading-relaxed mb-6" style={{ color: '#475569' }}>
-                Agencies buy outcomes, not features. Bundle QA/QI, staffing forecasting, predictive
-                analytics, and call-volume forecasting into one platform that helps reduce overtime,
-                improve compliance, and improve patient care.
-              </p>
-              <div className="flex items-end gap-2 mb-6">
-                <span className="text-4xl font-bold" style={{ color: '#071829' }}>$1,199</span>
-                <span className="text-sm font-medium mb-1.5" style={{ color: '#64748B' }}>/mo</span>
-                <span className="text-sm mb-1.5 ml-2" style={{ color: '#0EA5E9' }}>everything, one price</span>
-              </div>
-              <Link
-                href="/contact"
-                className="inline-block px-7 py-3.5 rounded font-semibold text-sm text-center text-white transition-colors"
-                style={{ backgroundColor: '#1D4ED8' }}
+          <div className="grid md:grid-cols-3 gap-6 items-stretch">
+            {WAYS.map(({ Icon, cadence, name, price, sub, points, cta, highlight, badge }) => (
+              <div
+                key={name}
+                className={`relative flex flex-col rounded-2xl p-7 ${
+                  highlight
+                    ? 'bg-white border-2 border-blue-600 shadow-lg shadow-blue-600/10'
+                    : 'bg-slate-50 border border-slate-200'
+                }`}
               >
-                Get the full platform
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: '#64748B' }}>
-                Or buy modules individually
-              </p>
-              {MODULES.map((m) => (
-                <div
-                  key={m.name}
-                  className="flex items-center justify-between gap-4 rounded-xl px-5 py-4"
-                  style={{ backgroundColor: '#FFFFFF', border: '1px solid #E1E8F5' }}
+                {badge && (
+                  <span className="absolute -top-3 left-7 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider bg-blue-600 text-white">
+                    {badge}
+                  </span>
+                )}
+                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4">
+                  <Icon size={20} strokeWidth={1.75} className="text-blue-700" />
+                </div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-sky-600 mb-2">{cadence}</p>
+                <h3 className="text-lg font-bold text-slate-900 mb-1">{name}</h3>
+                <p className="text-2xl font-bold text-slate-900 tracking-tight mb-3">{price}</p>
+                <p className="text-sm text-slate-700 leading-relaxed mb-5">{sub}</p>
+                <ul className="space-y-2.5 mb-7 flex-1">
+                  {points.map((pt) => (
+                    <li key={pt} className="flex items-start gap-3">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 bg-blue-600/10">
+                        <Check size={13} strokeWidth={3} className="text-blue-700" />
+                      </span>
+                      <span className="text-sm text-slate-700">{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/contact"
+                  className={`block text-center px-5 py-3 rounded font-semibold text-sm transition-colors ${
+                    highlight
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                      : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200'
+                  }`}
                 >
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: '#071829' }}>{m.name}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{m.desc}</p>
-                  </div>
-                  <span className="text-sm font-bold whitespace-nowrap" style={{ color: '#1D4ED8' }}>{m.price}</span>
+                  {cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW WE PRICE — slate-50 */}
+      <section className="py-24 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">How We Price</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-6">
+                A fair price depends on what you need
+              </h2>
+              <div className="space-y-5">
+                <p className="text-base text-slate-700 leading-relaxed">
+                  We keep pricing honest and simple. Instead of forcing your work into a rigid plan, we
+                  look at a few practical things and give you a clear, fixed quote.
+                </p>
+                <p className="text-base text-slate-700 leading-relaxed">
+                  You will know the full price before any work starts — no surprise line items, no
+                  billing you did not agree to.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3 lg:mt-4">
+              {PRICE_FACTORS.map((item) => (
+                <div key={item} className="flex items-center gap-3 px-5 py-4 rounded-xl bg-white border border-slate-200">
+                  <Check size={16} strokeWidth={2.5} className="text-blue-700 flex-shrink-0" />
+                  <span className="text-sm font-medium text-slate-700">{item}</span>
                 </div>
               ))}
             </div>
@@ -301,118 +193,53 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ON-PREM PHI */}
-      <section className="py-16 md:py-20" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#0EA5E9' }}>
-                On-prem · PHI production
-              </p>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                Run it inside your own environment
-              </h2>
-              <p className="text-base leading-relaxed mb-6" style={{ color: '#94A3B8' }}>
-                For agencies and hospital systems that must process PHI in production within their own
-                infrastructure. Deployed, configured, and trained by our team — your data never leaves your walls.
-              </p>
-              <ul className="space-y-2.5 mb-8">
-                {['Installation & configuration', 'Protocol setup', 'Initial training', 'Data migration'].map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
-                      style={{ backgroundColor: 'rgba(14,165,233,0.18)' }}>
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="#38BDF8" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <span className="text-sm" style={{ color: '#CBD5E1' }}>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/contact"
-                className="inline-block px-7 py-3.5 rounded font-semibold text-sm text-center text-white transition-colors"
-                style={{ backgroundColor: '#1D4ED8' }}
-              >
-                Request on-prem pricing
-              </Link>
+      {/* REGULATED / ON-PREM — white */}
+      <section className="py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 md:p-10">
+            <div className="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-5">
+              <ShieldCheck size={24} strokeWidth={1.75} className="text-blue-700" />
             </div>
-
-            <div className="rounded-2xl p-6" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid #1E3A58' }}>
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="text-sm font-semibold" style={{ color: '#E2E8F0' }}>One-time implementation</span>
-                <span className="text-lg font-bold" style={{ color: '#FFFFFF' }}>$15k–$30k</span>
-              </div>
-              <p className="text-xs mb-5" style={{ color: '#64748B' }}>Installation, configuration, protocol setup, training, and data migration.</p>
-
-              <p className="text-sm font-semibold mb-3" style={{ color: '#E2E8F0' }}>Annual license — by call volume</p>
-              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #1E3A58' }}>
-                {ONPREM_LICENSE.map((row, i) => (
-                  <div
-                    key={row.calls}
-                    className="flex items-center justify-between px-4 py-3"
-                    style={{ backgroundColor: i % 2 ? 'rgba(255,255,255,0.03)' : 'transparent' }}
-                  >
-                    <span className="text-sm" style={{ color: '#CBD5E1' }}>{row.calls} calls</span>
-                    <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>{row.price}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-3">Regulated &amp; Sensitive Data</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight mb-4">
+              We can run it inside your own walls
+            </h2>
+            <p className="text-base text-slate-700 leading-relaxed mb-6 max-w-2xl">
+              Handling PHI or other sensitive data? For healthcare, EMS, and research teams that need it,
+              we deploy and run everything inside your own environment — your data never leaves. These
+              engagements are scoped and quoted to your setup and requirements.
+            </p>
+            <Link href="/contact"
+              className="inline-block px-7 py-3.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm text-center transition-colors">
+              Ask about secure deployment
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ADD-ONS */}
-      <section className="py-16 md:py-20" style={{ backgroundColor: '#FFFFFF' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-4 mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#0EA5E9' }}>Add-ons</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: '#E1E8F5' }} />
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {ADDONS.map((a) => (
-              <div key={a.name} className="rounded-xl p-5" style={{ backgroundColor: '#F8FAFD', border: '1px solid #E1E8F5' }}>
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-bold" style={{ color: '#071829' }}>{a.name}</p>
-                  <span className="text-sm font-bold whitespace-nowrap" style={{ color: '#1D4ED8' }}>{a.price}</span>
-                </div>
-                <p className="text-xs mt-1.5 leading-relaxed" style={{ color: '#64748B' }}>{a.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="py-24" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-5 mx-auto" style={{ color: '#FFFFFF', maxWidth: '640px', letterSpacing: '-0.02em' }}>
-            Not sure which plan fits your agency?
+      {/* FINAL CTA — navy band */}
+      <section className="py-28 bg-navy-deep">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight mb-6">
+            Not sure what your project should cost?
           </h2>
-          <p className="text-lg mb-10 mx-auto leading-relaxed" style={{ color: '#94A3B8', maxWidth: '520px' }}>
-            Tell us your call volume and goals, and we will recommend the right plan — and demo it with your own data.
+          <p className="text-lg text-slate-300 mb-12 leading-relaxed mx-auto max-w-xl">
+            Tell us what you are trying to solve. We will recommend the right approach and give you a
+            clear, no-pressure quote — often with a quick look at what it means for your own data.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href={CALENDAR_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-10 py-5 rounded font-semibold text-base text-center text-white transition-colors"
-              style={{ backgroundColor: '#1D4ED8' }}
-            >
-              Schedule a demo
+            <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+              className="px-10 py-5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
+              Schedule a strategy call
             </a>
-            <Link
-              href="/contact"
-              className="px-10 py-5 rounded font-semibold text-base text-center transition-colors"
-              style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
-            >
+            <Link href="/contact"
+              className="px-10 py-5 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
               Contact us
             </Link>
           </div>
         </div>
       </section>
+
     </div>
   );
 }

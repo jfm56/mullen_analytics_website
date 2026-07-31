@@ -3,7 +3,7 @@ import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-const HIDE_ROUTES = ['/admin', '/portal'];
+const HIDE_ROUTES = ['/admin', '/portal', '/connect'];
 
 export function ConditionalNav() {
   const pathname = usePathname();

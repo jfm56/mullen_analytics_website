@@ -133,7 +133,7 @@ export default function PortalMessagesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
           <p className="text-gray-600 text-sm mt-1">
-            This is where updates from Mullen Analytics &amp; AI Consulting LLC will appear about your project.
+            This is where updates from Mullen Analytics &amp; Data Solutions LLC will appear about your project.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs">

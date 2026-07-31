@@ -1,0 +1,7 @@
+# Drop these images here (referenced by /connect):
+#   connect-preview.jpg        (1200x630 social share card)
+#   portfolio-ems.jpg
+#   portfolio-healthcare.jpg
+#   portfolio-environmental.jpg
+#   portfolio-dashboard.jpg
+# Note: the headshot uses the existing /head-shot.jpeg, not this folder.

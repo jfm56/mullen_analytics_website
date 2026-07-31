@@ -10,9 +10,9 @@ export default function EmsQaPage() {
   const capabilities = [
     {
       num: '01',
-      title: 'AI Chart Review — On Your Hardware',
-      desc: 'Every ePCR narrative is reviewed by a local AI model running on your infrastructure. No chart data ever leaves the building, and no public AI service ever touches PHI. Deterministic rules catch the structured gaps; the AI reads the narrative for the rest.',
-      tags: ['Local AI (Ollama)', 'No PHI to the cloud', 'Narrative + structured', 'Explainable findings'],
+      title: 'Automated Chart Review — On Your Hardware',
+      desc: 'Every ePCR narrative is reviewed by a local model running on your infrastructure. No chart data ever leaves the building, and no public cloud service ever touches PHI. Deterministic rules catch the structured gaps; the local model reads the narrative for the rest.',
+      tags: ['Local model (Ollama)', 'No PHI to the cloud', 'Narrative + structured', 'Explainable findings'],
     },
     {
       num: '02',
@@ -43,10 +43,10 @@ export default function EmsQaPage() {
 
   const features = [
     { title: 'Imports Everything', desc: 'CSV, NEMSIS XML (emsCharts, ESO, ImageTrend), and PDF charts — vendor quirks handled automatically.' },
-    { title: 'Deterministic + AI Flags', desc: 'A transparent rule engine plus a conservative AI reviewer that uses cautious, non-punitive language.' },
+    { title: 'Deterministic + Model Flags', desc: 'A transparent rule engine plus a conservative model reviewer that uses cautious, non-punitive language.' },
     { title: 'Policy RAG', desc: 'Upload protocols once; charts are flagged against them with the source standing order cited on every finding.' },
     { title: 'No-Code Rule Builder', desc: 'Build your own QA rules as nested AND/OR conditions and preview them against recent charts before enabling.' },
-    { title: 'Learning Loop', desc: 'Reviewer decisions re-weight rules per agency and build an exemplar bank that sharpens the AI over time.' },
+    { title: 'Learning Loop', desc: 'Reviewer decisions re-weight rules per agency and build an exemplar bank that sharpens the model over time.' },
     { title: 'Crew Feedback Loop', desc: 'Findings route back to the chart and the crew, with a correction workflow and supervisor sign-off.' },
     { title: 'Analytics + Reports', desc: 'Per-provider / per-unit dashboards, training recommendations, and one-click monthly PDF / CSV exports.' },
     { title: 'Hosted or Fully On-Prem', desc: 'A de-identified hosted trial, or a single-command air-gapped install on your own server for real PHI.' },
@@ -62,10 +62,10 @@ export default function EmsQaPage() {
             Mullen Analytics · EMS QA / QI Platform
           </p>
           <h1 className="text-4xl md:text-6xl font-bold mb-6" style={{ color: '#FFFFFF', lineHeight: 1.15 }}>
-            AI-Assisted Chart QA,<br />Built for EMS
+            Automated Chart QA,<br />Built for EMS
           </h1>
           <p className="text-xl mb-12 mx-auto leading-relaxed" style={{ color: '#94A3B8', maxWidth: '640px' }}>
-            Review every chart against your protocols, catch documentation gaps before billing and audits, and coach your crews — with a secure AI that runs on your hardware and never sends PHI to the cloud.
+            Review every chart against your protocols, catch documentation gaps before billing and audits, and coach your crews — with a secure local model that runs on your hardware and never sends PHI to the cloud.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -121,7 +121,7 @@ export default function EmsQaPage() {
                 Most agencies can only review a fraction of their charts. Issues surface late, coaching is inconsistent, and the rationale behind a flag lives in a reviewer&apos;s head instead of a citable record.
               </p>
               <p className="text-lg leading-relaxed" style={{ color: '#94A3B8' }}>
-                And in EMS, the data is PHI. Sending it to a public AI service is not an option — so most teams get none of the leverage AI could provide.
+                And in EMS, the data is PHI. Sending it to a public cloud service is not an option — so most teams get none of the leverage automation could provide.
               </p>
             </div>
             <div className="flex flex-col gap-4">
@@ -194,17 +194,17 @@ export default function EmsQaPage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-8" style={{ color: '#071829', borderLeft: '4px solid #0EA5E9', paddingLeft: '1.5rem' }}>Secure by Design</h2>
               <div className="space-y-5">
                 <p className="text-lg leading-relaxed" style={{ color: '#1E293B' }}>
-                  The platform is built around a hard rule: no chart data ever reaches a public AI service. The language model and the embeddings run locally, so PHI stays inside your network.
+                  The platform is built around a hard rule: no chart data ever reaches a public cloud service. The language model and the embeddings run locally, so PHI stays inside your network.
                 </p>
                 <p className="text-lg leading-relaxed" style={{ color: '#1E293B' }}>
-                  Narratives are run through PHI redaction before the model sees them, every AI call is logged for forensic audit, and tenant data is isolated at the database level.
+                  Narratives are run through PHI redaction before the model sees them, every model call is logged for forensic audit, and tenant data is isolated at the database level.
                 </p>
                 <p className="text-lg leading-relaxed font-medium" style={{ color: '#071829' }}>
                   Run it as a de-identified hosted trial, or install it fully air-gapped on your own server — same platform, your choice of footprint.
                 </p>
               </div>
               <div className="mt-8 flex flex-wrap gap-3">
-                {['Local AI — no public cloud', 'PHI redaction', 'Row-level tenant isolation', 'Hash-chained audit log', 'MFA', 'On-prem / air-gap option'].map((badge) => (
+                {['Local model — no public cloud', 'PHI redaction', 'Row-level tenant isolation', 'Hash-chained audit log', 'MFA', 'On-prem / air-gap option'].map((badge) => (
                   <span key={badge} className="px-4 py-2 rounded-full text-sm font-semibold" style={{ backgroundColor: '#071829', color: '#FFFFFF' }}>{badge}</span>
                 ))}
               </div>
@@ -214,8 +214,8 @@ export default function EmsQaPage() {
               <div className="space-y-4">
                 {[
                   'Import — CSV, NEMSIS XML, or PDF',
-                  'Redact — PHI removed before any AI sees it',
-                  'Review — rules + local AI, grounded in your policies',
+                  'Redact — PHI removed before any model sees it',
+                  'Review — rules + local model, grounded in your policies',
                   'Flag — findings cite the protocol they came from',
                   'Coach — routed to the crew, tracked to correction',
                   'Learn — feedback re-weights rules over time',

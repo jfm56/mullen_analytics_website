@@ -3,10 +3,10 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Privacy Policy | Mullen Analytics',
   description:
-    'How Mullen Analytics & AI Consulting collects, uses, and protects your information, including our use of cookies and analytics.',
+    'How Mullen Analytics & Data Solutions collects, uses, and protects your information, including our use of cookies and analytics.',
 };
 
-const LAST_UPDATED = 'June 2, 2026';
+const LAST_UPDATED = 'July 31, 2026';
 
 function Section({ id, title, children }) {
   return (
@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-12 md:py-16 space-y-10">
         <p className="text-[15px] leading-relaxed" style={{ color: '#334155' }}>
-          This Privacy Policy explains how <strong>Mullen Analytics &amp; AI Consulting</strong> (&ldquo;Mullen
+          This Privacy Policy explains how <strong>Mullen Analytics &amp; Data Solutions LLC</strong> (&ldquo;Mullen
           Analytics,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects, uses, discloses, and
           protects information when you visit{' '}
           <a href="https://mullenanalytics.com" style={{ color: '#1D4ED8' }}>mullenanalytics.com</a>{' '}
@@ -121,7 +121,7 @@ export default function PrivacyPolicyPage() {
           resident, you may exercise rights under the CCPA/CPRA, including the right to know and the right to delete,
           without discrimination.</p>
           <p>To exercise any of these rights, contact us at{' '}
-            <a href="mailto:hello@mullenanalytics.com" style={{ color: '#1D4ED8' }}>hello@mullenanalytics.com</a>.
+            <a href="mailto:jmullen@mullenanalytics.com" style={{ color: '#1D4ED8' }}>jmullen@mullenanalytics.com</a>.
             We will respond as required by applicable law.</p>
         </Section>
 
@@ -141,8 +141,8 @@ export default function PrivacyPolicyPage() {
         <Section id="contact" title="11. Contact Us">
           <p>Questions about this Policy or your information:</p>
           <p>
-            <strong>Mullen Analytics &amp; AI Consulting</strong><br />
-            Email: <a href="mailto:hello@mullenanalytics.com" style={{ color: '#1D4ED8' }}>hello@mullenanalytics.com</a><br />
+            <strong>Mullen Analytics &amp; Data Solutions LLC</strong><br />
+            Email: <a href="mailto:jmullen@mullenanalytics.com" style={{ color: '#1D4ED8' }}>jmullen@mullenanalytics.com</a><br />
             Phone: <a href="tel:16092005818" style={{ color: '#1D4ED8' }}>609-200-5818</a>
           </p>
         </Section>
