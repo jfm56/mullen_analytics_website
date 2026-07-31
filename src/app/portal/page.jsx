@@ -490,7 +490,7 @@ export default function PortalHomePage() {
       </section>
 
       <div className="text-center text-xs text-gray-500 mt-12">
-        © 2026 Mullen Analytics & AI Consulting
+        © 2026 Mullen Analytics & Data Solutions
       </div>
     </div>
   );

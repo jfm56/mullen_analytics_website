@@ -10,7 +10,7 @@ export default function TechnologyPage() {
         <div className="relative max-w-7xl mx-auto px-4 py-24">
           <div style={{ maxWidth: '600px' }}>
             <h1 className="mb-6 text-5xl font-bold" style={{ color: '#FFFFFF' }}>
-              Technology & Artificial Intelligence
+              Technology & Automation
             </h1>
             <p className="text-xl mb-8" style={{ color: '#E5E7EB' }}>
               Applied, explainable systems for mission-critical decisions
@@ -46,23 +46,23 @@ export default function TechnologyPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="h-px bg-[#0EA5E9] w-24 mx-auto mb-8" />
           <p className="text-xl leading-relaxed" style={{ color: '#1E293B', maxWidth: '680px', margin: '0 auto' }}>
-            Technology is at the core of everything we deliver. Our analytics, machine learning, and AI solutions are built to support high-stakes decisions in healthcare, public safety, life sciences, and environmental systems.
+            Technology is at the core of everything we deliver. Our analytics, machine learning, and automation solutions are built to support high-stakes decisions in healthcare, public safety, life sciences, and environmental systems.
           </p>
           <div className="h-px bg-[#0EA5E9] w-24 mx-auto mt-8" />
         </div>
       </section>
 
-      {/* Artificial Intelligence - Image RIGHT */}
+      {/* Automation & Decision Support - Image RIGHT */}
       <section className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="mb-4" style={{ color: '#071829' }}>Artificial Intelligence</h2>
+              <h2 className="mb-4" style={{ color: '#071829' }}>Automation & Decision Support</h2>
               <p className="text-lg leading-relaxed mb-8" style={{ color: '#1E293B' }}>
-                We design and deploy AI systems that augment human decision-making in complex, regulated, and mission-critical environments.
+                We design and deploy automation that augments human decision-making in complex, regulated, and mission-critical environments.
               </p>
               
-              <h3 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: '#1D4ED8' }}>AI Capabilities</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: '#1D4ED8' }}>Automation Capabilities</h3>
               <div className="grid grid-cols-2 gap-3 mb-8">
                 <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F8FAFD' }}>
                   <span className="mr-2 text-lg" style={{ color: '#0EA5E9' }}>✓</span>
@@ -103,22 +103,22 @@ export default function TechnologyPage() {
               </div>
             </div>
             <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Artificial%20Intelligence%20(Applied%20AI%20section).jpg" alt="Artificial Intelligence" className="w-full h-full object-cover" />
+              <img src="/Artificial%20Intelligence%20(Applied%20AI%20section).jpg" alt="Automation" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Responsible & Applied AI - Trust Block */}
+      {/* Responsible Automation - Trust Block */}
       <section className="py-20" style={{ backgroundColor: '#071829' }}>
         <div className="max-w-5xl mx-auto px-4">
           <div className="mb-12 rounded-lg overflow-hidden shadow-xl">
-            <img src="/Responsible%20%26%20Applied%20AI.png" alt="Responsible & Applied AI" className="w-full h-auto object-cover" style={{ maxHeight: '300px' }} />
+            <img src="/Responsible%20%26%20Applied%20AI.png" alt="Responsible Automation" className="w-full h-auto object-cover" style={{ maxHeight: '300px' }} />
           </div>
           <div className="text-center mb-12">
-            <h2 className="mb-4" style={{ color: '#FFFFFF' }}>Responsible & Applied AI</h2>
+            <h2 className="mb-4" style={{ color: '#FFFFFF' }}>Responsible Automation</h2>
             <p className="text-xl max-w-2xl mx-auto" style={{ color: '#E5E7EB' }}>
-              AI systems must be trusted to be effective. We prioritize transparency, explainability, and governance.
+              Automation must be trusted to be effective. We prioritize transparency, explainability, and governance.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -203,7 +203,7 @@ export default function TechnologyPage() {
               <p className="text-sm" style={{ color: '#475569' }}>Environmental and spatial intelligence</p>
             </div>
             <div className="bg-white rounded-lg p-6 border-2 hover:shadow-lg transition-all" style={{ borderColor: '#0EA5E9' }}>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#071829' }}>AI-Assisted Decision Systems</h3>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#071829' }}>Automated Decision Support</h3>
               <p className="text-sm" style={{ color: '#475569' }}>Augmented operational intelligence</p>
             </div>
             <div className="bg-white rounded-lg p-6 border-2 hover:shadow-lg transition-all" style={{ borderColor: '#0EA5E9' }}>
@@ -221,7 +221,7 @@ export default function TechnologyPage() {
             <div>
               <h2 className="mb-4" style={{ color: '#071829' }}>Technology & Transformation</h2>
               <p className="text-lg leading-relaxed mb-6" style={{ color: '#1E293B' }}>
-                Technology alone does not create impact. We help organizations align analytics and AI with strategy, operations, and governance.
+                Technology alone does not create impact. We help organizations align analytics and automation with strategy, operations, and governance.
               </p>
               <div className="space-y-4">
                 <div className="flex items-start">
@@ -320,7 +320,7 @@ export default function TechnologyPage() {
       {/* Final CTA - Dark Background */}
       <section className="py-24" style={{ backgroundColor: '#071829' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="mb-6 text-4xl font-bold" style={{ color: '#FFFFFF' }}>Ready to apply AI with confidence?</h2>
+          <h2 className="mb-6 text-4xl font-bold" style={{ color: '#FFFFFF' }}>Ready to apply automation with confidence?</h2>
           <div className="flex flex-col sm:flex-row justify-center gap-6 mt-12">
             <a
               href="/contact"

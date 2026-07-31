@@ -33,6 +33,14 @@
   --color-border: var(--border);
   --color-footer-bg: var(--footer-bg);
   --color-footer-text: var(--footer-text);
+  /* Fixed navy bands (hero / CTA / trust strip). Intentionally NOT redefined in
+     .dark — these sections are dark in both themes, so they stay constant. The
+     :root vars above already existed; this exposes them as utilities
+     (bg-navy-deep, bg-navy-surface, border-navy-border) so pages stop
+     hardcoding inline hex. */
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-surface: var(--navy-surface);
+  --color-navy-border: var(--navy-border);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
@@ -54,18 +62,20 @@
   --surface-elevated: #0D2035;
 }
 
-.dark h1,
-.dark h2,
-.dark h3 {
-  color: var(--heading);
-}
+@layer base {
+  .dark h1,
+  .dark h2,
+  .dark h3 {
+    color: var(--heading);
+  }
 
-.dark a {
-  color: var(--brand-primary);
-}
+  .dark a {
+    color: var(--brand-primary);
+  }
 
-.dark a:hover {
-  color: var(--brand-secondary);
+  .dark a:hover {
+    color: var(--brand-secondary);
+  }
 }
 
 body {
@@ -80,33 +90,39 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Typography scale — executive grade */
-h1 {
-  font-size: clamp(2.25rem, 5vw, 3.75rem);
-  font-weight: 700;
-  line-height: 1.08;
-  color: var(--heading);
-  letter-spacing: -0.025em;
-}
+/* Typography scale — executive grade.
+   MUST be in @layer base so Tailwind utility colors (text-white, text-slate-900,
+   etc.) win over these element defaults. Unlayered, these element rules beat
+   utilities in the cascade and force every heading to --heading, which renders
+   invisible on dark/navy sections. */
+@layer base {
+  h1 {
+    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    font-weight: 700;
+    line-height: 1.08;
+    color: var(--heading);
+    letter-spacing: -0.025em;
+  }
 
-h2 {
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--heading);
-  letter-spacing: -0.02em;
-}
+  h2 {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--heading);
+    letter-spacing: -0.02em;
+  }
 
-h3 {
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--brand-primary);
-}
+  h3 {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--brand-primary);
+  }
 
-p {
-  max-width: 70ch;
-  line-height: 1.75;
+  p {
+    max-width: 70ch;
+    line-height: 1.75;
+  }
 }
 
 small, .text-small { font-size: 13px; }
@@ -127,13 +143,15 @@ a:focus-visible {
 /* Force white heading in dark contact section */
 #contact h2 { color: #ffffff !important; }
 
-a {
-  color: var(--brand-primary);
-  text-decoration: none;
-}
+@layer base {
+  a {
+    color: var(--brand-primary);
+    text-decoration: none;
+  }
 
-a:hover {
-  color: var(--brand-secondary);
+  a:hover {
+    color: var(--brand-secondary);
+  }
 }
 
 /* ── Layout height helpers ───────────────────────────────────────────────── */

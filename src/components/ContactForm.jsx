@@ -31,29 +31,34 @@ export default function ContactForm() {
     }
   }
 
+  const fieldClass =
+    'mt-1 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 ' +
+    'placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition';
+  const labelClass = 'block text-sm font-semibold text-slate-800 mb-1.5';
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-medium">Name</label>
-        <input name="name" required className="mt-1 w-full border rounded px-3 py-2" />
+        <label className={labelClass}>Name</label>
+        <input name="name" required className={fieldClass} />
       </div>
       <div>
-        <label className="block text-sm font-medium">Email</label>
-        <input type="email" name="email" required className="mt-1 w-full border rounded px-3 py-2" />
+        <label className={labelClass}>Email</label>
+        <input type="email" name="email" required className={fieldClass} />
       </div>
       <div>
-        <label className="block text-sm font-medium">What are you trying to improve?</label>
-        <select name="projectFocus" className="mt-1 w-full border rounded px-3 py-2">
+        <label className={labelClass}>What are you trying to improve?</label>
+        <select name="projectFocus" className={fieldClass}>
           <option value="Analytics Strategy">Analytics Strategy</option>
           <option value="Data Platform">Data Platform</option>
           <option value="Dashboard Build">Dashboard Build</option>
-          <option value="Machine Learning / AI">Machine Learning / AI</option>
+          <option value="Machine Learning / Automation">Machine Learning / Automation</option>
           <option value="Not sure (need guidance)">Not sure (need guidance)</option>
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium">Message</label>
-        <textarea name="message" rows="4" required className="mt-1 w-full border rounded px-3 py-2" />
+        <label className={labelClass}>Message</label>
+        <textarea name="message" rows="4" required className={fieldClass} />
       </div>
       {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
         <div>
@@ -63,8 +68,13 @@ export default function ContactForm() {
           />
         </div>
       )}
-      <button type="submit" className="px-6 py-3 rounded bg-black text-white">Send</button>
-      <div className="text-sm text-gray-600">{status}</div>
+      <button
+        type="submit"
+        className="w-full sm:w-auto px-8 py-3.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
+      >
+        Send message
+      </button>
+      {status && <div className="text-sm text-slate-600" aria-live="polite">{status}</div>}
     </form>
   );
 }

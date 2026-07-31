@@ -16,7 +16,7 @@ export default function PortfolioPage() {
             </div>
             <div className="h-px bg-[#0EA5E9] w-24 mb-8" />
             <p className="text-xl text-gray-200 leading-relaxed max-w-3xl">
-              Selected analytics, AI, and systems work delivered for EMS, public safety, and healthcare environments. Every project here is built around operational decision-making — not academic experimentation.
+              Selected analytics, automation, and systems work delivered for EMS, public safety, and healthcare environments. Every project here is built around operational decision-making — not academic experimentation.
             </p>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function PortfolioPage() {
                 </div>
                 <div className="flex items-start">
                   <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Demonstrated explainable AI techniques appropriate for regulated, accountability-driven environments</span>
+                  <span style={{ color: '#1E293B' }}>Demonstrated explainable, transparent techniques appropriate for regulated, accountability-driven environments</span>
                 </div>
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function PortfolioPage() {
                 </div>
                 <div className="flex items-start">
                   <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Built reusable patterns applicable to applied analytics and AI projects</span>
+                  <span style={{ color: '#1E293B' }}>Built reusable patterns applicable to applied analytics and automation projects</span>
                 </div>
               </div>
             </div>

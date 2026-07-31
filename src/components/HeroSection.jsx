@@ -35,7 +35,7 @@
           Transforming Data into Intelligent Decisions
         </h1>
         <p className="mt-4 max-w-2xl mx-auto">
-          We help organizations design, build, and operationalize modern analytics and AI capabilities
+          We help organizations design, build, and operationalize modern analytics and automation capabilities
           that drive measurable business outcomes.
         </p>
         <div className="mt-10 flex justify-center gap-4">

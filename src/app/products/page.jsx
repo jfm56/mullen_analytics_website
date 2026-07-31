@@ -1,17 +1,30 @@
 import Link from 'next/link';
+import {
+  BarChart3, Cloud, Plane, BrainCircuit, Zap, Compass, Check, ArrowRight,
+} from 'lucide-react';
+
+// Products & Solutions. Same FIXED palette as the home page — see app/page.jsx.
+// Broad "Solutions we build" grid up top, then the EMS SaaS "Platforms" below.
 
 export const metadata = {
-  title: 'Products | Mullen Analytics & AI Consulting',
+  title: 'Products & Solutions | Mullen Analytics & Data Solutions',
   description:
-    'Explore Mullen Analytics products: EMS Analytics Dashboards, the EMS QA/QI Platform, and the secure Client Portal — built for public safety and healthcare organizations.',
+    'Custom analytics & dashboards, AWS data engineering, drone analytics, machine learning, and automation — plus ready-to-use platforms like EMS Analytics, the EMS QA/QI Platform, and the secure Client Portal.',
 };
 
 const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
 
-const PRODUCTS = [
-  // ── EMS & Public Safety ──────────────────────────────────────────────────
+const SOLUTIONS = [
+  { Icon: BarChart3,    title: 'Custom Analytics & Dashboards', desc: 'Dashboards and reports built around your data and your decisions — clear views your team will actually use.' },
+  { Icon: Cloud,        title: 'AWS Data Engineering',          desc: 'Modern, secure data pipelines and warehouses on AWS — so your data is reliable, current, and ready to use.' },
+  { Icon: Plane,        title: 'Drone Analytics & Mapping',     desc: 'Aerial capture, surveying, mapping, and thermal/LiDAR analysis turned into measurable, reportable insight.' },
+  { Icon: BrainCircuit, title: 'Machine Learning & Automation', desc: 'Forecasting, prediction, and automation — built to be explainable, so you can defend the output.' },
+  { Icon: Zap,          title: 'Automation & Decision Support', desc: 'Automate manual reporting, document processing, and repetitive workflows — accurately and consistently.' },
+  { Icon: Compass,      title: 'Data Strategy & Advisory',      desc: 'Not sure where to start? We help you find the highest-value opportunities and a practical roadmap.' },
+];
+
+const PLATFORMS = [
   {
-    category: 'EMS & Public Safety',
     eyebrow: 'EMS Analytics',
     name: 'EMS Analytics Dashboard',
     status: 'available',
@@ -29,7 +42,6 @@ const PRODUCTS = [
     external: true,
   },
   {
-    category: 'EMS & Public Safety',
     eyebrow: 'Quality Assurance',
     name: 'EMS QA/QI Platform',
     status: 'early-access',
@@ -40,7 +52,6 @@ const PRODUCTS = [
       'Missing-documentation & protocol-deviation flags',
       'Manager review workflow with audit-log hash chain',
       'HIPAA-compliant · RBAC · on-prem deployment path',
-      'TOTP MFA · Row-Level Security · tamper-evident audit logs',
     ],
     image: null,
     href: '/ems-qa',
@@ -48,11 +59,10 @@ const PRODUCTS = [
     badge: 'HIPAA-focused',
   },
   {
-    category: 'EMS & Public Safety',
     eyebrow: 'Client Portal',
     name: 'Secure Client Portal',
     status: 'available',
-    desc: 'A private workspace for your agency: upload data, explore datasets, view dashboards, download reports, submit recommendations, and message our team — with role-based access and per-client data isolation.',
+    desc: 'A private workspace for your organization: upload data, explore datasets, view dashboards, download reports, submit recommendations, and message our team — with role-based access and per-client data isolation.',
     features: [
       'Secure, per-client data isolation (Row-Level Security)',
       'Self-service uploads & interactive dashboards',
@@ -63,13 +73,10 @@ const PRODUCTS = [
     href: '/portal/login',
     cta: 'Open the portal',
   },
-
-  // ── Coming soon ──────────────────────────────────────────────────────────
   {
-    category: 'Coming Soon',
     eyebrow: 'Prediction',
     name: 'EMS Predictive Analytics',
-    status: 'coming-soon',
+    status: 'available',
     desc: 'Forecast call volume, staffing needs, and response-time risk — by day, hour, and location, with historical weather built in. Plan coverage before demand hits.',
     features: [
       'Call-volume & staffing forecasts',
@@ -78,82 +85,67 @@ const PRODUCTS = [
       'Weather-aware trend modeling',
     ],
     image: '/products/predictive-analytics.png',
+    href: CALENDAR_URL,
+    cta: 'See it with your data',
+    external: true,
+  },
+  {
+    eyebrow: 'Wildfire Risk',
+    name: 'Wildfire Prediction Analytics',
+    status: 'coming-soon',
+    desc: 'Forecast wildfire risk and spread by combining weather, drought and fuel conditions, terrain, and historical fire data with drone and satellite imagery — so fire agencies and emergency managers can pre-position crews, warn earlier, and plan evacuations before a fire grows.',
+    features: [
+      'Fire-risk & ignition-likelihood forecasting by area',
+      'Fuel, drought & weather-driven risk modeling',
+      'Fire-spread & spot-fire progression modeling',
+      'Drone / aerial & satellite imagery analysis',
+      'Evacuation & resource pre-positioning support',
+    ],
     href: '/contact',
     cta: 'Join the early-access list',
   },
 ];
 
-// ── Group products by category ───────────────────────────────────────────────
-const CATEGORIES = [...new Set(PRODUCTS.map((p) => p.category))];
+const STATUS = {
+  available:      { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500', label: 'Available now' },
+  'early-access': { cls: 'bg-blue-50 text-blue-700 border-blue-200',          dot: 'bg-blue-500',    label: 'Early access' },
+  beta:           { cls: 'bg-violet-50 text-violet-700 border-violet-200',    dot: 'bg-violet-500',  label: 'Beta' },
+  'coming-soon':  { cls: 'bg-amber-50 text-amber-700 border-amber-200',       dot: 'bg-amber-500',   label: 'Coming soon' },
+};
 
 function StatusBadge({ status }) {
-  const styles = {
-    available:    { bg: '#ECFDF5', color: '#047857', border: '#A7F3D0', dot: '#10B981', label: 'Available now' },
-    'early-access': { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE', dot: '#3B82F6', label: 'Early access' },
-    beta:         { bg: '#F5F3FF', color: '#6D28D9', border: '#DDD6FE', dot: '#7C3AED', label: 'Beta' },
-    'coming-soon': { bg: '#FEF9F0', color: '#B45309', border: '#F5E0B8', dot: '#F59E0B', label: 'Coming soon' },
-  };
-  const s = styles[status] ?? styles['coming-soon'];
+  const s = STATUS[status] ?? STATUS['coming-soon'];
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider"
-      style={{ backgroundColor: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.dot }} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider border ${s.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}
     </span>
   );
 }
 
-function BrowserFrame({ image, alt, label }) {
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E1E8F5', boxShadow: '0 12px 40px rgba(7,24,41,0.14)' }}>
-      <div className="flex items-center gap-2 px-3 py-2.5" style={{ backgroundColor: '#0D2035' }}>
-        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FF5F57' }} />
-        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FEBC2E' }} />
-        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#28C840' }} />
-        <span className="ml-3 flex-1 truncate rounded px-2 py-0.5 text-[11px]" style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#94A3B8' }}>
-          app.mullenanalytics.com
-        </span>
-      </div>
-      {image ? (
-        <img src={image} alt={alt} className="w-full block" style={{ maxHeight: '460px', objectFit: 'cover', objectPosition: 'top' }} />
-      ) : (
-        <div className="flex flex-col items-center justify-center text-center px-6"
-          style={{ aspectRatio: '16 / 10', background: 'linear-gradient(135deg, #F8FAFD 0%, #EEF3FB 100%)' }}>
-          <svg className="w-10 h-10 mb-3" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h7l-1 8 11-12h-7l1-8z" />
-          </svg>
-          <p className="text-sm font-semibold" style={{ color: '#071829' }}>{label}</p>
-          <p className="text-xs mt-1" style={{ color: '#64748B' }}>Preview coming soon — contact us for a demo.</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ProductsPage() {
   return (
-    <div>
-      {/* HERO */}
-      <section style={{ background: 'linear-gradient(180deg, #071829 0%, #0D2035 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6 py-20 md:py-28">
+    <div className="bg-white">
+
+      {/* HERO — navy band */}
+      <section className="bg-navy-deep">
+        <div className="max-w-7xl mx-auto px-6 py-24 md:py-28">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#0EA5E9' }}>Products</p>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6"
-              style={{ color: '#FFFFFF', lineHeight: 1.1, letterSpacing: '-0.025em' }}>
-              Analytics &amp; AI tools built for real decisions
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">Products &amp; Solutions</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.05] tracking-tight mb-6">
+              Analytics &amp; automation built for real decisions
             </h1>
-            <p className="text-lg mb-10 leading-relaxed" style={{ color: '#94A3B8', maxWidth: '640px' }}>
-              From dashboards to automated QA and forecasting — purpose-built EMS &amp; healthcare tools that surface the right information at the right time, with full auditability and no black boxes.
+            <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
+              From custom analytics, data engineering, and drone mapping to ready-to-use platforms — we
+              build the tools that turn your data into decisions, whatever your field.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
-                className="px-8 py-4 rounded font-semibold text-base text-center text-white transition-colors"
-                style={{ backgroundColor: '#1D4ED8' }}>
+                className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
                 Schedule a demo
               </a>
               <Link href="/portal/login"
-                className="px-8 py-4 rounded font-semibold text-base text-center transition-colors"
-                style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}>
+                className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
                 Open the client portal
               </Link>
             </div>
@@ -161,107 +153,104 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {/* PRODUCT SECTIONS — grouped by category */}
-      {CATEGORIES.map((category) => {
-        const catProducts = PRODUCTS.filter((p) => p.category === category);
-        return (
-          <div key={category}>
-            {/* Category divider */}
-            <div className="max-w-7xl mx-auto px-6 pt-16 pb-2">
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#0EA5E9' }}>{category}</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E1E8F5' }} />
-              </div>
-            </div>
-
-            {catProducts.map((p, i) => {
-              const reversed = i % 2 === 1;
-              const tinted   = i % 2 === 1;
-              return (
-                <section key={p.name} className="py-16 md:py-20"
-                  style={{ backgroundColor: tinted ? '#F8FAFD' : '#FFFFFF' }}>
-                  <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-
-                      {/* Screenshot / mockup */}
-                      <div className={reversed ? 'lg:order-2' : ''}>
-                        <BrowserFrame image={p.image} alt={`${p.name} screenshot`} label={p.name} />
-                      </div>
-
-                      {/* Copy */}
-                      <div className={reversed ? 'lg:order-1' : ''}>
-                        <div className="flex flex-wrap items-center gap-3 mb-4">
-                          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#0EA5E9' }}>
-                            {p.eyebrow}
-                          </p>
-                          <StatusBadge status={p.status} />
-                          {p.badge && (
-                            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                              style={{ backgroundColor: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A' }}>
-                              {p.badge}
-                            </span>
-                          )}
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4"
-                          style={{ color: '#071829', letterSpacing: '-0.02em' }}>{p.name}</h2>
-                        <p className="text-base leading-relaxed mb-6" style={{ color: '#475569' }}>{p.desc}</p>
-
-                        <ul className="space-y-2.5 mb-8">
-                          {p.features.map((f) => (
-                            <li key={f} className="flex items-start gap-3">
-                              <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
-                                style={{ backgroundColor: 'rgba(14,165,233,0.12)' }}>
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                              <span className="text-sm" style={{ color: '#1E293B' }}>{f}</span>
-                            </li>
-                          ))}
-                        </ul>
-
-                        {p.external ? (
-                          <a href={p.href} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-sm font-semibold"
-                            style={{ color: '#1D4ED8' }}>
-                            {p.cta} <span aria-hidden>→</span>
-                          </a>
-                        ) : (
-                          <Link href={p.href}
-                            className="inline-flex items-center gap-2 text-sm font-semibold"
-                            style={{ color: '#1D4ED8' }}>
-                            {p.cta} <span aria-hidden>→</span>
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              );
-            })}
+      {/* SOLUTIONS — white */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Solutions We Build</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-4">
+              Custom-built for your data and your goals
+            </h2>
+            <p className="text-base text-slate-700 leading-relaxed">
+              Every organization is different, so most of what we deliver is built for you — from the
+              data foundation up to the dashboards and models on top.
+            </p>
           </div>
-        );
-      })}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {SOLUTIONS.map(({ Icon, title, desc }) => (
+              <div key={title} className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4">
+                  <Icon size={20} strokeWidth={1.75} className="text-blue-700" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-2">{title}</h3>
+                <p className="text-sm text-slate-700 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      {/* FINAL CTA */}
-      <section className="py-24" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-5 mx-auto"
-            style={{ color: '#FFFFFF', maxWidth: '640px', letterSpacing: '-0.02em' }}>
+      {/* PLATFORMS — card grid */}
+      <section className="py-24 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Platforms</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-4">
+              Ready-to-use software
+            </h2>
+            <p className="text-base text-slate-700 leading-relaxed">
+              Purpose-built platforms for EMS and public-safety agencies — available today, with full
+              auditability and no black boxes.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {PLATFORMS.map((p) => (
+              <div key={p.name} className="bg-white border border-slate-200 rounded-xl p-7 shadow-sm flex flex-col">
+                <div className="flex flex-wrap items-center gap-2.5 mb-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{p.eyebrow}</p>
+                  <StatusBadge status={p.status} />
+                  {p.badge && (
+                    <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                      {p.badge}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-2">{p.name}</h3>
+                <p className="text-sm text-slate-700 leading-relaxed mb-5">{p.desc}</p>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-3">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 bg-blue-600/10">
+                        <Check size={13} strokeWidth={3} className="text-blue-700" />
+                      </span>
+                      <span className="text-sm text-slate-700">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                {p.external ? (
+                  <a href={p.href} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800">
+                    {p.cta} <ArrowRight size={15} />
+                  </a>
+                ) : (
+                  <Link href={p.href}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800">
+                    {p.cta} <ArrowRight size={15} />
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA — navy band */}
+      <section className="py-24 bg-navy-deep">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-5">
             Want a walkthrough with your own data?
           </h2>
-          <p className="text-lg mb-10 mx-auto leading-relaxed" style={{ color: '#94A3B8', maxWidth: '520px' }}>
-            We&rsquo;ll demo any product with your agency&rsquo;s real data, loaded into a live dashboard you can click through.
+          <p className="text-lg text-slate-300 mb-10 leading-relaxed mx-auto max-w-xl">
+            Tell us what you&apos;re trying to solve and we&apos;ll show you what it looks like with your data —
+            a custom solution or a live platform you can click through.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
-              className="px-10 py-5 rounded font-semibold text-base text-center text-white transition-colors"
-              style={{ backgroundColor: '#1D4ED8' }}>
+              className="px-10 py-5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
               Schedule a demo
             </a>
             <Link href="/contact"
-              className="px-10 py-5 rounded font-semibold text-base text-center transition-colors"
-              style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}>
+              className="px-10 py-5 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
               Contact us
             </Link>
           </div>

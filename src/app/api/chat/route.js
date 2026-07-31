@@ -37,7 +37,7 @@ function buildContext({ faqMatches, services, serviceDetails }) {
   let context = '';
 
   if (services && services.length) {
-    context += 'Services offered by Mullen Analytics & AI Consulting LLC:\n';
+    context += 'Services offered by Mullen Analytics & Data Solutions LLC:\n';
     for (const s of services) {
       context += `- ${s.name}: ${s.shortDescription || s.description || ''}\n`;
     }
@@ -72,7 +72,7 @@ async function callOpenAI(messages, context) {
     };
   }
 
-  const systemPrompt = `You are the customer assistant for Mullen Analytics & AI Consulting LLC.\n\nYour goals:\n- Explain what the company does in clear language.\n- Provide contact info: Phone ${PHONE}, Email ${EMAIL}.\n- Direct users to schedule a call at: ${BOOKING_URL}.\n- Only talk about services that are in the provided documents or context.\n- If you do not know the answer from the context, say you are not sure and that James will follow up.\n- Style: friendly, professional, concise, realistic (do not overpromise).\n- Always stay on-brand and use the name "Mullen Analytics & AI Consulting LLC".\n\nHere is some reference information about the company, services, and FAQs:\n${context}`;
+  const systemPrompt = `You are the customer assistant for Mullen Analytics & Data Solutions LLC.\n\nYour goals:\n- Explain what the company does in clear language.\n- Provide contact info: Phone ${PHONE}, Email ${EMAIL}.\n- Direct users to schedule a call at: ${BOOKING_URL}.\n- Only talk about services that are in the provided documents or context.\n- If you do not know the answer from the context, say you are not sure and that James will follow up.\n- Style: friendly, professional, concise, realistic (do not overpromise).\n- Always stay on-brand and use the name "Mullen Analytics & Data Solutions LLC".\n\nHere is some reference information about the company, services, and FAQs:\n${context}`;
 
   const body = {
     model: 'gpt-4o-mini',

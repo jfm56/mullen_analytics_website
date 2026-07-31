@@ -1,38 +1,25 @@
-'use client';
+import Link from 'next/link';
+import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight } from 'lucide-react';
 
-const SERVICES = [
-  {
-    img: '/first%20responder%20analytics.jpeg',
-    alt: 'First Responder Analytics',
-    label: 'Public Safety',
-    title: 'First Responder Analytics',
-    desc: 'Demand forecasting, staffing optimization, response time analysis, unit utilization, and operational dashboards for EMS, fire, and public safety agencies.',
-    href: '/first-responders',
-  },
-  {
-    img: '/healcare%20analytics.jpeg',
-    alt: 'Healthcare Analytics',
-    label: 'Healthcare',
-    title: 'Healthcare Analytics',
-    desc: 'Explainable analytics and AI systems for clinical operations, quality improvement, patient flow, documentation automation, and healthcare decision support.',
-    href: '/healthcare',
-  },
-  {
-    img: '/biomedical%20research.jpeg',
-    alt: 'Biomedical Research',
-    label: 'Research',
-    title: 'Biomedical Research',
-    desc: 'Data pipelines, outcome modeling, AI-assisted literature synthesis, and analytics systems built for scientific rigor, reproducibility, and research accountability.',
-    href: '/biomedical-research',
-  },
-  {
-    img: '/ai%20automation.jpeg',
-    alt: 'AI & Automation',
-    label: 'AI & Automation',
-    title: 'AI Automation',
-    desc: 'Practical AI tools that eliminate manual work, structure complex documents, support compliance reporting, and improve consistency across operational workflows.',
-    href: '/capabilities',
-  },
+// NOTE: The marketing home uses a FIXED palette (always light, with navy bands),
+// not the theme-aware tokens. A landing page has one intentional design; letting
+// it flip to dark on a visitor's system preference collapses the section rhythm
+// (bg-background and the navy bands become the same color). Navy bands use the
+// fixed --navy-* tokens; everything else uses fixed Tailwind grays.
+
+const DISCIPLINES = [
+  { Icon: BarChart3,   title: 'Data Analytics',        desc: 'Clear, at-a-glance views of how your organization is doing — so the numbers that matter are easy to see and act on, instead of buried in spreadsheets.' },
+  { Icon: BrainCircuit, title: 'Machine Learning & Automation', desc: 'Software that learns from your past to predict what is coming and handle repetitive work automatically — built so you can see how it reached its answer.' },
+  { Icon: FlaskConical, title: 'Data Science',          desc: 'Digging into your data to find the real answers: why something is happening, what is likely next, and what to do about it.' },
+  { Icon: Database,     title: 'Data Engineering',      desc: 'Gathering your data from all the places it lives, cleaning it up, and keeping it in one reliable, up-to-date place you can actually use.' },
+];
+
+const SECTORS = [
+  { label: 'Business',          title: 'Business & Commercial',      desc: 'Forecasting, KPI dashboards, customer and operations analytics, and the data infrastructure underneath them.', href: '/industries' },
+  { label: 'Public Safety',     title: 'First Responders',           desc: 'Demand forecasting, staffing and deployment models, response-time analysis, and unit utilization for EMS, fire, and public safety.', href: '/first-responders' },
+  { label: 'Drone & Geospatial', title: 'Drone Analytics & Surveying', desc: 'Survey processing, mapping, geospatial analytics, and disaster-response imagery turned into measurable, reportable insight.', href: '/drone-intelligence' },
+  { label: 'Healthcare',        title: 'Healthcare Analytics',        desc: 'Clinical operations, quality improvement, patient flow, and documentation automation with clinical accountability built in.', href: '/healthcare' },
+  { label: 'Research',          title: 'Biomedical Research',         desc: 'Data pipelines, outcome modeling, and analytics built for scientific rigor and reproducibility.', href: '/biomedical-research' },
 ];
 
 const PILLARS = [
@@ -45,238 +32,303 @@ const PILLARS = [
 ];
 
 const FOCUS_AREAS = [
-  'EMS demand forecasting',
-  'Response time analysis',
-  'Staffing and deployment models',
-  'Healthcare document processing',
-  'Patient flow and operational dashboards',
-  'Quality improvement analytics',
-  'AI-assisted reporting',
-  'Public safety performance dashboards',
-  'Predictive modeling for operational planning',
-  'Clinical trial data analysis',
-  'Biomedical data pipelines',
-  'Research outcome modeling',
+  'Demand forecasting', 'Staffing and deployment models', 'Response time analysis',
+  'Drone survey processing & mapping', 'Geospatial and spatial analytics', 'Disaster response & damage assessment',
+  'Executive KPI dashboards', 'Predictive modeling for planning', 'Data pipelines & warehousing',
+  'Data quality and validation', 'Automated reporting', 'Document processing & automation',
+  'Quality improvement analytics', 'Patient flow and clinical operations', 'Research outcome modeling',
 ];
 
 const SELECTED_WORK = [
-  {
-    sector: 'EMS Operations',
-    title: 'Demand Forecasting & Staffing Optimization',
-    desc: 'Predictive models and operational dashboards supporting resource allocation decisions for high-volume emergency services.',
-  },
-  {
-    sector: 'Healthcare Analytics',
-    title: 'Explainable ML for Medical Classification',
-    desc: 'Interpretable machine learning models built for transparency, clinical accountability, and executive-level defensibility.',
-  },
-  {
-    sector: 'AI Automation',
-    title: 'AI-Assisted Reporting & Document Processing',
-    desc: 'Practical automation tools reducing manual workload and improving consistency across high-volume operational workflows.',
-  },
+  { sector: 'EMS Operations',      title: 'Demand Forecasting & Staffing Optimization', desc: 'Predictive models and operational dashboards supporting resource allocation decisions for high-volume emergency services.' },
+  { sector: 'Healthcare Analytics', title: 'Explainable ML for Medical Classification',   desc: 'Interpretable machine learning models built for transparency, clinical accountability, and executive-level defensibility.' },
+  { sector: 'Automation',          title: 'Automated Reporting & Document Processing',    desc: 'Practical automation tools reducing manual workload and improving consistency across high-volume operational workflows.' },
 ];
 
-const TRUST_BADGES = ['Veteran-Owned', 'Former First Responders', 'Explainable AI', 'Procurement-Ready'];
+const TRUST_BADGES = ['Veteran-Owned', 'Former First Responders', 'Explainable Results', 'Procurement-Ready'];
+
+const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
+
+// Reusable section eyebrow
+function Eyebrow({ children }) {
+  return <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-3">{children}</p>;
+}
 
 export default function Home() {
   return (
-    <div>
+    <div className="bg-white">
 
-      {/* HERO */}
-      <section>
-        <img
-          src="/hero-image.png"
-          alt="Analytics and AI for First Responders and Healthcare"
-          className="w-full block"
-          style={{ height: 'auto' }}
-        />
-        <div style={{ background: 'linear-gradient(180deg, #071829 0%, #0D2035 100%)' }}>
-          <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
-            <div className="max-w-3xl">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" style={{ color: '#FFFFFF', lineHeight: 1.08, letterSpacing: '-0.025em' }}>
-                Analytics &amp; AI for First Responders and Healthcare Organizations
-              </h1>
-              <p className="text-lg mb-10 leading-relaxed" style={{ color: '#94A3B8', maxWidth: '620px' }}>
-                Specialized consulting built for EMS, fire, hospitals, and healthcare systems where decisions carry real operational consequences — and every system must be explainable, defensible, and trusted.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-4 rounded font-semibold text-base text-center transition-all duration-200"
-                  style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
-                >
-                  Schedule a Strategy Call
-                </a>
-                <a
-                  href="/capabilities"
-                  className="px-8 py-4 rounded font-semibold text-base text-center transition-all duration-200"
-                  style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A6FA5'; e.currentTarget.style.color = '#FFFFFF'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3A58'; e.currentTarget.style.color = '#E2E8F0'; }}
-                >
-                  Explore Capabilities
-                </a>
-              </div>
+      {/* HERO — navy band */}
+      <section className="bg-navy-deep">
+        <div className="max-w-7xl mx-auto px-6 py-24 md:py-32">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">
+              Analytics · Machine Learning · Data Engineering
+            </p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
+              Analytics &amp; Automation for Business, Public Safety, and Drone Operations
+            </h1>
+            <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
+              Data science, machine learning, and data engineering — from demand forecasting and
+              geospatial survey analysis to disaster response and executive dashboards. Built to be
+              explainable, defensible, and actually used.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+                className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
+                Schedule a Strategy Call
+              </a>
+              <Link href="/capabilities"
+                className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
+                Explore Capabilities
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* TRUST STRIP */}
-      <div style={{ backgroundColor: '#0A1929', borderTop: '1px solid #0F2740', borderBottom: '1px solid #0F2740' }}>
+      {/* TRUST STRIP — darker navy */}
+      <div className="bg-navy-surface border-y border-navy-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
-            {['Veteran-Owned', 'Former First Responders', 'Explainable AI', 'Secure & Compliant', 'Procurement-Ready', 'Leadership-Facing Dashboards'].map((m) => (
+            {['Veteran-Owned', 'Former First Responders', 'Explainable Results', 'Secure & Compliant', 'Procurement-Ready'].map((m) => (
               <div key={m} className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#0EA5E9' }} />
-                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#475569' }}>{m}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">{m}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* WHAT WE DO */}
-      <section className="py-24" style={{ backgroundColor: '#F8FAFD' }}>
+      {/* WHAT WE DO — white section, tinted cards */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#071829' }}>What We Do</h2>
+          <div className="max-w-2xl mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What We Do</h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              The four things we do — from getting your data organized and trustworthy, to turning it
+              into clear answers your team can act on.
+            </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SERVICES.map((card) => (
-              <a
-                key={card.title}
-                href={card.href}
-                className="group block bg-white rounded-xl overflow-hidden transition-all duration-300"
-                style={{ border: '1px solid #E1E8F5', boxShadow: '0 2px 12px rgba(7,24,41,0.06)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(7,24,41,0.13)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(7,24,41,0.06)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                <div className="overflow-hidden">
-                  <img src={card.img} alt={card.alt} className="w-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ height: 'auto', display: 'block' }} />
+            {DISCIPLINES.map(({ Icon, title, desc }) => (
+              <div key={title} className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4">
+                  <Icon size={20} strokeWidth={1.75} className="text-blue-700" />
                 </div>
-                <div className="p-6">
-                  <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#0EA5E9' }}>{card.label}</p>
-                  <h3 className="text-base font-bold mb-3" style={{ color: '#071829' }}>{card.title}</h3>
-                  <p className="text-sm leading-relaxed mb-4" style={{ color: '#475569' }}>{card.desc}</p>
-                  <span className="text-xs font-semibold" style={{ color: '#1D4ED8' }}>Learn more →</span>
-                </div>
-              </a>
+                <h3 className="text-base font-bold text-slate-900 mb-2">{title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* BUILT FOR HIGH-STAKES OPERATIONS */}
-      <section className="py-24" style={{ background: 'linear-gradient(180deg, #071829 0%, #0A1F35 100%)' }}>
+      {/* WHO WE SERVE — light-gray section, white cards that lift */}
+      <section className="py-24 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-6">
           <div className="max-w-2xl mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#FFFFFF' }}>Built for High-Stakes Operations</h2>
-            <p className="text-base leading-relaxed" style={{ color: '#475569' }}>
-              Your data represents patients, crews, response times, staffing decisions, budgets, and public trust. Every system we build reflects that weight.
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Who We Serve</h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              The same rigor, applied to the environments where being wrong is expensive.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {SECTORS.map((s) => (
+              <Link key={s.title} href={s.href}
+                className="group flex flex-col bg-white border border-slate-200 rounded-xl p-7 shadow-sm hover:shadow-md hover:border-blue-500 hover:-translate-y-0.5 transition-all duration-200">
+                <Eyebrow>{s.label}</Eyebrow>
+                <h3 className="text-lg font-bold text-slate-900 mb-3 group-hover:text-blue-700 transition-colors">{s.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed mb-6 flex-1">{s.desc}</p>
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+                  Learn more
+                  <ArrowRight size={15} strokeWidth={2.5} className="transition-transform duration-200 group-hover:translate-x-1" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHAT THEY ARE — plain-language definitions (white) */}
+      <section className="py-24 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Data Science &amp; Data Engineering — In Plain English
+            </h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              People mix these two up all the time. They&apos;re actually two different jobs. Here&apos;s what
+              each one really means — no jargon.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Data Engineering */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-8">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0">
+                  <Database size={20} strokeWidth={1.75} className="text-blue-700" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-sky-600">Getting your data ready</p>
+                  <h3 className="text-lg font-bold text-slate-900">Data Engineering</h3>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                Your information lives all over the place — spreadsheets, software, paper records — and
+                it&apos;s usually messy, out of date, or hard to pull together. Data engineering is the work of
+                gathering it all, cleaning it up, and putting it in one place you can actually use. Think of
+                it like the plumbing in a building: you never see it, but nothing works without it.
+              </p>
+              <p className="text-sm font-semibold text-slate-900 mb-5">
+                The question it answers: <span className="font-normal text-slate-600">Can we trust this data — and is it all in one place?</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['Gathering it all', 'Cleaning it up', 'Keeping it current', 'One place to look'].map((t) => (
+                  <span key={t} className="text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-full px-2.5 py-1">{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Data Science */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-8">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0">
+                  <FlaskConical size={20} strokeWidth={1.75} className="text-blue-700" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-sky-600">Making sense of it</p>
+                  <h3 className="text-lg font-bold text-slate-900">Data Science</h3>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                Once your data is clean and ready, data science digs in to find answers you can use. It
+                spots patterns, works out what&apos;s likely to happen next, and explains why. In short, it
+                takes a pile of numbers and turns it into something you can actually make a decision from.
+              </p>
+              <p className="text-sm font-semibold text-slate-900 mb-5">
+                The question it answers: <span className="font-normal text-slate-600">What is this data telling us — and what should we do about it?</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['Spotting patterns', 'Predicting what happens next', 'Explaining why', 'Guiding decisions'].map((t) => (
+                  <span key={t} className="text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-full px-2.5 py-1">{t}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* How they work together */}
+          <div className="mt-6 rounded-xl bg-navy-deep p-7 md:p-8">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold mb-4">
+              <span className="text-slate-400">Messy data</span>
+              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
+              <span className="text-white">Data Engineering</span>
+              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
+              <span className="text-slate-400">Data you can trust</span>
+              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
+              <span className="text-white">Data Science</span>
+              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
+              <span className="text-slate-400">Decisions you can act on</span>
+            </div>
+            <p className="text-sm text-slate-300 leading-relaxed max-w-3xl">
+              The simple version: <span className="text-white font-medium">data engineering gets your data ready; data science figures out what it&apos;s telling you.</span> You need both — data you can trust, and someone to make sense of it.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* BUILT FOR HIGH-STAKES — navy band (strong anchor) */}
+      <section className="py-24 bg-navy-deep">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Built for High-Stakes Operations</h2>
+            <p className="text-base text-slate-300 leading-relaxed">
+              Your data represents customers, crews, response times, staffing decisions, budgets, and
+              public trust. Every system we build reflects that weight.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {PILLARS.map((item) => (
-              <div
-                key={item.title}
-                className="p-6 rounded-xl"
-                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(14,165,233,0.15)' }}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#0EA5E9" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="font-bold text-sm" style={{ color: '#E2E8F0' }}>{item.title}</h3>
+              <div key={item.title} className="p-6 rounded-xl bg-navy-surface border border-navy-border">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 flex-shrink-0" />
+                  <h3 className="font-bold text-sm text-white">{item.title}</h3>
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{item.desc}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FOCUS AREAS */}
-      <section className="py-24" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* FOCUS AREAS — white section */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#071829' }}>Focus Areas</h2>
-          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-14">Focus Areas</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-5xl">
             {FOCUS_AREAS.map((area) => (
-              <div key={area} className="flex items-center gap-3 px-4 py-3 rounded-lg" style={{ backgroundColor: '#F8FAFD', border: '1px solid #E1E8F5' }}>
-                <span className="font-bold flex-shrink-0" style={{ color: '#1D4ED8' }}>→</span>
-                <span className="text-sm font-medium" style={{ color: '#1E293B' }}>{area}</span>
+              <div key={area} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="font-bold text-blue-700 flex-shrink-0">→</span>
+                <span className="text-sm font-medium text-slate-700">{area}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SELECTED WORK */}
-      <section className="py-24" style={{ backgroundColor: '#F8FAFD' }}>
+      {/* SELECTED WORK — light-gray section, white cards */}
+      <section className="py-24 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-14">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#071829' }}>Selected Work</h2>
-            </div>
-            <a href="/portfolio" className="hidden md:block text-sm font-semibold" style={{ color: '#1D4ED8' }}>View all →</a>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Selected Work</h2>
+            <Link href="/portfolio" className="hidden md:block text-sm font-semibold text-blue-700">View all →</Link>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {SELECTED_WORK.map((work) => (
-              <a
-                key={work.title}
-                href="/portfolio"
-                className="group block bg-white rounded-xl p-7 transition-all duration-300"
-                style={{ border: '1px solid #E1E8F5', borderTop: '3px solid #1D4ED8', boxShadow: '0 2px 12px rgba(7,24,41,0.06)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(7,24,41,0.12)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(7,24,41,0.06)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#0EA5E9' }}>{work.sector}</p>
-                <h3 className="text-base font-bold mb-3 leading-snug" style={{ color: '#071829' }}>{work.title}</h3>
-                <p className="text-sm leading-relaxed mb-5" style={{ color: '#475569' }}>{work.desc}</p>
-                <span className="text-xs font-semibold" style={{ color: '#1D4ED8' }}>View case study →</span>
-              </a>
+              <Link key={work.title} href="/portfolio"
+                className="block bg-white border border-slate-200 border-t-[3px] border-t-blue-600 rounded-xl p-7 shadow-sm hover:shadow-md transition-all">
+                <Eyebrow>{work.sector}</Eyebrow>
+                <h3 className="text-base font-bold text-slate-900 mb-3 leading-snug">{work.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed mb-5">{work.desc}</p>
+                <span className="text-xs font-semibold text-blue-700">View case study →</span>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* WHY MULLEN ANALYTICS */}
-      <section className="py-24" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* WHY MULLEN ANALYTICS — white section */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-16 items-start">
             <div>
-              <h2
-                className="text-3xl md:text-4xl font-bold mb-8"
-                style={{ color: '#071829', borderLeft: '3px solid #0EA5E9', paddingLeft: '1.25rem' }}
-              >
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-8 border-l-[3px] border-sky-500 pl-5">
                 Why Mullen Analytics
               </h2>
               <div className="space-y-5">
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  Mullen Analytics combines real-world first responder and healthcare operations experience with advanced data science, predictive analytics, and AI development.
+                <p className="text-base text-slate-700 leading-relaxed">
+                  Mullen Analytics pairs real, hands-on operational experience with genuine data science,
+                  forecasting, and automation — and puts it to work anywhere decisions depend on getting the data right.
                 </p>
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  We understand the reality of making decisions where response times, staffing, patient outcomes, compliance, and public trust are on the line.
+                <p className="text-base text-slate-700 leading-relaxed">
+                  Our roots are in emergency services and healthcare — about as high-pressure as it gets,
+                  where staffing, response times, and outcomes are on the line. That is where we learned
+                  data has to be accurate, clear, and something you can stand behind.
                 </p>
-                <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                  Our systems are built for environments where accuracy matters, accountability is expected, and every decision must be explainable and defensible.
+                <p className="text-base text-slate-700 leading-relaxed">
+                  We bring that same standard to businesses, drone and surveying operations, research
+                  teams, and any organization that needs to turn messy, scattered data into decisions it can trust.
                 </p>
-                <p className="text-base leading-relaxed font-semibold" style={{ color: '#071829' }}>
-                  We do not build generic dashboards or experimental AI tools — we build operational systems leadership can trust, teams can use, and organizations can scale with confidence.
+                <p className="text-base text-slate-900 font-semibold leading-relaxed">
+                  We do not build science experiments or one-size-fits-all tools. We build practical
+                  systems your team will actually use, your leadership can trust, and your organization can grow with.
                 </p>
               </div>
               <div className="mt-10 flex flex-wrap gap-3">
                 {TRUST_BADGES.map((badge) => (
-                  <span key={badge} className="px-4 py-2 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: '#F0F4FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>
+                  <span key={badge} className="px-4 py-2 rounded text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
                     {badge}
                   </span>
                 ))}
@@ -284,15 +336,15 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'Focus', value: '100%', sub: 'First Responders & Healthcare' },
+                { label: 'Approach', value: 'Explainable', sub: 'Models You Can Defend' },
                 { label: 'Commitment', value: 'Operator-Level', sub: 'Domain Expertise' },
                 { label: 'Output', value: 'Defensible', sub: 'Systems Leadership Can Trust' },
                 { label: 'Delivery', value: 'Procurement', sub: 'Ready & Compliant' },
               ].map((stat) => (
-                <div key={stat.label} className="p-6 rounded-xl" style={{ backgroundColor: '#F8FAFD', border: '1px solid #E1E8F5' }}>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#94A3B8' }}>{stat.label}</p>
-                  <p className="text-xl font-bold mb-1" style={{ color: '#071829' }}>{stat.value}</p>
-                  <p className="text-xs leading-snug" style={{ color: '#475569' }}>{stat.sub}</p>
+                <div key={stat.label} className="p-6 rounded-xl bg-slate-50 border border-slate-200">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">{stat.label}</p>
+                  <p className="text-xl font-bold text-slate-900 mb-1">{stat.value}</p>
+                  <p className="text-xs text-slate-600 leading-snug">{stat.sub}</p>
                 </div>
               ))}
             </div>
@@ -300,37 +352,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section className="py-28" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
+      {/* FINAL CTA — navy band */}
+      <section className="py-28 bg-navy-deep">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2
-            className="text-4xl md:text-5xl font-bold mb-6 mx-auto"
-            style={{ color: '#FFFFFF', lineHeight: 1.12, maxWidth: '700px', letterSpacing: '-0.02em' }}
-          >
-            Let&apos;s Build Smarter Systems for the People Who Respond First
+          <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight mb-6 mx-auto max-w-3xl">
+            Let&apos;s Build Systems Your Team Can Actually Use
           </h2>
-          <p className="text-lg mb-12 mx-auto leading-relaxed" style={{ color: '#475569', maxWidth: '540px' }}>
-            If your organization is ready to improve operations, reduce manual work, and make stronger leadership decisions, we should talk.
+          <p className="text-lg text-slate-300 mb-12 mx-auto leading-relaxed max-w-xl">
+            If your organization is ready to improve operations, reduce manual work, and make stronger
+            leadership decisions, we should talk.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/contact"
-              className="px-10 py-5 rounded font-semibold text-base text-center transition-all duration-200"
-              style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
-            >
+            <Link href="/contact"
+              className="px-10 py-5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
               Start a Conversation
-            </a>
-            <a
-              href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-10 py-5 rounded font-semibold text-base text-center transition-all duration-200"
-              style={{ backgroundColor: 'transparent', color: '#E2E8F0', border: '1px solid #1E3A58' }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A6FA5'; e.currentTarget.style.color = '#FFFFFF'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3A58'; e.currentTarget.style.color = '#E2E8F0'; }}
-            >
+            </Link>
+            <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+              className="px-10 py-5 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
               Schedule a Strategy Call
             </a>
           </div>
