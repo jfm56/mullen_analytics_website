@@ -65,7 +65,7 @@ export default function Navbar() {
         {/* Desktop */}
         <div className="hidden lg:flex items-center gap-6">
           {PRIMARY.map(({ label, href }) => (
-            <Link key={href} href={href} className={linkCls}>{label}</Link>
+            <Link key={href} href={href} className={linkCls} data-track={`nav:${label}`}>{label}</Link>
           ))}
 
           {/* Who We Serve dropdown */}
@@ -88,6 +88,7 @@ export default function Navbar() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setServeOpen(false)}
+                      data-track={`serve:${item.label}`}
                       className="block px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors"
                     >
                       <p className="text-sm font-semibold text-slate-900">{item.label}</p>
@@ -100,11 +101,12 @@ export default function Navbar() {
           </div>
 
           {SECONDARY.map(({ label, href }) => (
-            <Link key={href} href={href} className={linkCls}>{label}</Link>
+            <Link key={href} href={href} className={linkCls} data-track={`nav:${label}`}>{label}</Link>
           ))}
 
           <Link
             href="/signup"
+            data-track="cta:get-started"
             className="px-4 py-2 rounded text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors"
           >
             Get started
@@ -130,7 +132,7 @@ export default function Navbar() {
         <div style={{ backgroundColor: '#071829', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col">
             {PRIMARY.map(({ label, href }) => (
-              <Link key={href} href={href} onClick={() => setOpen(false)}
+              <Link key={href} href={href} onClick={() => setOpen(false)} data-track={`nav:${label}`}
                 className="py-3 text-sm font-medium text-slate-300 hover:text-white border-b border-white/5 transition-colors">
                 {label}
               </Link>
@@ -158,7 +160,7 @@ export default function Navbar() {
             )}
 
             {SECONDARY.map(({ label, href }) => (
-              <Link key={href} href={href} onClick={() => setOpen(false)}
+              <Link key={href} href={href} onClick={() => setOpen(false)} data-track={`nav:${label}`}
                 className="py-3 text-sm font-medium text-slate-300 hover:text-white border-b border-white/5 transition-colors">
                 {label}
               </Link>

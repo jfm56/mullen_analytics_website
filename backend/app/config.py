@@ -95,6 +95,22 @@ class Settings(BaseSettings):
     sso_audience: str = "mullen-ems-qa"
     sso_token_ttl_seconds: int = 60
     ems_qa_sso_url: str = "https://app.mullenanalytics.com/api/auth/sso"
+
+    # ── On-prem features: first-party visitor analytics + lead discovery ──
+    # These run on the on-prem FastAPI instance (own hardware, local Postgres),
+    # exposed to the cloud admin via a tunnel (see ONPREM_FASTAPI_URL / proxy2).
+    analytics_enabled: bool = True          # public visitor-analytics ingest + admin dashboard
+    leads_enabled: bool = False             # nightly lead-discovery crawler + admin Leads
+    scheduler_enabled: bool = False         # APScheduler nightly jobs — ON-PREM single replica ONLY
+    lead_discovery_hour: int = 2            # local hour (0-23) for the nightly crawl
+    # Lead-discovery web search: "duckduckgo" (no key) | "tavily" | "brave"
+    lead_search_provider: str = "duckduckgo"
+    lead_search_api_key: str = ""
+    samgov_api_key: str = ""               # SAM.gov Opportunities API (federal RFPs); blank = skip
+    # LLM for need-signal extraction + outreach drafting: "ollama" (local) | "anthropic"
+    lead_llm_provider: str = "ollama"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
     
 
 

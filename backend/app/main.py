@@ -12,8 +12,11 @@ from .routers import settings as settings_router
 from .routers import datasets as datasets_router
 from .routers import sso
 from .routers import plans as plans_router
+from .routers import analytics_ingest, analytics_admin, leads_admin, outreach as outreach_router
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
 from .models import error_log as _error_log_models  # noqa: F401 – register with Base
+from .models import web_analytics as _web_analytics_models  # noqa: F401 – register with Base
+from .models import lead as _lead_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
 
 settings = get_settings()
@@ -70,6 +73,10 @@ app.include_router(datasets_router.router, prefix="/api")
 app.include_router(errors.router, prefix="/api")
 app.include_router(sso.router, prefix="/api")
 app.include_router(plans_router.router, prefix="/api")
+app.include_router(analytics_ingest.router, prefix="/api")   # public visitor-analytics ingest
+app.include_router(analytics_admin.router, prefix="/api")    # admin visitor-analytics dashboard
+app.include_router(leads_admin.router, prefix="/api")        # admin lead discovery
+app.include_router(outreach_router.router, prefix="/api")    # lead outreach + public unsubscribe
 
 
 @app.on_event("startup")
@@ -159,6 +166,31 @@ async def on_startup():
                          getattr(result, "rowcount", "?"))
     except Exception as exc:  # noqa: BLE001
         log.error("Email-verification backfill failed: %s", exc)
+
+    # Nightly lead-discovery scheduler — ON-PREM instance ONLY (single replica).
+    # Gated on scheduler_enabled + leads_enabled so it never runs on Railway or a
+    # normal local dev backend by default. APScheduler is imported lazily so the
+    # app runs fine even when the package is not installed.
+    if settings.scheduler_enabled and settings.leads_enabled:
+        try:
+            from apscheduler.schedulers.asyncio import AsyncIOScheduler
+            from .services.leadgen import discover as _lead_discover
+            from .database import SessionLocal as _SessionLocal
+
+            def _run_nightly_discovery():
+                _db = _SessionLocal()
+                try:
+                    _lead_discover.run_discovery(_db)
+                finally:
+                    _db.close()
+
+            _scheduler = AsyncIOScheduler()
+            _scheduler.add_job(_run_nightly_discovery, "cron", hour=settings.lead_discovery_hour,
+                               id="nightly_lead_discovery", replace_existing=True)
+            _scheduler.start()
+            log.info("Nightly lead-discovery scheduler started (hour=%s)", settings.lead_discovery_hour)
+        except Exception as exc:  # noqa: BLE001
+            log.error("Lead-discovery scheduler failed to start: %s", exc)
 
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)

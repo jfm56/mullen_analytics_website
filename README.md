@@ -1,7 +1,7 @@
 # Mullen Analytics — Client Portal
 
 Secure client portal built on **Next.js 16 + FastAPI + PostgreSQL**.  
-Handles client management, document delivery, invoice management, and Stripe payments.
+Includes the public marketing site, a secure client portal, the EMS analytics product, an admin console, and first-party (consent-gated, self-hosted) website visitor analytics.
 
 ---
 
@@ -235,6 +235,45 @@ stripe login
 stripe listen --forward-to localhost:8000/api/payments/webhook/stripe
 # Copy the webhook secret printed and set it as STRIPE_WEBHOOK_SECRET in .env
 ```
+
+---
+
+## 12. Website Visitor Analytics & On-Prem Data (first-party)
+
+First-party, **consent-gated** website analytics — a self-hosted alternative to Google Analytics whose data lives in **your own** Postgres, not a third party's. Tracks page views, tab/link clicks, and time-on-page; the admin dashboard shows trends, top pages, most-clicked tabs, referrers, devices, and regions.
+
+**How it works**
+- `src/components/VisitorTracker.jsx` (mounted in `layout.jsx`) sends anonymous beacons **only after the visitor accepts cookies** (`mullen-analytics-cookie-consent`). No personal data; the visitor IP is used only to rate-limit ingest and is **never stored**.
+- Tracked clicks: add `data-track="label"` to any element (nav tabs + CTAs already have it).
+- Public ingest: `POST /api/analytics/collect` (`backend/app/routers/analytics_ingest.py`) → `web_sessions` + `web_events` (`models/web_analytics.py`).
+- Admin dashboard: **Admin → Analytics** (`src/app/admin/analytics/page.jsx`) → `GET /api/admin/analytics/overview` (`routers/analytics_admin.py`, admin-gated) + `services/analytics_service.py`.
+
+**Keeping the data on your own hardware (on-prem)**
+The platform runs on Vercel (frontend) + Railway (backend). To keep analytics/leads data on your own box:
+1. Run a **second FastAPI instance of this same repo** on your on-prem machine with `ENVIRONMENT=local`, `DATABASE_URL` → your local Postgres, and `SCHEDULER_ENABLED=true` (single replica only).
+2. Expose it with a **Cloudflare Tunnel** (`cloudflared`) → a stable hostname (e.g. `onprem.mullenanalytics.com`).
+3. Set `ONPREM_FASTAPI_URL=https://onprem.mullenanalytics.com` in the frontend (Vercel) env. The tracker (`/api/proxy2/...`) and admin Analytics/Leads calls route there; everything else keeps using `/api/proxy` → Railway. If `ONPREM_FASTAPI_URL` is unset, `proxy2` falls back to `FASTAPI_URL`, so local dev and pre-on-prem prod behave identically.
+
+**New backend env vars / feature flags** (`backend/app/config.py`)
+```env
+ANALYTICS_ENABLED=true          # visitor-analytics ingest + dashboard
+LEADS_ENABLED=false             # nightly lead-discovery (Phase 3, in progress)
+SCHEDULER_ENABLED=false         # APScheduler nightly jobs — ON-PREM single replica ONLY
+LEAD_DISCOVERY_HOUR=2           # local hour (0-23) to run the nightly crawl
+LEAD_SEARCH_PROVIDER=duckduckgo # duckduckgo (no key) | tavily | brave
+LEAD_SEARCH_API_KEY=            # for tavily/brave
+SAMGOV_API_KEY=                 # SAM.gov federal RFP feed (optional)
+LEAD_LLM_PROVIDER=ollama        # ollama (local) | anthropic
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1:8b
+```
+Frontend env: `ONPREM_FASTAPI_URL=` (blank = same origin as `FASTAPI_URL`).
+
+**Local dev ports:** backend `:8001`, frontend `:3010` (`.env.local` → `FASTAPI_URL=http://localhost:8001`).
+
+**Privacy:** disclosed in `src/app/privacy/page.jsx` (§1–§3, §7) — first-party, self-hosted, consent-gated, IP not stored, ~12-month event retention.
+
+> **Lead discovery (in progress):** a nightly crawler that finds companies looking for analytics/ML/data-engineering help and surfaces them under **Admin → Analytics → Leads**, with draft-for-review outreach (never auto-send; opt-out + CAN-SPAM). See the project plan.
 
 ---
 
