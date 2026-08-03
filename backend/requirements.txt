@@ -83,3 +83,7 @@ urllib3==2.6.3
 uvicorn==0.27.0
 watchfiles==1.1.1
 websockets==16.0
+
+# Lead discovery (Phase 3) — imported lazily; only needed to run the nightly crawler.
+apscheduler==3.10.4
+ddgs>=6.0

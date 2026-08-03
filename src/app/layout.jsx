@@ -6,6 +6,7 @@ import ChatWidget from "@/components/ChatWidget";
 import CookieConsent from "@/components/CookieConsent";
 import ThemeProvider from "@/components/ThemeProvider";
 import Analytics from "@/components/Analytics";
+import VisitorTracker from "@/components/VisitorTracker";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
     <html lang="en" data-scroll-behavior="smooth">
       <body className={`${inter.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
         <Analytics />
+        <VisitorTracker />
         <ThemeProvider>
           <ConditionalNav />
           <main className="flex-1">{children}</main>

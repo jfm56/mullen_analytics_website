@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   '/admin/errors':         'Errors & Issues',
   '/admin/projects':       'Projects',
   '/admin/invoices':       'Invoices',
+  '/admin/analytics':      'Analytics',
   '/admin/audit-logs':     'Audit Logs',
   '/admin/settings':       'Settings',
 };

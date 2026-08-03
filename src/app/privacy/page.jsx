@@ -6,7 +6,7 @@ export const metadata = {
     'How Mullen Analytics & Data Solutions collects, uses, and protects your information, including our use of cookies and analytics.',
 };
 
-const LAST_UPDATED = 'July 31, 2026';
+const LAST_UPDATED = 'August 3, 2026';
 
 function Section({ id, title, children }) {
   return (
@@ -53,6 +53,12 @@ export default function PrivacyPolicyPage() {
           providers automatically collect usage information such as your IP address (often truncated/anonymized),
           browser and device type, referring page, the pages you view, and timestamps. This is collected through
           cookies and similar technologies (see Section 3).</p>
+          <p><strong>First-party, self-hosted analytics.</strong> With your consent (see Section 2), we also run our own
+          privacy-focused analytics on our own infrastructure — no third-party analytics vendor is involved. Using
+          anonymous first-party identifiers, it records the pages you view, the links and tabs you click, how long you
+          spend on a page, your approximate region (from your browser&rsquo;s time zone), and your device type. It does
+          <strong> not</strong> store your IP address (your IP is used only momentarily to rate-limit abuse), and it does
+          not attempt to identify you personally.</p>
         </Section>
 
         <Section id="cookies" title="2. Cookies &amp; Similar Technologies">
@@ -63,8 +69,8 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc pl-5 space-y-1.5">
             <li><strong>Strictly necessary</strong> — required for core functionality such as authentication and
             remembering your consent choice. These are always active.</li>
-            <li><strong>Analytics</strong> — Google Analytics 4, used to count visits and understand which pages are
-            useful. Set only after you accept.</li>
+            <li><strong>Analytics</strong> — Google Analytics 4 and our own first-party, self-hosted analytics, used to
+            count visits and understand which pages and links are useful. Set only after you accept.</li>
             <li><strong>Advertising</strong> — Google Ads, used to measure ad conversions and reach relevant audiences.
             Set only after you accept.</li>
           </ul>
@@ -82,6 +88,8 @@ export default function PrivacyPolicyPage() {
               <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#1D4ED8' }}>Google Privacy Policy</a></li>
             <li><strong>Google Ads</strong> (Google LLC) — advertising and conversion measurement.</li>
             <li><strong>Vercel</strong> — Site hosting and performance (Speed Insights) monitoring.</li>
+            <li><strong>Mullen Analytics &amp; Data Solutions (first-party)</strong> — our own self-hosted visitor
+              analytics; the data stays on our own infrastructure and is not shared with any third party.</li>
           </ul>
           <p>You can opt out of Google Analytics across all sites using Google&rsquo;s{' '}
             <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" style={{ color: '#1D4ED8' }}>browser add-on</a>.</p>
@@ -111,8 +119,9 @@ export default function PrivacyPolicyPage() {
 
         <Section id="retention" title="7. Data Retention">
           <p>We retain personal information only as long as necessary for the purposes described above or as required by
-          law. Analytics data is retained according to our Google Analytics configuration; contact and account data is
-          kept for the duration of our relationship and a reasonable period afterward.</p>
+          law. Google Analytics data is retained per our Google Analytics configuration; our first-party analytics
+          events are retained for up to 12 months (aggregated, non-identifying statistics may be kept longer); contact
+          and account data is kept for the duration of our relationship and a reasonable period afterward.</p>
         </Section>
 
         <Section id="your-rights" title="8. Your Privacy Rights">
@@ -150,7 +159,7 @@ export default function PrivacyPolicyPage() {
         {/* Template notice */}
         <div className="rounded-lg p-4 text-sm" style={{ backgroundColor: '#FEF9F0', border: '1px solid #F5E0B8', color: '#7C5E2A' }}>
           <strong>Note:</strong> This policy is a starting template tailored to the Site&rsquo;s current tracking
-          (Google Analytics 4, Google Ads, Vercel). Please have it reviewed by qualified legal counsel before relying on
+          (Google Analytics 4, Google Ads, Vercel, and our own first-party self-hosted analytics). Please have it reviewed by qualified legal counsel before relying on
           it, and update it if your data practices change.
         </div>
 

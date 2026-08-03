@@ -65,7 +65,7 @@ def _email_wrapper(title: str, preheader: str, body_html: str) -> str:
               {body_html}
               <p style="margin-top:40px;font-size:15px;color:#111827;">
                 Thank you,<br />
-                <strong>Mullen Analytics &amp; AI Consulting</strong>
+                <strong>Mullen Analytics &amp; Data Solutions</strong>
               </p>
               <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 20px;" />
               <p style="font-size:12px;color:#9ca3af;margin:0;">
