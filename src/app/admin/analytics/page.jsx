@@ -259,6 +259,7 @@ function LeadsPanel() {
                 <tr className="text-left text-xs uppercase tracking-wide text-slate-400 border-b border-slate-100">
                   <th className="py-2 pr-3 font-semibold">Company</th>
                   <th className="py-2 pr-3 font-semibold">What they want</th>
+                  <th className="py-2 pr-3 font-semibold">Point of contact</th>
                   <th className="py-2 pr-3 font-semibold">Vertical</th>
                   <th className="py-2 pr-3 font-semibold text-right">Score</th>
                   <th className="py-2 pr-3 font-semibold">Status</th>
@@ -274,14 +275,26 @@ function LeadsPanel() {
                         <a href={l.website.startsWith('http') ? l.website : `https://${l.website}`} target="_blank" rel="noopener noreferrer"
                           className="text-xs text-blue-600 hover:underline">{l.website}</a>
                       )}
-                      {l.contact_email && <p className="text-xs text-slate-500">{l.contact_email}</p>}
+                      {l.date_note && <p className="text-xs text-amber-600 mt-0.5">🗓 {l.date_note}</p>}
                     </td>
                     <td className="py-2 pr-3 text-slate-600 max-w-md">{l.need_summary || l.signal || '—'}</td>
+                    <td className="py-2 pr-3">
+                      {(l.contact_name || l.contact_email || l.contact_phone) ? (
+                        <div className="text-xs leading-relaxed">
+                          {l.contact_name && <p className="font-medium text-slate-800">{l.contact_name}</p>}
+                          {l.contact_role && <p className="text-slate-500">{l.contact_role}</p>}
+                          {l.contact_email && <a href={`mailto:${l.contact_email}`} className="text-blue-600 hover:underline break-all">{l.contact_email}</a>}
+                          {l.contact_phone && <p className="text-slate-500">{l.contact_phone}</p>}
+                        </div>
+                      ) : <span className="text-xs text-slate-400">—</span>}
+                    </td>
                     <td className="py-2 pr-3 text-slate-600">{l.vertical || '—'}</td>
                     <td className="py-2 pr-3 text-right">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold border ${scoreColor(l.score)}`}>{l.score}</span>
                     </td>
-                    <td className="py-2 pr-3 text-slate-600">{l.status}</td>
+                    <td className="py-2 pr-3">
+                      <span className={l.status === 'expired' ? 'text-red-600 font-medium' : 'text-slate-600'}>{l.status}</span>
+                    </td>
                     <td className="py-2 pr-3 text-right">
                       <button onClick={() => setOutreachLead(l)}
                         className="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-medium text-blue-600 hover:bg-blue-50">

@@ -29,12 +29,14 @@ class Lead(Base):
     contact_name = Column(String(200), nullable=True)
     contact_email = Column(String(320), nullable=True, index=True)
     contact_role = Column(String(200), nullable=True)
+    contact_phone = Column(String(50), nullable=True)
     website = Column(String(500), nullable=True)
     vertical = Column(String(50), nullable=True, index=True)         # healthcare | ems | gov | smb | research | other
     source = Column(String(30), default="research", index=True)      # research | samgov | rfp | manual | referral
     source_url = Column(String(1000), nullable=True)
     need_summary = Column(Text, nullable=True)                       # what they appear to be looking for (LLM)
     signal = Column(String(500), nullable=True)                     # short "why relevant" tag
+    date_note = Column(String(200), nullable=True)                  # posting/deadline detail (freshness)
     status = Column(String(30), default="researched", index=True)    # researched|contacted|meeting|proposal|won|lost|disqualified
     score = Column(Integer, default=0, index=True)                  # 0-100 heuristic
     notes = Column(Text, nullable=True)

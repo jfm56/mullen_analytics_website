@@ -130,6 +130,8 @@ async def on_startup():
             "ALTER TABLE messages ADD COLUMN IF NOT EXISTS direction VARCHAR(20) DEFAULT 'outbound'",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS extra_dataset_slots INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(50)",
+            "ALTER TABLE leads ADD COLUMN IF NOT EXISTS date_note VARCHAR(200)",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:

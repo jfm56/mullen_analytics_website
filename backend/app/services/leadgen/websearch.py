@@ -36,7 +36,8 @@ def available() -> bool:
             return False
 
 
-def search(query: str, max_results: int = 6) -> List[Dict]:
+def search(query: str, max_results: int = 6, timelimit: Optional[str] = None) -> List[Dict]:
+    """timelimit: DuckDuckGo recency filter — 'd'|'w'|'m'|'y' (day/week/month/year) or None."""
     s = get_settings()
     provider = (s.lead_search_provider or "duckduckgo").lower()
     try:
@@ -44,12 +45,12 @@ def search(query: str, max_results: int = 6) -> List[Dict]:
             return _tavily(query, max_results, s.lead_search_api_key)
         if provider == "brave" and s.lead_search_api_key:
             return _brave(query, max_results, s.lead_search_api_key)
-        return _ddg(query, max_results)
+        return _ddg(query, max_results, timelimit)
     except Exception:
         return []
 
 
-def _ddg(query: str, max_results: int) -> List[Dict]:
+def _ddg(query: str, max_results: int, timelimit: Optional[str] = None) -> List[Dict]:
     try:
         from ddgs import DDGS
     except Exception:
@@ -59,7 +60,7 @@ def _ddg(query: str, max_results: int) -> List[Dict]:
             return []
     out: List[Dict] = []
     with DDGS() as ddgs:
-        for r in ddgs.text(query, max_results=max_results):
+        for r in ddgs.text(query, max_results=max_results, timelimit=timelimit):
             out.append({
                 "title": r.get("title", ""),
                 "url": r.get("href") or r.get("url", ""),

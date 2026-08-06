@@ -15,7 +15,7 @@ from ..models.user import User
 from ..services.leadgen import discover as lead_discover
 from ..services.leadgen import llm as lead_llm
 from ..services.leadgen import websearch as lead_search
-from .auth import require_admin
+from .auth import require_admin_or_upstream
 
 router = APIRouter(prefix="/admin/leads", tags=["admin-leads"])
 
@@ -27,12 +27,14 @@ def _to_dict(l: Lead) -> dict:
         "contact_name": l.contact_name,
         "contact_email": l.contact_email,
         "contact_role": l.contact_role,
+        "contact_phone": l.contact_phone,
         "website": l.website,
         "vertical": l.vertical,
         "source": l.source,
         "source_url": l.source_url,
         "need_summary": l.need_summary,
         "signal": l.signal,
+        "date_note": l.date_note,
         "status": l.status,
         "score": l.score,
         "discovered_at": l.discovered_at.isoformat() if l.discovered_at else None,
@@ -44,7 +46,7 @@ def list_leads(
     status: Optional[str] = None,
     vertical: Optional[str] = None,
     limit: int = 100,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_upstream),
     db: Session = Depends(get_db),
 ):
     q = db.query(Lead)
@@ -61,7 +63,7 @@ def list_leads(
 
 
 @router.post("/discover")
-def discover(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+def discover(current_user: User = Depends(require_admin_or_upstream), db: Session = Depends(get_db)):
     """Run a discovery pass now (used by the admin 'Discover' button)."""
     return lead_discover.run_discovery(db)
 
@@ -74,7 +76,7 @@ class StatusUpdate(BaseModel):
 def update_lead(
     lead_id: str,
     body: StatusUpdate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_upstream),
     db: Session = Depends(get_db),
 ):
     lead = db.query(Lead).filter(Lead.id == lead_id).first()
