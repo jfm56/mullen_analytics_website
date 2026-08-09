@@ -109,6 +109,19 @@ export default function Home() {
         </div>
       </div>
 
+      {/* PROOF BAND — sectors + capabilities, tangible credibility high up */}
+      <div className="bg-navy-deep border-b border-navy-border">
+        <div className="max-w-7xl mx-auto px-6 py-6 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-sky-400 mb-3">Built for operational data</p>
+          <p className="text-sm font-semibold text-slate-200 mb-2">
+            EMS &amp; Public Safety · Healthcare · Government · Environmental · Geospatial · Business · Research
+          </p>
+          <p className="text-xs text-slate-400 tracking-wide">
+            Forecasting · Machine Learning · AWS Data Engineering · GIS &amp; Remote Sensing · Automation
+          </p>
+        </div>
+      </div>
+
       {/* WHAT WE DO — white section, tinted cards */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
