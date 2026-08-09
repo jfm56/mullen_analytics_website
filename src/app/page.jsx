@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight } from 'lucide-react';
+import ScheduleCTA from '@/components/ScheduleCTA';
 
 // NOTE: The marketing home uses a FIXED palette (always light, with navy bands),
 // not the theme-aware tokens. A landing page has one intentional design; letting
@@ -67,18 +68,18 @@ export default function Home() {
               Analytics · Machine Learning · Data Engineering
             </p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
-              Analytics &amp; Automation for Business, Public Safety, and Drone Operations
+              Turn Your Data Into Better Decisions
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
-              Data science, machine learning, and data engineering — from demand forecasting and
-              geospatial survey analysis to disaster response and executive dashboards. Built to be
-              explainable, defensible, and actually used.
+              Predict demand. Optimize staffing. Automate reporting. Understand your operations. Mullen
+              Analytics builds practical data, analytics, and automation systems for organizations that
+              need answers they can act on.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+              <ScheduleCTA href={CALENDAR_URL}
                 className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
-                Schedule a Strategy Call
-              </a>
+                Schedule a Free Strategy Call
+              </ScheduleCTA>
               <Link href="/capabilities"
                 className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
                 Explore Capabilities

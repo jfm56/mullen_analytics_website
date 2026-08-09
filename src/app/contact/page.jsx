@@ -1,4 +1,5 @@
 import ContactForm from '@/components/ContactForm';
+import ScheduleCTA from '@/components/ScheduleCTA';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 
 // Contact page. Same FIXED palette as the home page (see app/page.jsx):
@@ -42,14 +43,15 @@ export default function ContactPage() {
               Let&rsquo;s talk about your data
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
-              Tell us what you&rsquo;re trying to solve — a dashboard, a forecast, cleaner data, or just where to
-              start. We&rsquo;ll get back to you quickly, with no pressure and no jargon.
+              Bring a problem, a sample dataset, a report, or a workflow. In a free 20-minute assessment we&rsquo;ll
+              pinpoint where analytics, automation, or forecasting could help &mdash; and recommend a concrete next
+              step. No pressure, no jargon, no obligation.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+              <ScheduleCTA href={CALENDAR_URL}
                 className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
-                Schedule a strategy call
-              </a>
+                Get a Free 20-Minute Data Assessment
+              </ScheduleCTA>
               <a href="#message-form"
                 className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
                 Send a message
@@ -113,13 +115,13 @@ export default function ContactPage() {
             Prefer to talk it through?
           </h2>
           <p className="text-lg text-slate-300 mb-10 leading-relaxed mx-auto max-w-xl">
-            Grab a time that works for you and we&rsquo;ll walk through your goals together — often with a quick
-            look at what it means for your own data.
+            Grab a time that works for you. In 20 minutes we&rsquo;ll walk through your goals together &mdash; often
+            with a quick look at what it means for your own data. No obligation.
           </p>
-          <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+          <ScheduleCTA href={CALENDAR_URL}
             className="inline-block px-10 py-5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
-            Schedule a strategy call
-          </a>
+            Get a Free 20-Minute Data Assessment
+          </ScheduleCTA>
           <div className="mt-12 pt-10 border-t border-navy-border">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-5">Connect with us</p>
             <div className="flex justify-center gap-4">
