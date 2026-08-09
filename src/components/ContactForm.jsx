@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { trackLead } from '../lib/conversions';
 
 export default function ContactForm() {
   const [status, setStatus] = useState('');
@@ -28,6 +29,9 @@ export default function ContactForm() {
     
     if (data.ok) {
       recaptchaRef.current?.reset();
+      // Fire the lead conversion ONLY on a successful submit (a real lead):
+      // GA4 generate_lead (Key Event) + Google Ads conversion. Not on pageview.
+      trackLead({ focus: payload.projectFocus });
     }
   }
 
