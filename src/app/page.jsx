@@ -56,6 +56,12 @@ function Eyebrow({ children }) {
   return <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-3">{children}</p>;
 }
 
+export const metadata = {
+  title: 'Data Analytics & Automation Consulting | Mullen Analytics & Data Solutions',
+  description:
+    'Practical data, analytics, and automation systems — forecasting, dashboards, and decision support for business, EMS & public safety, healthcare, environmental, and drone operations.',
+};
+
 export default function Home() {
   return (
     <div className="bg-white">

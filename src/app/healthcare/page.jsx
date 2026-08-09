@@ -56,6 +56,12 @@ const IMPROVEMENTS = [
   'Higher system-wide efficiency',
 ];
 
+export const metadata = {
+  title: 'Healthcare Analytics & Predictive Operations | Mullen Analytics',
+  description:
+    'Healthcare analytics: forecast demand, improve staffing, analyze patient flow and length of stay, reduce readmissions, and automate reporting with clinical accountability.',
+};
+
 export default function HealthcarePage() {
   return (
     <div className="bg-white">

@@ -24,6 +24,12 @@ const VALUE_POINTS = [
   { title: 'Yours to keep', desc: 'Practical systems your team can run and build on, long after we are done.' },
 ];
 
+export const metadata = {
+  title: 'Business & Commercial Analytics | Mullen Analytics',
+  description:
+    'Forecasting, KPI dashboards, customer and operations analytics, and the data infrastructure underneath — for businesses that want answers they can act on.',
+};
+
 export default function BusinessPage() {
   return (
     <div className="bg-white">

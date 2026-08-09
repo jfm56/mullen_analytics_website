@@ -36,6 +36,12 @@ const PRICING = [
 
 const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
 
+export const metadata = {
+  title: 'LiDAR Drone Mapping & Geospatial Analytics | Mullen Analytics',
+  description:
+    'Drone LiDAR, terrain modeling, mapping, and geospatial analysis for construction, public safety, environmental monitoring, and land management.',
+};
+
 export default function DroneIntelligencePage() {
   return (
     <div className="bg-white">

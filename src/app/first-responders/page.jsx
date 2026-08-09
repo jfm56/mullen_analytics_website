@@ -56,6 +56,12 @@ const IMPROVEMENTS = [
   'Leadership-ready decisions',
 ];
 
+export const metadata = {
+  title: 'EMS Analytics & Predictive Staffing | Mullen Analytics',
+  description:
+    'EMS analytics: call-volume forecasting, staffing and deployment optimization, response-time analysis, unit utilization, and leadership-ready reporting for EMS, fire, and public safety.',
+};
+
 export default function FirstRespondersPage() {
   return (
     <div className="bg-white">

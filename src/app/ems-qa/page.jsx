@@ -1,5 +1,7 @@
 'use client';
 
+import { trackStartTrial, trackRequestDemo } from '../../lib/conversions';
+
 const APP_URL = 'https://app.mullenanalytics.com';
 // New prospects start a trial; existing clients launch straight into the app's
 // login (the bare app root redirects to a marketing page, so link login directly).
@@ -72,6 +74,7 @@ export default function EmsQaPage() {
               href={TRIAL_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackStartTrial()}
               className="px-10 py-5 rounded-md font-semibold text-lg shadow-xl transition-all duration-200 text-center"
               style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
@@ -80,28 +83,21 @@ export default function EmsQaPage() {
               Start 30-Day Free Trial
             </a>
             <a
-              href={LOGIN_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/contact"
+              onClick={() => trackRequestDemo()}
               className="px-10 py-5 rounded-md border-2 font-semibold text-lg transition-all duration-200 text-center"
               style={{ borderColor: '#FFFFFF', color: '#FFFFFF', backgroundColor: 'transparent' }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#071829'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; }}
             >
-              Launch the Platform
-            </a>
-            <a
-              href="/contact"
-              className="px-10 py-5 rounded-md border-2 font-semibold text-lg transition-all duration-200 text-center"
-              style={{ borderColor: 'rgba(255,255,255,0.45)', color: '#FFFFFF', backgroundColor: 'transparent' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            >
               Request a Demo
             </a>
           </div>
           <p className="text-sm mt-5" style={{ color: '#64748B' }}>
-            De-identified hosted trial — no PHI. Existing client? Launch the platform to sign in.
+            De-identified hosted trial — no PHI.&nbsp;&nbsp;·&nbsp;&nbsp;Existing client?{' '}
+            <a href={LOGIN_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9', fontWeight: 600 }}>
+              Launch the platform →
+            </a>
           </p>
         </div>
       </section>
@@ -267,6 +263,7 @@ export default function EmsQaPage() {
               href={TRIAL_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackStartTrial()}
               className="px-10 py-5 rounded-md font-semibold text-lg shadow-xl transition-all duration-200 text-center"
               style={{ backgroundColor: '#1D4ED8', color: '#FFFFFF' }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
@@ -275,22 +272,12 @@ export default function EmsQaPage() {
               Start 30-Day Free Trial
             </a>
             <a
-              href={LOGIN_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/contact"
+              onClick={() => trackRequestDemo()}
               className="px-10 py-5 rounded-md border-2 font-semibold text-lg transition-all duration-200 text-center"
               style={{ borderColor: '#FFFFFF', color: '#FFFFFF', backgroundColor: 'transparent' }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#071829'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; }}
-            >
-              Launch the Platform
-            </a>
-            <a
-              href="/contact"
-              className="px-10 py-5 rounded-md border-2 font-semibold text-lg transition-all duration-200 text-center"
-              style={{ borderColor: 'rgba(255,255,255,0.45)', color: '#FFFFFF', backgroundColor: 'transparent' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             >
               Request a Demo
             </a>
