@@ -172,90 +172,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* WHAT THEY ARE — plain-language definitions (white) */}
-      <section className="py-24 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-2xl mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Data Science &amp; Data Engineering — In Plain English
-            </h2>
-            <p className="text-base text-slate-600 leading-relaxed">
-              People mix these two up all the time. They&apos;re actually two different jobs. Here&apos;s what
-              each one really means — no jargon.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Data Engineering */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-8">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0">
-                  <Database size={20} strokeWidth={1.75} className="text-blue-700" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-sky-600">Getting your data ready</p>
-                  <h3 className="text-lg font-bold text-slate-900">Data Engineering</h3>
-                </div>
-              </div>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                Your information lives all over the place — spreadsheets, software, paper records — and
-                it&apos;s usually messy, out of date, or hard to pull together. Data engineering is the work of
-                gathering it all, cleaning it up, and putting it in one place you can actually use. Think of
-                it like the plumbing in a building: you never see it, but nothing works without it.
+      {/* PLAIN-ENGLISH GUIDE — teaser linking to the full article */}
+      <section className="py-16 bg-white border-t border-slate-200">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="rounded-2xl bg-slate-50 border border-slate-200 p-8 md:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">New to this?</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
+                Data Science vs. Data Engineering — in plain English
+              </h2>
+              <p className="text-base text-slate-600 leading-relaxed">
+                They get mixed up all the time, but they&apos;re two different jobs. A quick, no-jargon guide to
+                what each one does and how they work together.
               </p>
-              <p className="text-sm font-semibold text-slate-900 mb-5">
-                The question it answers: <span className="font-normal text-slate-600">Can we trust this data — and is it all in one place?</span>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {['Gathering it all', 'Cleaning it up', 'Keeping it current', 'One place to look'].map((t) => (
-                  <span key={t} className="text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-full px-2.5 py-1">{t}</span>
-                ))}
-              </div>
             </div>
-
-            {/* Data Science */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-8">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0">
-                  <FlaskConical size={20} strokeWidth={1.75} className="text-blue-700" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-sky-600">Making sense of it</p>
-                  <h3 className="text-lg font-bold text-slate-900">Data Science</h3>
-                </div>
-              </div>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                Once your data is clean and ready, data science digs in to find answers you can use. It
-                spots patterns, works out what&apos;s likely to happen next, and explains why. In short, it
-                takes a pile of numbers and turns it into something you can actually make a decision from.
-              </p>
-              <p className="text-sm font-semibold text-slate-900 mb-5">
-                The question it answers: <span className="font-normal text-slate-600">What is this data telling us — and what should we do about it?</span>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {['Spotting patterns', 'Predicting what happens next', 'Explaining why', 'Guiding decisions'].map((t) => (
-                  <span key={t} className="text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-full px-2.5 py-1">{t}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* How they work together */}
-          <div className="mt-6 rounded-xl bg-navy-deep p-7 md:p-8">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold mb-4">
-              <span className="text-slate-400">Messy data</span>
-              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
-              <span className="text-white">Data Engineering</span>
-              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
-              <span className="text-slate-400">Data you can trust</span>
-              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
-              <span className="text-white">Data Science</span>
-              <ArrowRight size={15} className="text-sky-400 flex-shrink-0" />
-              <span className="text-slate-400">Decisions you can act on</span>
-            </div>
-            <p className="text-sm text-slate-300 leading-relaxed max-w-3xl">
-              The simple version: <span className="text-white font-medium">data engineering gets your data ready; data science figures out what it&apos;s telling you.</span> You need both — data you can trust, and someone to make sense of it.
-            </p>
+            <Link href="/guides/data-science-vs-data-engineering"
+              className="inline-flex items-center gap-1.5 flex-shrink-0 px-6 py-3.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors">
+              Read the guide
+              <ArrowRight size={16} strokeWidth={2.5} />
+            </Link>
           </div>
         </div>
       </section>
@@ -388,10 +323,10 @@ export default function Home() {
               className="px-10 py-5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
               Start a Conversation
             </Link>
-            <a href={CALENDAR_URL} target="_blank" rel="noopener noreferrer"
+            <ScheduleCTA href={CALENDAR_URL}
               className="px-10 py-5 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
               Schedule a Strategy Call
-            </a>
+            </ScheduleCTA>
           </div>
         </div>
       </section>
