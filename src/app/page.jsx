@@ -18,6 +18,7 @@ const SECTORS = [
   { label: 'Business',          title: 'Business & Commercial',      desc: 'Forecasting, KPI dashboards, customer and operations analytics, and the data infrastructure underneath them.', href: '/industries' },
   { label: 'Public Safety',     title: 'First Responders',           desc: 'Demand forecasting, staffing and deployment models, response-time analysis, and unit utilization for EMS, fire, and public safety.', href: '/first-responders' },
   { label: 'Drone & Geospatial', title: 'Drone Analytics & Surveying', desc: 'Survey processing, mapping, geospatial analytics, and disaster-response imagery turned into measurable, reportable insight.', href: '/drone-intelligence' },
+  { label: 'Environmental',     title: 'Environmental & Wildfire',    desc: 'Wildfire risk prediction, remote sensing, environmental monitoring, and disaster-response analytics for agencies protecting land and communities.', href: '/environmental' },
   { label: 'Healthcare',        title: 'Healthcare Analytics',        desc: 'Clinical operations, quality improvement, patient flow, and documentation automation with clinical accountability built in.', href: '/healthcare' },
   { label: 'Research',          title: 'Biomedical Research',         desc: 'Data pipelines, outcome modeling, and analytics built for scientific rigor and reproducibility.', href: '/biomedical-research' },
 ];

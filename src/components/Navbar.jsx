@@ -10,6 +10,7 @@ const WHO_WE_SERVE = [
   { label: 'Business & Commercial', href: '/industries',         desc: 'Forecasting, KPIs & data infrastructure' },
   { label: 'First Responders',      href: '/first-responders',   desc: 'EMS, fire & public safety analytics' },
   { label: 'Drone & Geospatial',    href: '/drone-intelligence', desc: 'Survey processing, mapping & disaster response' },
+  { label: 'Environmental',         href: '/environmental',      desc: 'Wildfire risk, remote sensing & monitoring' },
   { label: 'Healthcare',            href: '/healthcare',         desc: 'Clinical operations & quality improvement' },
   { label: 'Biomedical Research',   href: '/biomedical-research', desc: 'Data pipelines & outcome modeling' },
 ];

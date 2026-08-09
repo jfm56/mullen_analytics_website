@@ -12,6 +12,7 @@ const WHO_WE_SERVE = [
   { label: 'Business & Commercial', href: '/industries' },
   { label: 'First Responders', href: '/first-responders' },
   { label: 'Drone & Geospatial', href: '/drone-intelligence' },
+  { label: 'Environmental', href: '/environmental' },
   { label: 'Healthcare', href: '/healthcare' },
   { label: 'Biomedical Research', href: '/biomedical-research' },
 ];
