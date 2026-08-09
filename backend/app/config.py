@@ -111,6 +111,14 @@ class Settings(BaseSettings):
     lead_llm_provider: str = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1:8b"
+    # Cross-backend admin auth (ON-PREM instance only). The admin's login session
+    # lives in the CLOUD (Railway) DB, not locally, so when set, admin endpoints
+    # served here (analytics/leads/outreach) also accept a cookie validated by the
+    # upstream backend. Unset on the cloud + normal local dev => local-only auth,
+    # no behavior change. Point at the public site's proxy to avoid needing the
+    # raw Railway URL: url=https://mullenanalytics.com, path=/api/proxy/auth/session
+    upstream_auth_url: str = ""
+    upstream_auth_path: str = "/api/auth/session"
     
 
 

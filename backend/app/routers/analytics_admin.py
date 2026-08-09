@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.user import User
 from ..services import analytics_service
-from .auth import require_admin
+from .auth import require_admin_or_upstream
 
 router = APIRouter(prefix="/admin/analytics", tags=["admin-analytics"])
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/admin/analytics", tags=["admin-analytics"])
 @router.get("/overview")
 def analytics_overview(
     days: int = 30,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_upstream),
     db: Session = Depends(get_db),
 ):
     """Visitor KPIs + trends over the last `days` (1-365)."""

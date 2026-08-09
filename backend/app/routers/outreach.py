@@ -14,7 +14,7 @@ from ..database import get_db
 from ..models.lead import Lead, OutreachMessage
 from ..models.user import User
 from ..services.leadgen import outreach
-from .auth import require_admin
+from .auth import require_admin_or_upstream
 
 router = APIRouter(tags=["outreach"])
 
@@ -32,7 +32,7 @@ def _msg_dict(m: OutreachMessage) -> dict:
 
 
 @router.post("/admin/leads/{lead_id}/outreach/draft")
-def draft(lead_id: str, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+def draft(lead_id: str, current_user: User = Depends(require_admin_or_upstream), db: Session = Depends(get_db)):
     lead = db.query(Lead).filter(Lead.id == lead_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
@@ -40,7 +40,7 @@ def draft(lead_id: str, current_user: User = Depends(require_admin), db: Session
 
 
 @router.get("/admin/leads/{lead_id}/outreach")
-def list_outreach(lead_id: str, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+def list_outreach(lead_id: str, current_user: User = Depends(require_admin_or_upstream), db: Session = Depends(get_db)):
     rows = (
         db.query(OutreachMessage)
         .filter(OutreachMessage.lead_id == lead_id)
@@ -57,7 +57,7 @@ class OutreachEdit(BaseModel):
 
 @router.patch("/admin/outreach/{message_id}")
 def edit(message_id: str, body: OutreachEdit,
-         current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+         current_user: User = Depends(require_admin_or_upstream), db: Session = Depends(get_db)):
     m = db.query(OutreachMessage).filter(OutreachMessage.id == message_id).first()
     if not m:
         raise HTTPException(status_code=404, detail="Message not found")
@@ -72,13 +72,13 @@ def edit(message_id: str, body: OutreachEdit,
 
 
 @router.post("/admin/outreach/{message_id}/send")
-def send(message_id: str, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+def send(message_id: str, current_user: User = Depends(require_admin_or_upstream), db: Session = Depends(get_db)):
     """Explicit admin send of one reviewed draft (never automatic)."""
     return outreach.send_outreach(db, message_id, current_user.id)
 
 
 @router.post("/admin/leads/{lead_id}/suppress")
-def suppress(lead_id: str, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+def suppress(lead_id: str, current_user: User = Depends(require_admin_or_upstream), db: Session = Depends(get_db)):
     lead = db.query(Lead).filter(Lead.id == lead_id).first()
     if not lead or not lead.contact_email:
         raise HTTPException(status_code=400, detail="Lead has no email address")

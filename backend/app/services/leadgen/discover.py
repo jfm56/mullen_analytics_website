@@ -17,7 +17,7 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 
 from ...models.lead import Lead
-from . import llm, websearch
+from . import contacts, freshness, llm, websearch
 
 # (label, search fragment) — kept small; each pairs with a NEED below.
 _VERTICALS = [
@@ -38,11 +38,14 @@ _SYSTEM = (
     "You identify real prospective CLIENTS for an analytics / machine-learning / "
     "data-engineering consultancy. From the search results, return ONLY genuine "
     "organizations that appear to be SEEKING such help (an RFP, a job posting, a "
-    "stated data problem, or grant funding). EXCLUDE job boards, directories, "
-    "other consultancies/competitors, news aggregators, and Wikipedia. "
+    "stated data problem, or grant funding) that are CURRENT — open or recent. "
+    "EXCLUDE anything clearly expired, closed, or from a prior year (judge against "
+    "today's date given below), plus job boards, directories, other consultancies/"
+    "competitors, news aggregators, and Wikipedia. "
     "Respond as strict JSON only: "
     '{"leads":[{"company":"","website":"","role":"","need_summary":"one plain sentence on what they want",'
-    '"signal":"short why-relevant tag","vertical":"healthcare|ems|gov|smb|research|other"}]}'
+    '"signal":"short why-relevant tag","vertical":"healthcare|ems|gov|smb|research|other",'
+    '"date_note":"any posting or deadline date visible, or null"}]}'
 )
 
 
@@ -76,10 +79,11 @@ def run_discovery(db: Session, max_per_query: int = 6) -> Dict:
     if not llm.available():
         return {"ok": False, "reason": "LLM unavailable — start Ollama or set ANTHROPIC_API_KEY"}
 
+    _today = datetime.utcnow().date().isoformat()
     seen = set()
     candidates: List[Dict] = []
     for q in _queries():
-        for r in websearch.search(q, max_per_query):
+        for r in websearch.search(q, max_per_query, timelimit="y"):
             u = (r.get("url") or "").strip()
             if not u or u in seen:
                 continue
@@ -90,7 +94,8 @@ def run_discovery(db: Session, max_per_query: int = 6) -> Dict:
 
     blob = "\n".join(f"- {c.get('title', '')} | {c.get('url', '')} | {str(c.get('snippet', ''))[:300]}"
                      for c in candidates[:40])
-    raw = llm.generate(f"Search results:\n{blob}\n\nReturn the JSON now.", system=_SYSTEM, json_mode=True)
+    raw = llm.generate(f"Today is {_today}.\nSearch results:\n{blob}\n\nReturn the JSON now.",
+                       system=_SYSTEM, json_mode=True)
     try:
         parsed = json.loads(raw) if raw else {}
         found = parsed.get("leads", []) if isinstance(parsed, dict) else []
@@ -105,7 +110,11 @@ def run_discovery(db: Session, max_per_query: int = 6) -> Dict:
         if db.query(Lead).filter(Lead.company.ilike(company)).first():
             continue  # de-dupe by company name
         website = (ld.get("website") or "").strip() or None
-        email = websearch.find_contact_email(website) if website else None
+        fresh = freshness.assess(company, ld.get("need_summary"), website, _today)
+        if fresh.get("verdict") == "expired":
+            continue  # skip stale / closed opportunities
+        poc = contacts.find_contact(company, website, ld.get("need_summary"))
+        email = poc.get("contact_email")
         row = {
             "company": company, "website": website, "role": ld.get("role"),
             "vertical": ld.get("vertical"), "need_summary": ld.get("need_summary"),
@@ -114,13 +123,16 @@ def run_discovery(db: Session, max_per_query: int = 6) -> Dict:
         db.add(Lead(
             company=company[:300],
             website=website,
+            contact_name=poc.get("contact_name"),
             contact_email=email,
-            contact_role=(ld.get("role") or None),
+            contact_role=(poc.get("contact_role") or ld.get("role") or None),
+            contact_phone=poc.get("contact_phone"),
             vertical=(ld.get("vertical") or "other")[:50],
             source="research",
             source_url=None,
             need_summary=ld.get("need_summary"),
             signal=(ld.get("signal") or "")[:500] or None,
+            date_note=((fresh.get("date_note") or ld.get("date_note") or "")[:200] or None),
             status="researched",
             score=score_lead(row),
             discovered_at=datetime.utcnow(),

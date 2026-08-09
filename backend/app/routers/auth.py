@@ -431,6 +431,41 @@ async def require_admin(
     return current_user
 
 
+async def require_admin_or_upstream(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User:
+    """Admin gate for endpoints ALSO served by the on-prem instance (visitor
+    analytics, leads, outreach). Identical to require_admin for a session that lives
+    in THIS backend's DB. On the on-prem box the admin's session lives in the CLOUD
+    DB instead, so when local validation fails and settings.upstream_auth_url is
+    configured, the cookie is validated against the cloud backend and a confirmed
+    admin is accepted. Upstream is unset on the cloud + local-dev backends, so this
+    behaves exactly like require_admin there."""
+    token = get_session_token(request)
+    if token:
+        user = validate_session(db, token)
+        if user:
+            profile = get_user_profile(db, str(user.id))
+            if profile and profile.role == "admin":
+                return user
+
+    from ..services import upstream_auth
+    ident = upstream_auth.verify_admin(request.headers.get("cookie", ""))
+    if ident:
+        email = (ident.get("email") or "").lower()
+        if email:
+            local = db.query(User).filter(User.email == email).first()
+            if local:
+                return local
+        # Data-only on-prem DB with no local user row: return a detached admin User
+        # so read endpoints work. id is None — write paths needing a real FK (e.g.
+        # outreach send / approved_by) still require the admin to exist locally.
+        return User(email=email or "admin@upstream")
+
+    raise HTTPException(status_code=403, detail="Admin access required")
+
+
 @router.post("/resend-verification", response_model=ResendVerificationResponse)
 async def resend_verification(
     request: Request,
