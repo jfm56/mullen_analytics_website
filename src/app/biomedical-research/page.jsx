@@ -56,6 +56,12 @@ const IMPROVEMENTS = [
   'Stronger research outcomes',
 ];
 
+export const metadata = {
+  title: 'Biomedical Research Analytics | Mullen Analytics',
+  description:
+    'Data pipelines, outcome modeling, and analytics built for scientific rigor and reproducibility in biomedical and clinical research.',
+};
+
 export default function BiomedicalResearchPage() {
   return (
     <div className="bg-white">

@@ -22,6 +22,12 @@ const APPROACH_ITEMS = [
 
 const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
 
+export const metadata = {
+  title: 'About Mullen Analytics | Veteran-Owned Data & Analytics',
+  description:
+    'Veteran-owned and founded by former first responders, Mullen Analytics & Data Solutions builds explainable, defensible analytics for high-consequence operations.',
+};
+
 export default function AboutPage() {
   return (
     <div className="bg-white">

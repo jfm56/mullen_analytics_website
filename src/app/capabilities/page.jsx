@@ -70,6 +70,12 @@ const TRUST_CARDS = [
   { title: 'Flexible engagements', desc: 'Pilots, phased rollouts, retainers, or multi-year programs.' },
 ];
 
+export const metadata = {
+  title: 'Analytics, ML & Data Engineering Capabilities | Mullen Analytics',
+  description:
+    'What we do: analytics and dashboards, machine learning and automation, data science, and data engineering — explainable, defensible, and built to be used.',
+};
+
 export default function CapabilitiesPage() {
   return (
     <div className="bg-white">
