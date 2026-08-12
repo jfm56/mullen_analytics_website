@@ -1,7 +1,9 @@
 """
 LLM wrapper for lead discovery — need-signal extraction + outreach drafting.
-Local Ollama by default (keeps lead analysis on-prem + free); Anthropic if
-configured. Returns None when unavailable so callers degrade gracefully.
+Local Ollama by default (keeps lead analysis on-prem + free); auto-falls back to
+Anthropic when Ollama isn't reachable and an Anthropic key is set (so the cloud/
+Railway backend, which already has the key for AI insights, just works). Returns
+None when neither is available so callers degrade gracefully.
 """
 from __future__ import annotations
 
@@ -13,10 +15,11 @@ import httpx
 from ...config import get_settings
 
 
-def available() -> bool:
-    s = get_settings()
-    if (s.lead_llm_provider or "ollama").lower() == "anthropic":
-        return bool(s.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY"))
+def _has_anthropic(s) -> bool:
+    return bool(s.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY"))
+
+
+def _ollama_up(s) -> bool:
     try:
         r = httpx.get(s.ollama_base_url.rstrip("/") + "/api/tags", timeout=3)
         return r.status_code == 200
@@ -24,12 +27,33 @@ def available() -> bool:
         return False
 
 
+def _resolve_provider(s) -> Optional[str]:
+    """Provider to actually use. Explicit 'anthropic' is honored (needs a key); the
+    default 'ollama' uses Ollama when reachable, else auto-falls back to Anthropic
+    when a key is present, else None (unavailable)."""
+    pref = (s.lead_llm_provider or "ollama").lower()
+    if pref == "anthropic":
+        return "anthropic" if _has_anthropic(s) else None
+    if _ollama_up(s):
+        return "ollama"
+    if _has_anthropic(s):
+        return "anthropic"
+    return None
+
+
+def available() -> bool:
+    return _resolve_provider(get_settings()) is not None
+
+
 def generate(prompt: str, system: str = "", json_mode: bool = False, max_tokens: int = 1500) -> Optional[str]:
     s = get_settings()
+    prov = _resolve_provider(s)
     try:
-        if (s.lead_llm_provider or "ollama").lower() == "anthropic":
+        if prov == "anthropic":
             return _anthropic(prompt, system, max_tokens, s)
-        return _ollama(prompt, system, json_mode, s)
+        if prov == "ollama":
+            return _ollama(prompt, system, json_mode, s)
+        return None
     except Exception:
         return None
 
