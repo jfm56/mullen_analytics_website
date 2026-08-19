@@ -209,7 +209,11 @@ def build_filter_options(upload: DataUpload, db: Session) -> Dict[str, Any]:
 # Apply dashboard filters to a DataFrame
 # ---------------------------------------------------------------------------
 
-def apply_dashboard_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> Tuple[pd.DataFrame, List[str]]:
+def apply_dashboard_filters(
+    df: pd.DataFrame,
+    filters: Dict[str, Any],
+    overrides: Optional[Dict[str, Optional[str]]] = None,
+) -> Tuple[pd.DataFrame, List[str]]:
     """
     Apply dashboard filters dict to *df*. Returns (filtered_df, applied_filter_descriptions).
 
@@ -220,6 +224,11 @@ def apply_dashboard_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> Tuple[
       call_types: [str, ...]
       exclude_interfacility: bool
       emergency_only: bool
+
+    *overrides* are the upload's column mappings — used so the filter resolves each
+    dimension to the SAME column the dashboard/options do (detect_mapped_column). Without
+    this, a mapped date/unit/etc. column would be filtered against a different auto-detected
+    column, silently dropping every row ("No calls match" despite the data being present).
     """
     applied: List[str] = []
     original_len = len(df)
@@ -227,7 +236,7 @@ def apply_dashboard_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> Tuple[
     # Date range
     date_range = filters.get("date_range")
     if date_range and len(date_range) == 2:
-        date_col = detect_column(df, "incident_date")
+        date_col = detect_mapped_column(df, "incident_date", overrides)
         if date_col:
             parsed = pd.to_datetime(df[date_col], errors="coerce")
             start = pd.to_datetime(date_range[0], errors="coerce")
@@ -241,7 +250,7 @@ def apply_dashboard_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> Tuple[
     # Units (case-insensitive)
     units = filters.get("units")
     if units:
-        unit_col = detect_column(df, "unit")
+        unit_col = detect_mapped_column(df, "unit", overrides)
         if unit_col:
             lower_units = {u.lower() for u in units}
             df = df[df[unit_col].astype(str).str.strip().str.lower().isin(lower_units)]
@@ -250,7 +259,7 @@ def apply_dashboard_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> Tuple[
     # Municipalities (case-insensitive)
     munis = filters.get("municipalities")
     if munis:
-        muni_col = detect_column(df, "municipality")
+        muni_col = detect_mapped_column(df, "municipality", overrides)
         if muni_col:
             lower_munis = {m.lower() for m in munis}
             df = df[df[muni_col].astype(str).str.strip().str.lower().isin(lower_munis)]
@@ -259,7 +268,7 @@ def apply_dashboard_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> Tuple[
     # Call types (case-insensitive)
     call_types = filters.get("call_types")
     if call_types:
-        type_col = detect_column(df, "incident_type")
+        type_col = detect_mapped_column(df, "incident_type", overrides)
         if type_col:
             lower_types = {t.lower() for t in call_types}
             df = df[df[type_col].astype(str).str.strip().str.lower().isin(lower_types)]
@@ -441,7 +450,8 @@ def filtered_dashboard(upload: DataUpload, db: Session, filters: Dict[str, Any])
     if df is None:
         return {"error": "Cleaned file not available"}
 
-    df, applied = apply_dashboard_filters(df, filters)
+    overrides = get_column_overrides(upload, db)
+    df, applied = apply_dashboard_filters(df, filters, overrides)
     if df.empty:
         return {"empty": True, "total_calls": 0, "filters_applied": applied, "row_count": 0}
 
@@ -495,8 +505,9 @@ def compare_dashboard(
     if df_base is None:
         return {"error": "Cleaned file not available"}
 
-    df_a, applied_a = apply_dashboard_filters(df_base.copy(), group_a_filters)
-    df_b, applied_b = apply_dashboard_filters(df_base.copy(), group_b_filters)
+    overrides = get_column_overrides(upload, db)
+    df_a, applied_a = apply_dashboard_filters(df_base.copy(), group_a_filters, overrides)
+    df_b, applied_b = apply_dashboard_filters(df_base.copy(), group_b_filters, overrides)
 
     metrics_a = _compute_filtered_metrics(df_a, label=group_a_label)
     metrics_b = _compute_filtered_metrics(df_b, label=group_b_label)
