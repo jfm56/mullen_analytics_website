@@ -46,7 +46,7 @@ export default function TechnologyPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="h-px bg-[#0EA5E9] w-24 mx-auto mb-8" />
           <p className="text-xl leading-relaxed" style={{ color: '#1E293B', maxWidth: '680px', margin: '0 auto' }}>
-            Technology is at the core of everything we deliver. Our analytics, machine learning, and automation solutions are built to support high-stakes decisions in healthcare, public safety, life sciences, and environmental systems.
+            Technology is at the core of everything we deliver. Our analytics, machine learning, and automation solutions are built to support high-stakes decisions in healthcare, public safety, and life sciences.
           </p>
           <div className="h-px bg-[#0EA5E9] w-24 mx-auto mt-8" />
         </div>
@@ -95,10 +95,6 @@ export default function TechnologyPage() {
                 <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F8FAFD' }}>
                   <span className="mr-2 text-lg" style={{ color: '#0EA5E9' }}>✓</span>
                   <span className="text-sm font-medium" style={{ color: '#1E293B' }}>Life Sciences</span>
-                </div>
-                <div className="flex items-center px-4 py-3 rounded-md" style={{ backgroundColor: '#F8FAFD' }}>
-                  <span className="mr-2 text-lg" style={{ color: '#0EA5E9' }}>✓</span>
-                  <span className="text-sm font-medium" style={{ color: '#1E293B' }}>Environmental</span>
                 </div>
               </div>
             </div>
@@ -199,10 +195,6 @@ export default function TechnologyPage() {
               <p className="text-sm" style={{ color: '#475569' }}>Next-generation modeling techniques</p>
             </div>
             <div className="bg-white rounded-lg p-6 border-2 hover:shadow-lg transition-all" style={{ borderColor: '#0EA5E9' }}>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#071829' }}>Geospatial Analytics</h3>
-              <p className="text-sm" style={{ color: '#475569' }}>Environmental and spatial intelligence</p>
-            </div>
-            <div className="bg-white rounded-lg p-6 border-2 hover:shadow-lg transition-all" style={{ borderColor: '#0EA5E9' }}>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#071829' }}>Automated Decision Support</h3>
               <p className="text-sm" style={{ color: '#475569' }}>Augmented operational intelligence</p>
             </div>
@@ -258,7 +250,7 @@ export default function TechnologyPage() {
           <div className="text-center mb-12">
             <h2 className="mb-4" style={{ color: '#071829' }}>Analytics Products & Accelerators</h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: '#1E293B' }}>
-              Targeted analytics accelerators designed to solve recurring problems in public safety, healthcare, and environmental systems.
+              Targeted analytics accelerators designed to solve recurring problems in public safety and healthcare.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -273,10 +265,6 @@ export default function TechnologyPage() {
             <div className="bg-white rounded-lg p-6 shadow-lg border-t-4" style={{ borderColor: '#0EA5E9' }}>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#071829' }}>Ops Dashboards</h3>
               <p className="text-sm" style={{ color: '#475569' }}>Performance and KPI tracking</p>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-lg border-t-4" style={{ borderColor: '#0EA5E9' }}>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#071829' }}>Environmental Tools</h3>
-              <p className="text-sm" style={{ color: '#475569' }}>Risk and planning systems</p>
             </div>
           </div>
         </div>

@@ -4,13 +4,12 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-// The five verticals, grouped under one "Who We Serve" menu so drone + business
-// are reachable (they were orphaned before) and the top bar isn't a wall of links.
+// Verticals grouped under one "Who We Serve" menu. Drone & Geospatial and
+// Environmental are hidden for now to focus on first responders + business
+// (re-add their entries here to restore them).
 const WHO_WE_SERVE = [
   { label: 'Business & Commercial', href: '/industries',         desc: 'Forecasting, KPIs & data infrastructure' },
   { label: 'First Responders',      href: '/first-responders',   desc: 'EMS, fire & public safety analytics' },
-  { label: 'Drone & Geospatial',    href: '/drone-intelligence', desc: 'Survey processing, mapping & disaster response' },
-  { label: 'Environmental',         href: '/environmental',      desc: 'Wildfire risk, remote sensing & monitoring' },
   { label: 'Healthcare',            href: '/healthcare',         desc: 'Clinical operations & quality improvement' },
   { label: 'Biomedical Research',   href: '/biomedical-research', desc: 'Data pipelines & outcome modeling' },
 ];

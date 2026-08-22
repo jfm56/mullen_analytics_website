@@ -79,7 +79,7 @@ export default function AboutPage() {
                 they&apos;re looking at.
               </p>
               <p className="text-base text-slate-600 leading-relaxed">
-                We work with businesses, first responders, drone and surveying teams, healthcare, and
+                We work with businesses, first responders, healthcare, and
                 research groups — anyone who needs their data organized, trustworthy, and turned into
                 clear answers.
               </p>
@@ -178,7 +178,7 @@ export default function AboutPage() {
             Let&apos;s turn your data into better decisions
           </h2>
           <p className="text-lg text-slate-300 mb-12 leading-relaxed mx-auto max-w-xl">
-            Whatever your field — business, public safety, drone operations, healthcare, or research —
+            Whatever your field — business, public safety, healthcare, or research —
             if you want to improve operations, staffing, or decision-making, we&apos;d welcome the conversation.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

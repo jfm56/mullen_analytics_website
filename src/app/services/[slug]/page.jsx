@@ -330,46 +330,6 @@ export default async function ServicePage({ params }) {
           </>
         ) : null}
 
-        {slug === "environmental-and-geospatial-analytics" ? (
-          <>
-            <h2 className="text-2xl font-bold mb-4">Overview</h2>
-            <p className="mb-8">
-              We combine GIS, remote sensing, climate data, and predictive modeling to support land-use planning, environmental monitoring, and risk mitigation. This helps organizations visualize spatial patterns and make data-driven environmental decisions.
-            </p>
-
-            <h3 className="text-xl font-semibold mb-3">Why It Matters</h3>
-            <p className="mb-8">Good environmental decisions require more than intuition—they require clear, spatially aware insight.</p>
-
-            <div className="border rounded-lg overflow-hidden mb-6">
-              <div className="bg-gray-900 text-white text-center text-sm tracking-widest py-2">HOW WE WORK</div>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="rounded border p-5">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16"/></svg>
-                </div>
-                <h4 className="font-semibold">Gather Spatial, Satellite & Environmental Data</h4>
-                <p className="text-sm text-gray-700 mt-2">We integrate multi-source geospatial datasets.</p>
-              </div>
-              <div className="rounded border p-5">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h12M4 18h8"/></svg>
-                </div>
-                <h4 className="font-semibold">Model Risk & Spatial Patterns</h4>
-                <p className="text-sm text-gray-700 mt-2">We apply spatial analytics and predictive modeling.</p>
-              </div>
-              <div className="rounded border p-5">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600/10 text-indigo-700">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-                <h4 className="font-semibold">Visualize Insights on Interactive Maps & Dashboards</h4>
-                <p className="text-sm text-gray-700 mt-2">We create tools for planners, emergency services, and environmental teams.</p>
-              </div>
-            </div>
-          </>
-        ) : null}
-
         {slug === "product-and-mvp-development" ? (
           <>
             <h2 className="text-2xl font-bold mb-4">Overview</h2>

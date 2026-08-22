@@ -9,6 +9,7 @@ export const metadata = {
   title: 'Environmental & Wildfire Analytics | Mullen Analytics',
   description:
     'Wildfire risk prediction, environmental monitoring, remote sensing, and disaster-response analytics for fire and land agencies, counties, utilities, and emergency management.',
+  robots: { index: false, follow: false }, // vertical hidden for now — unlinked from nav/footer/home
 };
 
 const CAPABILITIES = [

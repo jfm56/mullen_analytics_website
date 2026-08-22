@@ -10,7 +10,7 @@ import {
 export const metadata = {
   title: 'Pricing | Mullen Analytics & Data Solutions',
   description:
-    'Simple, quote-first pricing for analytics, data engineering, drone, and automation work — plus ready-to-use platforms. Most engagements are custom-scoped to what you actually need. Start with a strategy call.',
+    'Simple, quote-first pricing for analytics, data engineering, and automation work — plus ready-to-use platforms. Most engagements are custom-scoped to what you actually need. Start with a strategy call.',
 };
 
 const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
@@ -25,7 +25,6 @@ const WAYS = [
     points: [
       'A dashboard or report built around your data',
       'Getting your data cleaned up, connected, and reliable',
-      'A drone survey, map, or inspection',
       'A forecasting or prediction model',
       'Automating a manual, repetitive task',
     ],

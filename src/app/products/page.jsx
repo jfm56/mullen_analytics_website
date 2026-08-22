@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-  BarChart3, Cloud, Plane, BrainCircuit, Zap, Compass, Check, ArrowRight,
+  BarChart3, Cloud, BrainCircuit, Zap, Compass, Check, ArrowRight,
 } from 'lucide-react';
 
 // Products & Solutions. Same FIXED palette as the home page — see app/page.jsx.
@@ -9,7 +9,7 @@ import {
 export const metadata = {
   title: 'Products & Solutions | Mullen Analytics & Data Solutions',
   description:
-    'Custom analytics & dashboards, AWS data engineering, drone analytics, machine learning, and automation — plus ready-to-use platforms like EMS Analytics, the EMS QA/QI Platform, and the secure Client Portal.',
+    'Custom analytics & dashboards, AWS data engineering, machine learning, and automation — plus ready-to-use platforms like EMS Analytics, the EMS QA/QI Platform, and the secure Client Portal.',
 };
 
 const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
@@ -17,7 +17,6 @@ const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
 const SOLUTIONS = [
   { Icon: BarChart3,    title: 'Custom Analytics & Dashboards', desc: 'Dashboards and reports built around your data and your decisions — clear views your team will actually use.' },
   { Icon: Cloud,        title: 'AWS Data Engineering',          desc: 'Modern, secure data pipelines and warehouses on AWS — so your data is reliable, current, and ready to use.' },
-  { Icon: Plane,        title: 'Drone Analytics & Mapping',     desc: 'Aerial capture, surveying, mapping, and thermal/LiDAR analysis turned into measurable, reportable insight.' },
   { Icon: BrainCircuit, title: 'Machine Learning & Automation', desc: 'Forecasting, prediction, and automation — built to be explainable, so you can defend the output.' },
   { Icon: Zap,          title: 'Automation & Decision Support', desc: 'Automate manual reporting, document processing, and repetitive workflows — accurately and consistently.' },
   { Icon: Compass,      title: 'Data Strategy & Advisory',      desc: 'Not sure where to start? We help you find the highest-value opportunities and a practical roadmap.' },
@@ -89,21 +88,6 @@ const PLATFORMS = [
     cta: 'See it with your data',
     external: true,
   },
-  {
-    eyebrow: 'Wildfire Risk',
-    name: 'Wildfire Prediction Analytics',
-    status: 'coming-soon',
-    desc: 'Forecast wildfire risk and spread by combining weather, drought and fuel conditions, terrain, and historical fire data with drone and satellite imagery — so fire agencies and emergency managers can pre-position crews, warn earlier, and plan evacuations before a fire grows.',
-    features: [
-      'Fire-risk & ignition-likelihood forecasting by area',
-      'Fuel, drought & weather-driven risk modeling',
-      'Fire-spread & spot-fire progression modeling',
-      'Drone / aerial & satellite imagery analysis',
-      'Evacuation & resource pre-positioning support',
-    ],
-    href: '/contact',
-    cta: 'Join the early-access list',
-  },
 ];
 
 const STATUS = {
@@ -136,7 +120,7 @@ export default function ProductsPage() {
               Analytics &amp; automation built for real decisions
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
-              From custom analytics, data engineering, and drone mapping to ready-to-use platforms — we
+              From custom analytics and data engineering to ready-to-use platforms — we
               build the tools that turn your data into decisions, whatever your field.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
