@@ -58,7 +58,6 @@ const industries = [
   "Healthcare",
   "EMS and Public Safety",
   "Government and Defense",
-  "Environmental Conservation",
   "Small and Mid-Sized Businesses",
   "Research Organizations",
 ];
@@ -77,13 +76,6 @@ const projects = [
       "Dashboards and predictive tools for staffing, clinical operations, quality improvement, and resource planning.",
     image: "/images/portfolio-healthcare.jpg",
     href: "/healthcare",
-  },
-  {
-    title: "Environmental and Drone Intelligence",
-    description:
-      "LiDAR, thermal imaging, mapping, wildfire risk, watershed monitoring, and environmental change analysis.",
-    image: "/images/portfolio-environmental.jpg",
-    href: "/drone-intelligence",
   },
   {
     title: "Business Intelligence Dashboards",
@@ -354,7 +346,6 @@ export default function ConnectPage() {
               <li>Data engineering and integration</li>
               <li>Workflow and reporting automation</li>
               <li>Healthcare and public-safety analytics</li>
-              <li>Drone, LiDAR, and environmental analytics</li>
             </ul>
           </div>
         </div>

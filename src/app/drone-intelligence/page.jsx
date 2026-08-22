@@ -40,6 +40,7 @@ export const metadata = {
   title: 'LiDAR Drone Mapping & Geospatial Analytics | Mullen Analytics',
   description:
     'Drone LiDAR, terrain modeling, mapping, and geospatial analysis for construction, public safety, environmental monitoring, and land management.',
+  robots: { index: false, follow: false }, // vertical hidden for now — unlinked from nav/footer/home
 };
 
 export default function DroneIntelligencePage() {

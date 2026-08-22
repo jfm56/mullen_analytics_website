@@ -11,8 +11,6 @@ function reopenCookiePreferences() {
 const WHO_WE_SERVE = [
   { label: 'Business & Commercial', href: '/industries' },
   { label: 'First Responders', href: '/first-responders' },
-  { label: 'Drone & Geospatial', href: '/drone-intelligence' },
-  { label: 'Environmental', href: '/environmental' },
   { label: 'Healthcare', href: '/healthcare' },
   { label: 'Biomedical Research', href: '/biomedical-research' },
 ];
@@ -51,8 +49,7 @@ export default function Footer() {
             <p className="text-sm font-bold text-slate-100 mb-1">Mullen Analytics &amp; Data Solutions LLC</p>
             <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-3">Veteran-Owned</p>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs mb-6">
-              Analytics, machine learning, and data engineering for business, public safety, drone and
-              surveying operations, and healthcare.
+              Analytics, machine learning, and data engineering for business, public safety, and healthcare.
             </p>
             <div className="flex items-center gap-3">
               <SocialBtn href="https://www.linkedin.com/company/mullen-analytics" label="LinkedIn">

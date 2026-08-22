@@ -263,62 +263,6 @@ export default function PortfolioPage() {
       </section>
 
 
-      {/* Environmental Risk Analytics */}
-      <section className="bg-white py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="border-l-4 border-[#1D4ED8] pl-6 mb-8">
-            <h2 className="mb-4" style={{ color: '#071829' }}>Environmental Risk Analytics & Visualization</h2>
-          </div>
-          
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-3" style={{ color: '#1D4ED8' }}>Challenge</h3>
-              <p className="text-base leading-relaxed" style={{ color: '#1E293B' }}>
-                Environmental risk data is often complex and difficult to communicate effectively to non-technical stakeholders.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-3" style={{ color: '#1D4ED8' }}>Approach</h3>
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Structured environmental and risk-related data into a clear analytical framework</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Designed a lightweight web-based interface for communicating insights</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Focused on usability, clarity, and stakeholder comprehension</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-3" style={{ color: '#1D4ED8' }}>Outcome</h3>
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Improved accessibility of environmental risk insights</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="mr-3 mt-1.5 h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: '#0EA5E9' }} />
-                  <span style={{ color: '#1E293B' }}>Demonstrated the ability to translate analytical work into stakeholder-facing tools</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
-              <p className="text-sm font-semibold" style={{ color: '#1D4ED8' }}>
-                Capabilities demonstrated: <span className="font-normal" style={{ color: '#1E293B' }}>Environmental analytics, data visualization, web-based decision support</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Analytics Engineering Foundations */}
       <section className="py-16" style={{ backgroundColor: '#F8FAFD' }}>
         <div className="max-w-5xl mx-auto px-4">

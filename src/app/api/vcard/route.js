@@ -10,7 +10,7 @@ export async function GET() {
     "EMAIL;TYPE=INTERNET:jmullen@mullenanalytics.com",
     "URL:https://mullenanalytics.com",
     "ADR;TYPE=WORK:;;Burlington County;NJ;;;United States",
-    "NOTE:Automation, decision support, data analytics, healthcare, EMS, business intelligence, and environmental analytics consulting.",
+    "NOTE:Automation, decision support, data analytics, healthcare, EMS, and business intelligence consulting.",
     "END:VCARD",
   ].join("\r\n");
 

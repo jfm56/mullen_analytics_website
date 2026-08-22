@@ -95,19 +95,6 @@
     ]
   },
   {
-    "slug": "environmental-and-geospatial-analytics",
-    "title": "Environmental & Geospatial Analytics",
-    "description": "GIS-based risk modeling, land-use visualization, remote sensing analysis, and climate impact scenarios.",
-    "overview": "We combine GIS, remote sensing, climate data, and predictive modeling to support land-use planning, environmental monitoring, and risk mitigation. This helps organizations visualize spatial patterns and make data-driven environmental decisions.",
-    "whyItMattersSummary": "Good environmental decisions require more than intuition—they require clear, spatially aware insight.",
-    "howTitle": "HOW WE WORK",
-    "howWeWork": [
-      { "title": "Gather Spatial, Satellite & Environmental Data", "text": "We integrate multi-source geospatial datasets." },
-      { "title": "Model Risk & Spatial Patterns", "text": "We apply spatial analytics and predictive modeling." },
-      { "title": "Visualize Insights on Interactive Maps & Dashboards", "text": "We create tools for planners, emergency services, and environmental teams." }
-    ]
-  },
-  {
     "slug": "product-and-mvp-development",
     "title": "Product & MVP Development",
     "description": "Rapid prototyping of analytics-enabled features, lightweight pipelines, and fractional Chief Data Officer support.",

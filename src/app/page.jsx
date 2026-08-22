@@ -18,8 +18,6 @@ const DISCIPLINES = [
 const SECTORS = [
   { label: 'Business',          title: 'Business & Commercial',      desc: 'Forecasting, KPI dashboards, customer and operations analytics, and the data infrastructure underneath them.', href: '/industries' },
   { label: 'Public Safety',     title: 'First Responders',           desc: 'Demand forecasting, staffing and deployment models, response-time analysis, and unit utilization for EMS, fire, and public safety.', href: '/first-responders' },
-  { label: 'Drone & Geospatial', title: 'Drone Analytics & Surveying', desc: 'Survey processing, mapping, geospatial analytics, and disaster-response imagery turned into measurable, reportable insight.', href: '/drone-intelligence' },
-  { label: 'Environmental',     title: 'Environmental & Wildfire',    desc: 'Wildfire risk prediction, remote sensing, environmental monitoring, and disaster-response analytics for agencies protecting land and communities.', href: '/environmental' },
   { label: 'Healthcare',        title: 'Healthcare Analytics',        desc: 'Clinical operations, quality improvement, patient flow, and documentation automation with clinical accountability built in.', href: '/healthcare' },
   { label: 'Research',          title: 'Biomedical Research',         desc: 'Data pipelines, outcome modeling, and analytics built for scientific rigor and reproducibility.', href: '/biomedical-research' },
 ];
@@ -35,7 +33,7 @@ const PILLARS = [
 
 const FOCUS_AREAS = [
   'Demand forecasting', 'Staffing and deployment models', 'Response time analysis',
-  'Drone survey processing & mapping', 'Geospatial and spatial analytics', 'Disaster response & damage assessment',
+  'Disaster response & damage assessment',
   'Executive KPI dashboards', 'Predictive modeling for planning', 'Data pipelines & warehousing',
   'Data quality and validation', 'Automated reporting', 'Document processing & automation',
   'Quality improvement analytics', 'Patient flow and clinical operations', 'Research outcome modeling',
@@ -59,7 +57,7 @@ function Eyebrow({ children }) {
 export const metadata = {
   title: 'Data Analytics & Automation Consulting | Mullen Analytics & Data Solutions',
   description:
-    'Practical data, analytics, and automation systems — forecasting, dashboards, and decision support for business, EMS & public safety, healthcare, environmental, and drone operations.',
+    'Practical data, analytics, and automation systems — forecasting, dashboards, and decision support for business, EMS & public safety, and healthcare.',
 };
 
 export default function Home() {
@@ -114,10 +112,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-6 text-center">
           <p className="text-[11px] font-bold uppercase tracking-widest text-sky-400 mb-3">Built for operational data</p>
           <p className="text-sm font-semibold text-slate-200 mb-2">
-            EMS &amp; Public Safety · Healthcare · Government · Environmental · Geospatial · Business · Research
+            EMS &amp; Public Safety · Healthcare · Government · Business · Research
           </p>
           <p className="text-xs text-slate-400 tracking-wide">
-            Forecasting · Machine Learning · AWS Data Engineering · GIS &amp; Remote Sensing · Automation
+            Forecasting · Machine Learning · AWS Data Engineering · Automation
           </p>
         </div>
       </div>
@@ -274,8 +272,8 @@ export default function Home() {
                   data has to be accurate, clear, and something you can stand behind.
                 </p>
                 <p className="text-base text-slate-700 leading-relaxed">
-                  We bring that same standard to businesses, drone and surveying operations, research
-                  teams, and any organization that needs to turn messy, scattered data into decisions it can trust.
+                  We bring that same standard to businesses, research teams, and any organization
+                  that needs to turn messy, scattered data into decisions it can trust.
                 </p>
                 <p className="text-base text-slate-900 font-semibold leading-relaxed">
                   We do not build science experiments or one-size-fits-all tools. We build practical

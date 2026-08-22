@@ -47,7 +47,6 @@ const CAPABILITIES = [
 const VERTICALS = [
   { label: 'Business & Commercial', href: '/industries',          examples: 'Demand and revenue forecasting, customer churn and retention, operations analytics, KPI dashboards.' },
   { label: 'First Responders',      href: '/first-responders',    examples: 'Demand forecasting, staffing and deployment, response-time analysis.' },
-  { label: 'Drone & Geospatial',    href: '/drone-intelligence',  examples: 'Survey processing, mapping, geospatial analytics, disaster-response assessment.' },
   { label: 'Healthcare',            href: '/healthcare',          examples: 'Patient flow, quality improvement, clinical and operational analytics.' },
   { label: 'Biomedical Research',   href: '/biomedical-research', examples: 'Cohort analysis, outcome modeling, trial performance and data quality.' },
 ];
@@ -90,7 +89,7 @@ export default function CapabilitiesPage() {
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
               We handle the whole journey — organizing your data, making sense of it, and turning it into
-              clear answers — for businesses, public safety, drone operations, healthcare, and research.
+              clear answers — for businesses, public safety, healthcare, and research.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-navy-border pt-10 max-w-4xl">

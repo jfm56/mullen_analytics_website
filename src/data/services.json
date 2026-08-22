@@ -6,7 +6,6 @@
   { "slug": "machine-learning-and-predictive-modeling", "title": "Machine Learning & Predictive Modeling", "description": "Forecasting, segmentation, optimization, MLOps deployment and monitoring." },
   { "slug": "nlp-and-workflow-automation", "title": "NLP & Workflow Automation", "description": "Text analytics, document intelligence, RPA, assistants, generative systems." },
   { "slug": "healthcare-and-life-sciences-analytics", "title": "Healthcare & Life Sciences Analytics", "description": "Clinical KPIs, outcome modeling, resource planning, public health analytics." },
-  { "slug": "environmental-and-geospatial-analytics", "title": "Environmental & Geospatial Analytics", "description": "GIS risk modeling, land-use visualization, remote sensing, climate scenarios." },
   { "slug": "product-and-mvp-development", "title": "Product & MVP Development", "description": "Rapid prototyping, lightweight pipelines, fractional Chief Data Officer." },
   { "slug": "training-and-capability-building", "title": "Training & Capability Building", "description": "Workshops in SQL, Python, ML, dashboarding, storytelling, decision intel." }
 ]
