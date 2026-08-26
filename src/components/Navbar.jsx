@@ -104,13 +104,15 @@ export default function Navbar() {
             <Link key={href} href={href} className={linkCls} data-track={`nav:${label}`}>{label}</Link>
           ))}
 
-          <Link
-            href="/signup"
-            data-track="cta:get-started"
+          <a
+            href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-track="cta:book-consultation"
             className="px-4 py-2 rounded text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors"
           >
-            Get started
-          </Link>
+            Book a Consultation
+          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -166,13 +168,15 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <Link
-              href="/signup"
+            <a
+              href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setOpen(false)}
               className="mt-4 py-3 px-6 rounded text-sm font-semibold text-center bg-blue-600 hover:bg-blue-500 text-white transition-colors"
             >
-              Get started
-            </Link>
+              Book a Consultation
+            </a>
           </div>
         </div>
       )}
