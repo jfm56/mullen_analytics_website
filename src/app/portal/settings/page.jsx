@@ -355,7 +355,7 @@ export default function PortalSettingsPage() {
                 </span>
               </Field>
               {trialDaysLeft != null && planStatus !== 'active' && (
-                <Field label="Free trial" hint="Time remaining in your 14-day trial">
+                <Field label="Free trial" hint="Time remaining in your 30-day trial">
                   <span className="text-sm text-gray-700">{trialDaysLeft > 0 ? `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left` : 'Ended'}</span>
                 </Field>
               )}
@@ -389,7 +389,7 @@ export default function PortalSettingsPage() {
                   </>
                 ) : (
                   <p className="text-sm text-gray-600">
-                    Your 14-day trial is active. To activate a paid plan, contact{' '}
+                    Your 30-day trial is active. To activate a paid plan, contact{' '}
                     <a href={`mailto:${supportEmail}`} className="text-blue-600 hover:underline">{supportEmail}</a> — we’ll get you set up.
                   </p>
                 )}

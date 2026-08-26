@@ -227,7 +227,7 @@ export default function PortalShell({ children }) {
                 <div className="flex-1 min-w-0 text-sm">
                   <p className="font-semibold text-amber-900">Verify your email to enable data uploads.</p>
                   <p className="text-amber-800">
-                    We sent a link to <span className="font-medium">{verifyAddr}</span>. Your 14-day trial is active in the meantime.
+                    We sent a link to <span className="font-medium">{verifyAddr}</span>. Your 30-day trial is active in the meantime.
                   </p>
                   {resendState === 'error' && (
                     <p className="text-red-700 mt-1">Couldn’t resend right now — please try again shortly.</p>
