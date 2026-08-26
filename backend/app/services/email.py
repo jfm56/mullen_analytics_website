@@ -204,7 +204,7 @@ async def send_verification_email(
         Hi {name},
       </p>
       <p style="font-size:16px;color:#374151;line-height:26px;margin:0 0 24px;">
-        Welcome to Mullen Analytics! Your 14-day trial is ready. Please confirm
+        Welcome to Mullen Analytics! Your 30-day trial is ready. Please confirm
         this email address to unlock data uploads and secure your account. This
         link expires in {expire_hours}&nbsp;hours.
       </p>

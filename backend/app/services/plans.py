@@ -4,7 +4,7 @@ truth for self-serve signup, the pricing page (GET /api/plans), and feature
 gating (GET /api/plans/me + plan_access.py).
 
 Tiers (monthly): Essential $249 · Professional $599 · Enterprise $1,499, plus a
-14-day free trial and an "extra active dataset" add-on ($99/mo each). The value
+30-day free trial and an "extra active dataset" add-on ($99/mo each). The value
 gates that distinguish tiers:
   • max_active_datasets — how many cleaned datasets/dashboards can be live
   • data_explorer        — ad-hoc filtering / slice-and-dice
@@ -13,18 +13,18 @@ gates that distinguish tiers:
 """
 from typing import Any, Dict, List, Optional
 
-TRIAL_DAYS = 14
+TRIAL_DAYS = 30
 
 PLANS: List[Dict[str, Any]] = [
     {
         "slug": "free_trial",
         "name": "Free Trial",
         "price_display": "$0",
-        "period": "14-day trial",
+        "period": "30-day trial",
         "monthly_cents": 0,
-        "blurb": "Full access for 14 days on your own data — no card required.",
+        "blurb": "Full access for 30 days on your own data — no card required.",
         "features": ["Clean + dashboard your data", "Data Explorer", "Up to 3 active datasets", "No credit card"],
-        "badge": "14 days",
+        "badge": "30 days",
         "highlight": False,
     },
     {

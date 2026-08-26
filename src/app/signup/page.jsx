@@ -59,7 +59,7 @@ export default function SignupPage() {
             Create your agency account
           </h1>
           <p className="text-base" style={{ color: '#94A3B8', maxWidth: 560 }}>
-            Start a free 14-day trial on your own data — no card required. Pick the plan that fits; you can change it anytime.
+            Start a free 30-day trial on your own data — no card required. Pick the plan that fits; you can change it anytime.
           </p>
         </div>
       </section>
@@ -163,7 +163,7 @@ export default function SignupPage() {
             </button>
 
             <p className="text-[11px] text-center" style={{ color: '#94A3B8' }}>
-              14-day free trial on your own data.{' '}
+              30-day free trial on your own data.{' '}
               {isPaid ? 'We’ll reach out to activate your plan before the trial ends.' : 'No credit card required.'}
             </p>
             <p className="text-xs text-center" style={{ color: '#64748B' }}>

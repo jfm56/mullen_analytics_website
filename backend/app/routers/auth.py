@@ -111,7 +111,7 @@ async def register(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    """Public self-serve signup: create an agency account on a 14-day trial with
+    """Public self-serve signup: create an agency account on a 30-day trial with
     the chosen plan, auto-login, send an email-verification link, and queue paid
     tiers for admin activation.
 
@@ -192,9 +192,9 @@ async def register(
 
     requires_activation = plan != "free_trial"
     base_msg = (
-        "Welcome! Your 14-day trial is ready."
+        "Welcome! Your 30-day trial is ready."
         if not requires_activation
-        else "Welcome! Your 14-day trial is ready — our team will reach out to activate your plan."
+        else "Welcome! Your 30-day trial is ready — our team will reach out to activate your plan."
     )
     return RegisterResponse(
         success=True,
