@@ -50,7 +50,7 @@ const PLATFORMS = [
       'Automated chart review against agency policies & standing orders',
       'Missing-documentation & protocol-deviation flags',
       'Manager review workflow with audit-log hash chain',
-      'HIPAA-compliant · RBAC · on-prem deployment path',
+      'HIPAA-focused · RBAC · on-prem deployment path',
     ],
     image: null,
     href: '/ems-qa',

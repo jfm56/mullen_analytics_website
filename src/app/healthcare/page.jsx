@@ -57,7 +57,7 @@ const IMPROVEMENTS = [
 ];
 
 export const metadata = {
-  title: 'Healthcare Analytics & Predictive Operations | Mullen Analytics',
+  title: 'Healthcare Data Analytics & Predictive Modeling | Mullen Analytics',
   description:
     'Healthcare analytics: forecast demand, improve staffing, analyze patient flow and length of stay, reduce readmissions, and automate reporting with clinical accountability.',
 };

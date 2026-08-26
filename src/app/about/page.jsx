@@ -84,7 +84,7 @@ export default function AboutPage() {
                 clear answers.
               </p>
               <p className="text-base text-slate-900 font-semibold leading-relaxed">
-                We don&apos;t build science experiments or one-off dashboards. We build practical systems
+                We don&apos;t build dashboards just to build dashboards. We build practical systems
                 people actually use, leaders can stand behind, and organizations can grow with.
               </p>
             </div>

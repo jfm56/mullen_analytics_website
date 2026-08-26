@@ -64,30 +64,62 @@ export default function Home() {
   return (
     <div className="bg-white">
 
-      {/* HERO — navy band */}
+      {/* HERO — navy band, balanced two-column */}
       <section className="bg-navy-deep">
-        <div className="max-w-7xl mx-auto px-6 py-24 md:py-32">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">
-              Analytics · Machine Learning · Data Engineering
-            </p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
-              Turn Your Data Into Better Decisions
-            </h1>
-            <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-10">
-              Predict demand. Optimize staffing. Automate reporting. Understand your operations. Mullen
-              Analytics builds practical data, analytics, and automation systems for organizations that
-              need answers they can act on.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <ScheduleCTA href={CALENDAR_URL}
-                className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
-                Schedule a Free Strategy Call
-              </ScheduleCTA>
-              <Link href="/capabilities"
-                className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
-                Explore Capabilities
-              </Link>
+        <div className="max-w-7xl mx-auto px-6 py-20 md:py-28">
+          <div className="grid lg:grid-cols-2 gap-12 xl:gap-16 items-center">
+            {/* Message */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">
+                Analytics · Machine Learning · Data Engineering
+              </p>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
+                Turn Your Data Into Better Decisions
+              </h1>
+              <p className="text-lg text-slate-300 leading-relaxed mb-10">
+                Predict demand. Optimize staffing. Automate reporting. Understand your operations. Mullen
+                Analytics builds practical data, analytics, and automation systems for organizations that
+                need answers they can act on.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <ScheduleCTA href={CALENDAR_URL}
+                  className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
+                  Schedule a Free Strategy Call
+                </ScheduleCTA>
+                <Link href="/capabilities"
+                  className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
+                  Explore Capabilities
+                </Link>
+              </div>
+            </div>
+
+            {/* Dashboard preview — balances the hero + shows the product */}
+            <div className="hidden lg:block">
+              <div className="bg-navy-surface border border-navy-border rounded-2xl p-6 shadow-2xl ring-1 ring-white/5">
+                <div className="flex items-center justify-between mb-5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Operations Overview</span>
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Live
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  {[['Revenue', '$4.8M'], ['YoY', '+12.4%'], ['Forecast', '94%']].map(([l, v]) => (
+                    <div key={l} className="bg-navy-deep border border-navy-border rounded-lg px-3 py-3">
+                      <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">{l}</p>
+                      <p className="text-lg font-bold text-white tabular-nums">{v}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-baseline justify-between mb-3">
+                  <span className="text-[11px] font-semibold text-slate-300">Monthly trend</span>
+                  <span className="text-[10px] text-slate-500">12 mo</span>
+                </div>
+                <div className="flex items-end gap-1.5 h-28">
+                  {[52, 58, 55, 64, 68, 66, 74, 80, 78, 86, 90, 96].map((h, i) => (
+                    <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-blue-600 to-sky-400" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -117,7 +117,7 @@ export default function EmsQaPage() {
                 Most agencies can only review a fraction of their charts. Issues surface late, coaching is inconsistent, and the rationale behind a flag lives in a reviewer&apos;s head instead of a citable record.
               </p>
               <p className="text-lg leading-relaxed" style={{ color: '#94A3B8' }}>
-                And in EMS, the data is PHI. Sending it to a public cloud service is not an option — so most teams get none of the leverage automation could provide.
+                And in EMS, the data is PHI. Many agencies would rather it never leave infrastructure they control than hand it to a third-party AI service — so most teams get none of the leverage automation could provide.
               </p>
             </div>
             <div className="flex flex-col gap-4">
