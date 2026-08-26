@@ -141,14 +141,20 @@ export default function ProductsPage() {
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="max-w-2xl mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Solutions We Build</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Services — Hire Our Team</p>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-4">
-              Custom-built for your data and your goals
+              Custom analytics, built around your operations
             </h2>
             <p className="text-base text-slate-700 leading-relaxed">
-              Every organization is different, so most of what we deliver is built for you — from the
-              data foundation up to the dashboards and models on top.
+              Bring us a problem and we build the solution — from the data foundation up to the dashboards
+              and models on top. Most engagements are custom; here&apos;s where to start by field:
             </p>
+            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm font-semibold">
+              <Link href="/business-analytics" className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800">Business analytics <ArrowRight size={14} /></Link>
+              <Link href="/first-responders" className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800">EMS &amp; public safety <ArrowRight size={14} /></Link>
+              <Link href="/healthcare" className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800">Healthcare <ArrowRight size={14} /></Link>
+              <Link href="/pricing" className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800">Pricing <ArrowRight size={14} /></Link>
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {SOLUTIONS.map(({ Icon, title, desc }) => (
@@ -168,13 +174,13 @@ export default function ProductsPage() {
       <section className="py-24 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-6">
           <div className="max-w-2xl mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Platforms</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Products — Ready-to-Use Software</p>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-4">
-              Ready-to-use software
+              Software you can use today
             </h2>
             <p className="text-base text-slate-700 leading-relaxed">
-              Purpose-built platforms for EMS and public-safety agencies — available today, with full
-              auditability and no black boxes.
+              Purpose-built platforms for EMS and public-safety agencies — available now, with full
+              auditability and no black boxes. Buy the software, or have us run it for you.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">

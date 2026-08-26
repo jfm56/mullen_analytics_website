@@ -105,6 +105,21 @@ export default function FirstRespondersPage() {
         </div>
       </section>
 
+      {/* WORKS WITH YOUR DATA — slim band */}
+      <section className="bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
+            <p className="text-sm font-bold text-slate-900 flex-shrink-0">Works with your existing EMS data</p>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+              {['emsCharts', 'ESO', 'ImageTrend', 'NEMSIS', 'CAD exports', 'CSV', 'Excel'].map((s) => (
+                <span key={s} className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-full px-3 py-1.5">{s}</span>
+              ))}
+            </div>
+            <p className="text-sm text-slate-500 lg:ml-auto flex-shrink-0">No system replacement required.</p>
+          </div>
+        </div>
+      </section>
+
       {/* WHY IT MATTERS — white */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
