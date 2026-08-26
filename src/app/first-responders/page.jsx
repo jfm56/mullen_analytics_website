@@ -57,9 +57,9 @@ const IMPROVEMENTS = [
 ];
 
 export const metadata = {
-  title: 'EMS Analytics & Predictive Staffing | Mullen Analytics',
+  title: 'EMS Consulting Services & Analytics | Mullen Analytics',
   description:
-    'EMS analytics: call-volume forecasting, staffing and deployment optimization, response-time analysis, unit utilization, and leadership-ready reporting for EMS, fire, and public safety.',
+    'EMS analytics and consulting for agencies improving response times, staffing, deployment, QA/QI, reporting, and operational performance — call-volume forecasting, unit utilization, and leadership-ready dashboards for EMS, fire, and public safety.',
 };
 
 export default function FirstRespondersPage() {
@@ -70,13 +70,16 @@ export default function FirstRespondersPage() {
       <section className="bg-navy-deep">
         <div className="max-w-7xl mx-auto px-6 py-24 md:py-28">
           <div className="max-w-3xl mb-14">
-            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">First Responders</p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.05] tracking-tight mb-6">
-              Better decisions when seconds count
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">EMS · Fire · Public Safety</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.05] tracking-tight mb-4">
+              EMS Analytics &amp; Consulting Services
             </h1>
+            <p className="text-xl md:text-2xl text-sky-300 font-semibold leading-snug mb-6 max-w-2xl">
+              Better decisions when seconds count.
+            </p>
             <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
-              For EMS, fire, and public safety agencies, we turn your run data into faster response,
-              smarter staffing, and cases you can defend — to leadership, to auditors, and to the public.
+              Analytics and consulting for EMS agencies looking to improve response times, staffing,
+              deployment, QA/QI, reporting, and operational performance.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-navy-border pt-10 max-w-4xl">

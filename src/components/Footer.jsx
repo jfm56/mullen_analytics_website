@@ -9,7 +9,7 @@ function reopenCookiePreferences() {
 }
 
 const WHO_WE_SERVE = [
-  { label: 'Business & Commercial', href: '/industries' },
+  { label: 'Business & Commercial', href: '/business-analytics' },
   { label: 'First Responders', href: '/first-responders' },
   { label: 'Healthcare', href: '/healthcare' },
   { label: 'Biomedical Research', href: '/biomedical-research' },
