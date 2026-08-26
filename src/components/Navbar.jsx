@@ -8,7 +8,7 @@ import { ChevronDown } from 'lucide-react';
 // Environmental are hidden for now to focus on first responders + business
 // (re-add their entries here to restore them).
 const WHO_WE_SERVE = [
-  { label: 'Business & Commercial', href: '/industries',         desc: 'Forecasting, KPIs & data infrastructure' },
+  { label: 'Business & Commercial', href: '/business-analytics', desc: 'Analytics, KPI dashboards & forecasting' },
   { label: 'First Responders',      href: '/first-responders',   desc: 'EMS, fire & public safety analytics' },
   { label: 'Healthcare',            href: '/healthcare',         desc: 'Clinical operations & quality improvement' },
   { label: 'Biomedical Research',   href: '/biomedical-research', desc: 'Data pipelines & outcome modeling' },
