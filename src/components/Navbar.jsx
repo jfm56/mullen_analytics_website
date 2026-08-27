@@ -4,27 +4,40 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-// Verticals grouped under one "Who We Serve" menu. Drone & Geospatial and
-// Environmental are hidden for now to focus on first responders + business
-// (re-add their entries here to restore them).
-const WHO_WE_SERVE = [
-  { label: 'Business & Commercial', href: '/business-analytics', desc: 'Analytics, KPI dashboards & forecasting' },
-  { label: 'First Responders',      href: '/first-responders',   desc: 'EMS, fire & public safety analytics' },
-  { label: 'Healthcare',            href: '/healthcare',         desc: 'Clinical operations & quality improvement' },
-  { label: 'Biomedical Research',   href: '/biomedical-research', desc: 'Data pipelines & outcome modeling' },
-];
+const CALENDAR_URL = 'https://calendar.app.google/1BFgdi2pgjF9vwAB8';
 
-const PRIMARY = [
-  { label: 'About',        href: '/about' },
-  { label: 'Capabilities', href: '/capabilities' },
-];
-
-const SECONDARY = [
-  { label: 'Products',      href: '/products' },
-  { label: 'Pricing',       href: '/pricing' },
-  { label: 'EMS QA',        href: '/ems-qa' },
-  { label: 'Case Studies',  href: '/portfolio' },
-  { label: 'Contact',       href: '/contact' },
+// Pillar navigation. Verticals + services are grouped into a few dropdowns so the
+// bar reads as a handful of pillars (Services / EMS / Healthcare) rather than a
+// flat list of ~10 links. Every destination is an existing page.
+const NAV = [
+  { label: 'About', href: '/about' },
+  {
+    label: 'Services',
+    items: [
+      { label: 'Business Analytics', href: '/business-analytics', desc: 'KPI dashboards, forecasting & reporting' },
+      { label: 'Data Engineering', href: '/services/data-engineering-and-modern-data-infrastructure', desc: 'Pipelines, warehouses & data trust' },
+      { label: 'Machine Learning & Forecasting', href: '/services/machine-learning-and-predictive-modeling', desc: 'Prediction, segmentation & optimization' },
+      { label: 'Automation', href: '/services/nlp-and-workflow-automation', desc: 'Reporting, documents & workflows' },
+      { label: 'Dashboards & BI', href: '/services/business-intelligence-and-decision-intelligence', desc: 'Self-service dashboards & ops insights' },
+    ],
+    footer: { label: 'All capabilities', href: '/capabilities' },
+  },
+  {
+    label: 'EMS & Public Safety',
+    items: [
+      { label: 'EMS Analytics & Consulting', href: '/first-responders', desc: 'Response times, staffing, QA/QI & forecasting' },
+      { label: 'EMS QA/QI', href: '/ems-qa', desc: 'Automated chart review on your hardware' },
+    ],
+  },
+  {
+    label: 'Healthcare',
+    items: [
+      { label: 'Healthcare Analytics', href: '/healthcare', desc: 'Clinical operations & quality improvement' },
+      { label: 'Biomedical Research', href: '/biomedical-research', desc: 'Data pipelines & outcome modeling' },
+    ],
+  },
+  { label: 'Case Studies', href: '/portfolio' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Client Portal', href: '/portal/login' },
 ];
 
@@ -32,9 +45,9 @@ const linkCls = 'text-sm font-medium text-slate-300 hover:text-white transition-
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);              // mobile drawer
-  const [serveOpen, setServeOpen] = useState(false);     // desktop dropdown
-  const [mobileServeOpen, setMobileServeOpen] = useState(false);
+  const [open, setOpen] = useState(false);             // mobile drawer
+  const [openMenu, setOpenMenu] = useState(null);       // desktop dropdown (by label)
+  const [mobileMenu, setMobileMenu] = useState(null);   // mobile expanded section (by label)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -63,53 +76,61 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop */}
-        <div className="hidden lg:flex items-center gap-6">
-          {PRIMARY.map(({ label, href }) => (
-            <Link key={href} href={href} className={linkCls} data-track={`nav:${label}`}>{label}</Link>
-          ))}
-
-          {/* Who We Serve dropdown */}
-          <div className="relative" onMouseEnter={() => setServeOpen(true)} onMouseLeave={() => setServeOpen(false)}>
-            <button
-              type="button"
-              className={`flex items-center gap-1 ${linkCls} ${serveOpen ? 'text-white' : ''}`}
-              aria-expanded={serveOpen}
-              aria-haspopup="true"
-              onClick={() => setServeOpen((v) => !v)}
-            >
-              Who We Serve
-              <ChevronDown size={14} className={`transition-transform duration-200 ${serveOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {serveOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-80">
-                <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-2">
-                  {WHO_WE_SERVE.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setServeOpen(false)}
-                      data-track={`serve:${item.label}`}
-                      className="block px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-                    </Link>
-                  ))}
-                </div>
+        <div className="hidden lg:flex items-center gap-5">
+          {NAV.map((entry) => (
+            entry.items ? (
+              <div key={entry.label} className="relative"
+                onMouseEnter={() => setOpenMenu(entry.label)}
+                onMouseLeave={() => setOpenMenu((v) => (v === entry.label ? null : v))}>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1 ${linkCls} ${openMenu === entry.label ? 'text-white' : ''}`}
+                  aria-expanded={openMenu === entry.label}
+                  aria-haspopup="true"
+                  onClick={() => setOpenMenu((v) => (v === entry.label ? null : entry.label))}
+                >
+                  {entry.label}
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openMenu === entry.label ? 'rotate-180' : ''}`} />
+                </button>
+                {openMenu === entry.label && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-80">
+                    <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-2">
+                      {entry.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpenMenu(null)}
+                          data-track={`nav:${item.label}`}
+                          className="block px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                        </Link>
+                      ))}
+                      {entry.footer && (
+                        <Link
+                          href={entry.footer.href}
+                          onClick={() => setOpenMenu(null)}
+                          className="block px-3 py-2.5 mt-1 border-t border-slate-100 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                        >
+                          {entry.footer.label} &rarr;
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {SECONDARY.map(({ label, href }) => (
-            <Link key={href} href={href} className={linkCls} data-track={`nav:${label}`}>{label}</Link>
+            ) : (
+              <Link key={entry.href} href={entry.href} className={linkCls} data-track={`nav:${entry.label}`}>{entry.label}</Link>
+            )
           ))}
 
           <a
-            href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+            href={CALENDAR_URL}
             target="_blank"
             rel="noopener noreferrer"
             data-track="cta:book-consultation"
-            className="px-4 py-2 rounded text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+            className="px-4 py-2 rounded text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors whitespace-nowrap"
           >
             Book a Consultation
           </a>
@@ -133,43 +154,45 @@ export default function Navbar() {
       {open && (
         <div style={{ backgroundColor: '#071829', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col">
-            {PRIMARY.map(({ label, href }) => (
-              <Link key={href} href={href} onClick={() => setOpen(false)} data-track={`nav:${label}`}
-                className="py-3 text-sm font-medium text-slate-300 hover:text-white border-b border-white/5 transition-colors">
-                {label}
-              </Link>
-            ))}
-
-            {/* Who We Serve — expandable */}
-            <button
-              type="button"
-              onClick={() => setMobileServeOpen((v) => !v)}
-              className="flex items-center justify-between py-3 text-sm font-medium text-slate-300 hover:text-white border-b border-white/5 transition-colors"
-              aria-expanded={mobileServeOpen}
-            >
-              Who We Serve
-              <ChevronDown size={15} className={`transition-transform duration-200 ${mobileServeOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {mobileServeOpen && (
-              <div className="flex flex-col border-b border-white/5 py-1">
-                {WHO_WE_SERVE.map((item) => (
-                  <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
-                    className="py-2 pl-4 text-sm text-slate-400 hover:text-white transition-colors">
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {SECONDARY.map(({ label, href }) => (
-              <Link key={href} href={href} onClick={() => setOpen(false)} data-track={`nav:${label}`}
-                className="py-3 text-sm font-medium text-slate-300 hover:text-white border-b border-white/5 transition-colors">
-                {label}
-              </Link>
+            {NAV.map((entry) => (
+              entry.items ? (
+                <div key={entry.label} className="border-b border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenu((v) => (v === entry.label ? null : entry.label))}
+                    className="w-full flex items-center justify-between py-3 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                    aria-expanded={mobileMenu === entry.label}
+                  >
+                    {entry.label}
+                    <ChevronDown size={15} className={`transition-transform duration-200 ${mobileMenu === entry.label ? 'rotate-180' : ''}`} />
+                  </button>
+                  {mobileMenu === entry.label && (
+                    <div className="flex flex-col pb-2">
+                      {entry.items.map((item) => (
+                        <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
+                          className="py-2 pl-4 text-sm text-slate-400 hover:text-white transition-colors">
+                          {item.label}
+                        </Link>
+                      ))}
+                      {entry.footer && (
+                        <Link href={entry.footer.href} onClick={() => setOpen(false)}
+                          className="py-2 pl-4 text-sm font-semibold text-blue-400 hover:text-white transition-colors">
+                          {entry.footer.label} &rarr;
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link key={entry.href} href={entry.href} onClick={() => setOpen(false)} data-track={`nav:${entry.label}`}
+                  className="py-3 text-sm font-medium text-slate-300 hover:text-white border-b border-white/5 transition-colors">
+                  {entry.label}
+                </Link>
+              )
             ))}
 
             <a
-              href="https://calendar.app.google/1BFgdi2pgjF9vwAB8"
+              href={CALENDAR_URL}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
