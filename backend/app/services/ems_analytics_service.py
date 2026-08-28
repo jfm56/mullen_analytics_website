@@ -27,7 +27,15 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _ALIASES: Dict[str, List[str]] = {
     "incident_number": ["incident_number", "incident_no", "incident_nbr",
-                        "incidentnumber", "call_number", "call_no", "incident_id", "incident_"],
+                        "incidentnumber", "call_number", "call_no", "incident_id", "incident_",
+                        # CAD / dispatch-level call identifiers (shared across units on one
+                        # call). Without these, agencies whose export keys calls by a
+                        # "Dispatch ID" fall through to counting dispatched rows = one per
+                        # unit response, over-reporting call volume (e.g. SBES: 521 rows /
+                        # 435 calls). PCR/report numbers are intentionally excluded — those
+                        # are per-response and would just reproduce the row count.
+                        "dispatch_id", "dispatch_no", "dispatch_number",
+                        "cad_incident_number", "cad_number", "cad_id"],
     "incident_date":   ["incident_date", "call_date", "date", "dispatch_date",
                         "date_dispatched", "incidentdate", "calldate"],
     "received_time":   ["received_time", "date_received", "time_received", "date_called",
@@ -149,9 +157,19 @@ def _call_volume(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str
     # external reference (e.g. an emergency-only count).
     try:
         from .ems_filter_service import detect_interfacility_rows
-        ift_n = int(detect_interfacility_rows(df).sum())
-        out["interfacility_calls"] = ift_n
-        out["emergency_calls"] = int(len(df) - ift_n)
+        ift_mask = detect_interfacility_rows(df)
+        if inc_col:
+            # Reconcile the split to the deduplicated total: count unique
+            # incidents (a call is interfacility if any of its unit rows is),
+            # not unit-response rows, so emergency + IFT == total_calls.
+            ids = df[inc_col].astype(str).str.strip().replace("", pd.NA)
+            ift_calls = int(ids[ift_mask].dropna().nunique())
+            out["interfacility_calls"] = ift_calls
+            out["emergency_calls"] = int(total - ift_calls)
+        else:
+            ift_n = int(ift_mask.sum())
+            out["interfacility_calls"] = ift_n
+            out["emergency_calls"] = int(len(df) - ift_n)
     except Exception:
         pass
     out["count_basis"] = (

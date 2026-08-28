@@ -63,6 +63,10 @@ AUTO_DETECT_RULES: Dict[str, List[str]] = {
     "call_id": [
         "incident_number", "call_number", "call_id", "incident_no",
         "incident_nbr", "incidentnumber",
+        # CAD / dispatch-level identifiers — one value per call, shared across the
+        # units dispatched to it (EMSCharts "Dispatch ID", etc.).
+        "dispatch_id", "dispatch_no", "dispatch_number",
+        "cad_incident_number", "cad_number", "cad_id",
     ],
     "dispatch_datetime": [
         "date_dispatched", "dispatch_time", "dispatched", "time_dispatched",
