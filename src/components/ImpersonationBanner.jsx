@@ -47,6 +47,7 @@ export default function ImpersonationBanner() {
   }
 
   return (
+    <>
     <div className="fixed top-0 left-0 right-0 z-50 bg-orange-500 text-white px-4 py-2">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -69,5 +70,9 @@ export default function ImpersonationBanner() {
         </button>
       </div>
     </div>
+    {/* Spacer: the banner is position:fixed (out of flow) — reserve its height so
+        it doesn't overlap the portal content below. */}
+    <div aria-hidden className="h-[52px]" />
+    </>
   );
 }
