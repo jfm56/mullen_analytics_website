@@ -413,6 +413,36 @@ def _data_quality(df: pd.DataFrame, cleaning_stats: Dict[str, Any]) -> Dict[str,
 # Public entry point
 # ---------------------------------------------------------------------------
 
+def _collapse_to_incidents(df: pd.DataFrame, overrides: Optional[Dict] = None) -> pd.DataFrame:
+    """Reduce multi-unit incidents to ONE row each, keeping the FIRST dispatched
+    unit that actually responded: among an incident's rows, prefer those with an
+    arrival (or enroute) time, then take the earliest dispatch. This makes call
+    volume and response times reflect the incident and its first unit, not every
+    unit that rolled. No-op when there's no recognizable incident-id column; rows
+    with a blank incident id are left as their own records.
+    """
+    inc_col = detect_mapped_column(df, "incident_number", overrides)
+    if not inc_col or df.empty:
+        return df
+    disp_col = detect_mapped_column(df, "dispatch_time", overrides)
+    resp_col = (detect_mapped_column(df, "arrival_time", overrides)
+                or detect_mapped_column(df, "enroute_time", overrides))
+    work = df.copy()
+    work["__id"] = work[inc_col].astype(str).str.strip().replace("", pd.NA)
+    if resp_col:
+        work["__responded"] = work[resp_col].astype(str).str.strip().replace("", pd.NA).notna()
+    else:
+        work["__responded"] = True
+    work["__disp"] = pd.to_datetime(work[disp_col], errors="coerce") if disp_col else pd.NaT
+    # responded-first, then earliest dispatch -> the "first dispatched & responding" unit
+    work = work.sort_values(by=["__responded", "__disp"], ascending=[False, True],
+                            kind="stable", na_position="last")
+    has_id = work["__id"].notna()
+    collapsed = work[has_id].drop_duplicates(subset="__id", keep="first")
+    result = pd.concat([collapsed, work[~has_id]], ignore_index=True)
+    return result.drop(columns=[c for c in ("__id", "__responded", "__disp") if c in result.columns])
+
+
 def compute_ems_metrics(
     cleaned_file_path: str,
     upload_summary: Dict[str, Any],
@@ -459,11 +489,22 @@ def compute_ems_metrics(
     elif enroute_col and arrival_col:
         rt_series = _minutes_between(df, enroute_col, arrival_col)
 
+    # Incident-level view: collapse multi-unit incidents to one record (first
+    # dispatched-and-responding unit's times) so call volume and response times are
+    # per incident, not per unit response. Unit performance stays on the full,
+    # per-response rows (it is inherently per-unit).
+    df_inc = _collapse_to_incidents(df, overrides)
+
     return {
         "upload_summary":   upload_summary,
-        "call_volume":      _call_volume(df, overrides),
-        "response_times":   _response_times(df, overrides),
+        "call_volume":      _call_volume(df_inc, overrides),
+        "response_times":   _response_times(df_inc, overrides),
         "unit_performance": _unit_performance(df, rt_series, overrides),
         "data_quality":     _data_quality(df, cleaning_stats),
         "column_mapping_applied": bool(overrides),
+        "incident_collapse": {
+            "unit_responses": int(len(df)),
+            "incidents":      int(len(df_inc)),
+            "basis":          "first dispatched & responding unit per incident",
+        },
     }
