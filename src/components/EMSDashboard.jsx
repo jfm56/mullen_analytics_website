@@ -804,7 +804,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
 }
 
 // ─── Filtered Metrics View ────────────────────────────────────────────────────
-function FilteredMetricsView({ metrics }) {
+function FilteredMetricsView({ metrics, dataDateRange, onClearFilters }) {
   if (!metrics) return null;
   const cv = metrics.call_volume    || {};
   const rt = metrics.response_times || {};
@@ -814,14 +814,49 @@ function FilteredMetricsView({ metrics }) {
   const unavailable = !!metrics.error;
   const noMatch = !unavailable && (metrics.empty || (cv.total == null && cv.total_calls == null));
   if (unavailable || noMatch) {
+    const applied = metrics.filters_applied || {};
+    const activeChips = Object.entries(applied)
+      .filter(([, v]) => v !== null && v !== false && !(Array.isArray(v) && v.length === 0));
+    const dr = applied.date_range;
+    const drFrom = Array.isArray(dr) ? dr[0] : (dr?.from || dr?.start || null);
+    const drTo   = Array.isArray(dr) ? dr[1] : (dr?.to   || dr?.end   || null);
+    // Applied date window falls entirely outside the dataset's own range?
+    const outOfRange = dataDateRange && (
+      (drTo && drTo < dataDateRange.min) || (drFrom && drFrom > dataDateRange.max)
+    );
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
-        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-        <span>
-          {unavailable
-            ? "This upload's cleaned data isn't available on the server, so filtered views can't be computed. Re-upload the CSV to restore filtering, predictions, and outlooks for it."
-            : 'No calls match the selected filters.'}
-        </span>
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-start gap-2">
+          <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium">
+              {unavailable
+                ? "This upload's cleaned data isn't available on the server, so filtered views can't be computed. Re-upload the CSV to restore filtering, predictions, and outlooks for it."
+                : 'No calls match the selected filters.'}
+            </p>
+            {!unavailable && outOfRange && (
+              <p className="mt-1.5">
+                Your date filter ({drFrom || '…'} → {drTo || '…'}) is outside this dataset&apos;s range
+                {' '}({dataDateRange.min} → {dataDateRange.max}). Clear or widen the dates to see your calls.
+              </p>
+            )}
+            {!unavailable && activeChips.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {activeChips.map(([k, v]) => (
+                  <span key={k} className="text-xs bg-amber-100 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
+                    {k.replace(/_/g, ' ')}: {Array.isArray(v) ? v.filter(Boolean).join(', ') : String(v)}
+                  </span>
+                ))}
+                {onClearFilters && (
+                  <button onClick={onClearFilters}
+                    className="text-xs font-semibold text-amber-900 underline hover:no-underline ml-1">
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -864,6 +899,7 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
   const [filterLoading, setFilterLoading]     = useState(false);
   const [compareOpen, setCompareOpen]         = useState(false);
   const [mappingOpen, setMappingOpen]         = useState(false);
+  const [filterKey, setFilterKey]             = useState(0);
   const hasFilters = uploadId != null;
 
   const handleFilterApply = useCallback(async (filters) => {
@@ -878,6 +914,11 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
       setFilterLoading(false);
     }
   }, [uploadId]);
+
+  const handleClearFilters = useCallback(() => {
+    setFilteredMetrics(null);   // drop the filtered view -> show the full dataset
+    setFilterKey(k => k + 1);    // remount the filter bar so its inputs reset to empty
+  }, []);
 
   const handleMappingSaved = useCallback(() => {
     setMappingOpen(false);
@@ -907,6 +948,10 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
   }
 
   const showFiltered = filteredMetrics && !filterLoading;
+  const _byDay = metrics.call_volume?.by_day;
+  const dataDateRange = _byDay && _byDay.length
+    ? { min: _byDay[0].date, max: _byDay[_byDay.length - 1].date }
+    : null;
 
   return (
     <div className="space-y-5">
@@ -930,7 +975,7 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
       </div>
 
       {hasFilters && (
-        <DashboardFilterBar uploadId={uploadId} onFilterApply={handleFilterApply}
+        <DashboardFilterBar key={filterKey} uploadId={uploadId} onFilterApply={handleFilterApply}
           onCompareOpen={() => setCompareOpen(true)} />
       )}
       {filterLoading && (
@@ -939,7 +984,7 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
 
       {showFiltered ? (
         (filteredMetrics.error || filteredMetrics.empty) ? (
-          <FilteredMetricsView metrics={filteredMetrics} />
+          <FilteredMetricsView metrics={filteredMetrics} dataDateRange={dataDateRange} onClearFilters={handleClearFilters} />
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-2 flex-wrap text-xs bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
