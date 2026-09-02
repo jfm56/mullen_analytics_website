@@ -1218,6 +1218,25 @@ async def post_date_range_compare(
     return daterange_compare(uploads, body.windows, db)
 
 
+@router.get("/combined-dashboard")
+async def get_combined_dashboard(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Pool all of the caller's 'like' cleaned uploads into ONE combined dashboard
+    (de-duped, call volume counted by unique incident id) so a client with many
+    monthly/yearly exports can see every dataset at once."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        raise HTTPException(status_code=400, detail="No client selected.")
+    uploads = _client_cleaned_uploads(db, client_id)
+    if not uploads:
+        raise HTTPException(status_code=404, detail="No cleaned datasets to combine.")
+    from ..services.ems_daterange_service import combined_dashboard
+    return combined_dashboard(uploads, db)
+
+
 # ============================================================================
 # GET /api/data/uploads/{upload_id}/columns/settings
 # ============================================================================

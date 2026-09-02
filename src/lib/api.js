@@ -725,6 +725,7 @@ export const dataUploads = {
   downloadOriginalUrl: (uploadId) => `/api/proxy/data/uploads/${uploadId}/download-original`,
   downloadCleanedUrl: (uploadId) => `/api/proxy/data/uploads/${uploadId}/download-cleaned`,
   getDashboard: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}/dashboard`),
+  getCombinedDashboard: () => apiFetch(`/api/data/combined-dashboard`),
   getClientDashboard: (clientId, params = {}) => {
     const q = new URLSearchParams();
     if (params.project_id) q.set('project_id', params.project_id);
