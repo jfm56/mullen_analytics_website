@@ -185,38 +185,49 @@ def daterange_compare(uploads: List[DataUpload], windows: List[Dict[str, Any]], 
 
 
 def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
-    """Pool every 'like' cleaned upload (the largest compatible schema group),
-    de-duplicate, and compute ONE set of dashboard metrics over the union — so a
-    client with many monthly/yearly EMSCharts exports sees all their data at once.
+    """Pool EVERY cleaned upload that has a recognizable call/incident id into ONE
+    dashboard, so a client with many monthly/yearly EMSCharts exports sees all
+    their data at once — even when exports differ slightly in their columns.
 
-    Overlapping exports are handled two ways: exact-duplicate rows are dropped, and
-    call volume stays correct regardless because _call_volume counts unique
-    incident/dispatch ids (not rows). Files whose columns don't match the main
-    group are left out rather than contaminating the pool.
+    pd.concat aligns columns by NAME (missing columns become NaN), so exports with
+    extra/fewer peripheral columns still pool together as long as the key EMS
+    fields (call id, unit, dispatch time) are present. Overlapping records are
+    collapsed on that natural key, and call volume counts unique incident ids, so
+    overlapping exports never double-count calls. Only files with no detectable
+    call id are left out (they can't contribute calls anyway).
     """
-    by_sig: Dict[str, List[pd.DataFrame]] = {}
-    files_by_sig: Dict[str, List[Dict[str, Any]]] = {}
+    dfs: List[pd.DataFrame] = []
+    used: List[Dict[str, Any]] = []
+    skipped: List[Dict[str, Any]] = []
     for up in uploads:
         df = _load_cleaned_df(up, db)
         if df is None or df.empty:
+            skipped.append({"filename": up.original_filename, "reason": "no cleaned data on server"})
             continue
-        sig = _schema_sig(df.columns)
-        by_sig.setdefault(sig, []).append(df)
-        files_by_sig.setdefault(sig, []).append(
-            {"upload_id": str(up.id), "filename": up.original_filename, "rows": int(len(df))}
-        )
-    if not by_sig:
-        return {"error": "No cleaned data available to combine."}
+        if detect_column(df, "incident_number") is None:
+            skipped.append({"filename": up.original_filename, "reason": "no recognizable call-id column"})
+            continue
+        dfs.append(df)
+        used.append({"upload_id": str(up.id), "filename": up.original_filename, "rows": int(len(df))})
 
-    # Largest compatible group by total rows = the real EMSCharts exports.
-    best = max(by_sig, key=lambda s: sum(len(d) for d in by_sig[s]))
-    dfs = by_sig[best]
-    pooled = pd.concat(dfs, ignore_index=True, sort=False)
+    if not dfs:
+        return {"error": "No cleaned data with a recognizable call id to combine."}
+
+    pooled = pd.concat(dfs, ignore_index=True, sort=False)   # union of columns, aligned by name
     rows_pooled = len(pooled)
     deduped = 0
     if len(dfs) > 1:
-        pooled = pooled.drop_duplicates()
-        deduped = rows_pooled - len(pooled)
+        # Collapse the same unit-response appearing in overlapping exports, keyed on
+        # (call id, unit, dispatch time) where available — robust to files that carry
+        # different peripheral columns (exact-row de-dup would miss those).
+        key = [c for c in (
+            detect_column(pooled, "incident_number"),
+            detect_column(pooled, "unit"),
+            detect_mapped_column(pooled, "dispatch_time", None),
+        ) if c]
+        before = len(pooled)
+        pooled = pooled.drop_duplicates(subset=key) if key else pooled.drop_duplicates()
+        deduped = before - len(pooled)
     pmin, pmax = _bounds(pooled)
 
     metrics = _metrics_for(pooled, "Combined - all datasets")
@@ -227,14 +238,15 @@ def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
         "metrics": metrics,
         "generated_at": None,
         "pool": {
-            "files_combined": len(dfs),
-            "files_total": sum(len(v) for v in files_by_sig.values()),
-            "files_skipped": sum(len(v) for k, v in files_by_sig.items() if k != best),
+            "files_combined": len(used),
+            "files_total": len(uploads),
+            "files_skipped": len(skipped),
+            "skipped_files": skipped,
             "rows_pooled": rows_pooled,
             "rows_used": int(len(pooled)),
             "deduped": int(deduped),
             "date_min": pmin,
             "date_max": pmax,
-            "files": files_by_sig[best],
+            "files": used,
         },
     }
