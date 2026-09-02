@@ -38,10 +38,32 @@ const NAV = [
   },
   { label: 'Case Studies', href: '/portfolio' },
   { label: 'Pricing', href: '/pricing' },
+  {
+    label: 'Contact Us',
+    items: [
+      { label: 'Book a Consultation', href: CALENDAR_URL, desc: 'Free 30-min strategy call', external: true },
+      { label: 'Send us a message', href: '/contact', desc: 'Questions, RFPs & project inquiries' },
+    ],
+  },
   { label: 'Client Portal', href: '/portal/login' },
 ];
 
 const linkCls = 'text-sm font-medium text-slate-300 hover:text-white transition-colors';
+
+// A dropdown item that links internally (Next Link) or out to an external URL
+// (calendar booking, etc.) based on item.external.
+function ItemLink({ item, onClick, className, children }) {
+  return item.external ? (
+    <a href={item.href} target="_blank" rel="noopener noreferrer" onClick={onClick}
+      data-track={`nav:${item.label}`} className={className}>
+      {children}
+    </a>
+  ) : (
+    <Link href={item.href} onClick={onClick} data-track={`nav:${item.label}`} className={className}>
+      {children}
+    </Link>
+  );
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -96,16 +118,15 @@ export default function Navbar() {
                   <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-80">
                     <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-2">
                       {entry.items.map((item) => (
-                        <Link
+                        <ItemLink
                           key={item.href}
-                          href={item.href}
+                          item={item}
                           onClick={() => setOpenMenu(null)}
-                          data-track={`nav:${item.label}`}
                           className="block px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors"
                         >
                           <p className="text-sm font-semibold text-slate-900">{item.label}</p>
                           <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-                        </Link>
+                        </ItemLink>
                       ))}
                       {entry.footer && (
                         <Link
@@ -124,16 +145,6 @@ export default function Navbar() {
               <Link key={entry.href} href={entry.href} className={linkCls} data-track={`nav:${entry.label}`}>{entry.label}</Link>
             )
           ))}
-
-          <a
-            href={CALENDAR_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-track="cta:book-consultation"
-            className="px-4 py-2 rounded text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors whitespace-nowrap"
-          >
-            Book a Consultation
-          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -169,10 +180,10 @@ export default function Navbar() {
                   {mobileMenu === entry.label && (
                     <div className="flex flex-col pb-2">
                       {entry.items.map((item) => (
-                        <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
+                        <ItemLink key={item.href} item={item} onClick={() => setOpen(false)}
                           className="py-2 pl-4 text-sm text-slate-400 hover:text-white transition-colors">
                           {item.label}
-                        </Link>
+                        </ItemLink>
                       ))}
                       {entry.footer && (
                         <Link href={entry.footer.href} onClick={() => setOpen(false)}
@@ -190,16 +201,6 @@ export default function Navbar() {
                 </Link>
               )
             ))}
-
-            <a
-              href={CALENDAR_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="mt-4 py-3 px-6 rounded text-sm font-semibold text-center bg-blue-600 hover:bg-blue-500 text-white transition-colors"
-            >
-              Book a Consultation
-            </a>
           </div>
         </div>
       )}
