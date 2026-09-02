@@ -297,7 +297,8 @@ export default function PortalDashboardPage() {
       .then(data => {
         const cleaned = (data || []).filter(u => u.upload_status === 'CLEANED');
         setUploads(cleaned);
-        if (cleaned.length > 0) setSelectedId(cleaned[0].id);
+        if (cleaned.length >= 2) setSelectedId('__combined__');   // default: all datasets combined
+        else if (cleaned.length === 1) setSelectedId(cleaned[0].id);
         if (cleaned.length >= 2) setSlots([cleaned[0].id, cleaned[1].id]);
         else if (cleaned.length === 1) setSlots([cleaned[0].id]);
       })
@@ -309,7 +310,10 @@ export default function PortalDashboardPage() {
     if (!selectedId) return;
     setDashLoading(true);
     setDashboard(null);
-    dataUploads.getDashboard(selectedId)
+    const load = selectedId === '__combined__'
+      ? dataUploads.getCombinedDashboard()
+      : dataUploads.getDashboard(selectedId);
+    load
       .then(d => setDashboard(d))
       .catch(e => setError(e.message || 'Failed to load dashboard'))
       .finally(() => setDashLoading(false));
@@ -351,6 +355,7 @@ export default function PortalDashboardPage() {
 
   if (loading) return <div className="space-y-4"><SkeletonCard /><SkeletonCard /></div>;
 
+  const isCombined = selectedId === '__combined__';
   const slotUploads = slots.map(id => uploads.find(u => u.id === id)).filter(Boolean);
   const baseMetrics = slotMetrics[slots[0]] || {};
 
@@ -366,6 +371,7 @@ export default function PortalDashboardPage() {
           {!compareMode && uploads.length > 1 && (
             <select value={selectedId} onChange={e => setSelectedId(e.target.value)}
               className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="__combined__">⊕ Combined — all datasets</option>
               {uploads.map(u => <option key={u.id} value={u.id}>{uploadLabel(u)}</option>)}
             </select>
           )}
@@ -507,6 +513,24 @@ export default function PortalDashboardPage() {
       ) : dashLoading ? (
         <div className="space-y-4"><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
       ) : dashboard ? (
+        isCombined ? (
+          <div className="space-y-5">
+            {dashboard.pool && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 text-sm text-indigo-900 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="font-semibold">⊕ Combined view — all datasets</span>
+                <span>{dashboard.pool.files_combined} datasets pooled</span>
+                {dashboard.pool.date_min && <span>{dashboard.pool.date_min} → {dashboard.pool.date_max}</span>}
+                <span>{Number(dashboard.pool.rows_used || 0).toLocaleString()} responses</span>
+                {dashboard.pool.deduped > 0 && <span className="text-indigo-500">{Number(dashboard.pool.deduped).toLocaleString()} overlapping rows removed</span>}
+                {dashboard.pool.files_skipped > 0 && <span className="text-amber-600">{dashboard.pool.files_skipped} incompatible file(s) excluded</span>}
+              </div>
+            )}
+            <div className="bg-white border rounded-xl shadow-sm p-6">
+              <EMSDashboard metrics={dashboard.metrics} generatedAt={null} uploadId={null}
+                uploadInfo={{ original_filename: 'Combined — all datasets' }} />
+            </div>
+          </div>
+        ) : (
         <>
         <PageTabs
           activeTab={dashTab}
@@ -571,6 +595,7 @@ export default function PortalDashboardPage() {
           </div>
         )}
         </>
+        )
       ) : null}
     </div>
   );

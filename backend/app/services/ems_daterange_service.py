@@ -182,3 +182,59 @@ def daterange_compare(uploads: List[DataUpload], windows: List[Dict[str, Any]], 
             "date_max": pmax,
         },
     }
+
+
+def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
+    """Pool every 'like' cleaned upload (the largest compatible schema group),
+    de-duplicate, and compute ONE set of dashboard metrics over the union — so a
+    client with many monthly/yearly EMSCharts exports sees all their data at once.
+
+    Overlapping exports are handled two ways: exact-duplicate rows are dropped, and
+    call volume stays correct regardless because _call_volume counts unique
+    incident/dispatch ids (not rows). Files whose columns don't match the main
+    group are left out rather than contaminating the pool.
+    """
+    by_sig: Dict[str, List[pd.DataFrame]] = {}
+    files_by_sig: Dict[str, List[Dict[str, Any]]] = {}
+    for up in uploads:
+        df = _load_cleaned_df(up, db)
+        if df is None or df.empty:
+            continue
+        sig = _schema_sig(df.columns)
+        by_sig.setdefault(sig, []).append(df)
+        files_by_sig.setdefault(sig, []).append(
+            {"upload_id": str(up.id), "filename": up.original_filename, "rows": int(len(df))}
+        )
+    if not by_sig:
+        return {"error": "No cleaned data available to combine."}
+
+    # Largest compatible group by total rows = the real EMSCharts exports.
+    best = max(by_sig, key=lambda s: sum(len(d) for d in by_sig[s]))
+    dfs = by_sig[best]
+    pooled = pd.concat(dfs, ignore_index=True, sort=False)
+    rows_pooled = len(pooled)
+    deduped = 0
+    if len(dfs) > 1:
+        pooled = pooled.drop_duplicates()
+        deduped = rows_pooled - len(pooled)
+    pmin, pmax = _bounds(pooled)
+
+    metrics = _metrics_for(pooled, "Combined - all datasets")
+    if not metrics:
+        return {"error": "Could not compute combined metrics."}
+
+    return {
+        "metrics": metrics,
+        "generated_at": None,
+        "pool": {
+            "files_combined": len(dfs),
+            "files_total": sum(len(v) for v in files_by_sig.values()),
+            "files_skipped": sum(len(v) for k, v in files_by_sig.items() if k != best),
+            "rows_pooled": rows_pooled,
+            "rows_used": int(len(pooled)),
+            "deduped": int(deduped),
+            "date_min": pmin,
+            "date_max": pmax,
+            "files": files_by_sig[best],
+        },
+    }
