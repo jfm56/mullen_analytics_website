@@ -194,6 +194,17 @@ def _dedup_key(pooled: pd.DataFrame) -> List[str]:
     ) if c]
 
 
+def _dedup_mask(pooled: pd.DataFrame, key: List[str]) -> pd.Series:
+    """Boolean mask of rows to DROP: cross-file duplicate unit-responses. Matched on
+    key + a within-file occurrence index, so legit within-file repeats (e.g. two
+    patients on one unit-response, which share call id + unit + dispatch time) are
+    preserved — only copies re-exported in another file are dropped."""
+    if not key:
+        return pooled.duplicated(keep="first")
+    occ = pooled.groupby(["__source_file"] + key, dropna=False).cumcount()
+    return pooled.assign(__occ=occ).duplicated(subset=key + ["__occ"], keep="first")
+
+
 def _pool(uploads: List[DataUpload], db):
     """Load + concat every cleaned upload that has a recognizable call id, tagging
     each row with its source filename. Returns (pooled_df|None, used, skipped).
@@ -232,8 +243,7 @@ def _pooled_deduped(uploads: List[DataUpload], db):
     rows_pooled = len(pooled)
     deduped = 0
     if len(used) > 1:
-        key = _dedup_key(pooled)
-        dup = pooled.duplicated(subset=key, keep="first") if key else pooled.duplicated(keep="first")
+        dup = _dedup_mask(pooled, _dedup_key(pooled))
         deduped = int(dup.sum())
         pooled = pooled[~dup]
     pmin, pmax = _bounds(pooled)
@@ -321,17 +331,20 @@ def combined_overlaps(uploads: List[DataUpload], db, limit: int = 1000) -> Dict[
     key = _dedup_key(pooled)
     if not key:
         return {"removed": [], "total": 0, "shown": 0, "key_fields": []}
-    dup = pooled.duplicated(subset=key, keep="first")
+    occ = pooled.groupby(["__source_file"] + key, dropna=False).cumcount()
+    p = pooled.assign(__occ=occ)
+    subset = key + ["__occ"]
+    dup = p.duplicated(subset=subset, keep="first")
     total = int(dup.sum())
-    first = pooled[~dup]
+    first = p[~dup]
     inc = detect_column(pooled, "incident_number")
     unit = detect_column(pooled, "unit")
     disp = detect_mapped_column(pooled, "dispatch_time", None)
-    # key tuple -> source file of the kept (first) row it duplicates
-    first_keys = list(zip(*[first[k].astype(str) for k in key]))
+    # (key + occurrence) tuple -> source file of the kept (first) row it duplicates
+    first_keys = list(zip(*[first[c].astype(str) for c in subset]))
     keep_src = dict(zip(first_keys, first["__source_file"]))
-    rem = pooled[dup].head(limit)
-    rem_keys = list(zip(*[rem[k].astype(str) for k in key])) if len(rem) else []
+    rem = p[dup].head(limit)
+    rem_keys = list(zip(*[rem[c].astype(str) for c in subset])) if len(rem) else []
     out: List[Dict[str, Any]] = []
     for (_, r), kv in zip(rem.iterrows(), rem_keys):
         out.append({
