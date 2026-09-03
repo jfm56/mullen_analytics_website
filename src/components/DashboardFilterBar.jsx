@@ -84,21 +84,22 @@ function MultiSelect({ label, options, selected, onChange, placeholder }) {
   );
 }
 
-export default function DashboardFilterBar({ uploadId, onFilterApply, onCompareOpen, initialFilters = {} }) {
+export default function DashboardFilterBar({ uploadId, onFilterApply, onCompareOpen, initialFilters = {}, loadOptions }) {
   const [opts, setOpts] = useState(null);
   const [filters, setFilters] = useState({ ...EMPTY_FILTERS, ...initialFilters });
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
 
   const loadOpts = useCallback(async () => {
-    if (!uploadId) return;
     try {
-      const r = await dashboardFilter.getFilterOptions(uploadId);
-      setOpts(r);
+      const r = loadOptions
+        ? await loadOptions()
+        : (uploadId ? await dashboardFilter.getFilterOptions(uploadId) : null);
+      if (r) setOpts(r);
     } catch (e) {
       console.error('filter-options error', e);
     }
-  }, [uploadId]);
+  }, [uploadId, loadOptions]);
 
   useEffect(() => { loadOpts(); }, [loadOpts]);
 
