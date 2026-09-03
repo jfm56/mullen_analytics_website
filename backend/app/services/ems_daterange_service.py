@@ -184,18 +184,20 @@ def daterange_compare(uploads: List[DataUpload], windows: List[Dict[str, Any]], 
     }
 
 
-def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
-    """Pool EVERY cleaned upload that has a recognizable call/incident id into ONE
-    dashboard, so a client with many monthly/yearly EMSCharts exports sees all
-    their data at once — even when exports differ slightly in their columns.
+def _dedup_key(pooled: pd.DataFrame) -> List[str]:
+    """Natural key for collapsing the same unit-response that appears in overlapping
+    exports: (call id, unit, dispatch time), using whichever are detectable."""
+    return [c for c in (
+        detect_column(pooled, "incident_number"),
+        detect_column(pooled, "unit"),
+        detect_mapped_column(pooled, "dispatch_time", None),
+    ) if c]
 
-    pd.concat aligns columns by NAME (missing columns become NaN), so exports with
-    extra/fewer peripheral columns still pool together as long as the key EMS
-    fields (call id, unit, dispatch time) are present. Overlapping records are
-    collapsed on that natural key, and call volume counts unique incident ids, so
-    overlapping exports never double-count calls. Only files with no detectable
-    call id are left out (they can't contribute calls anyway).
-    """
+
+def _pool(uploads: List[DataUpload], db):
+    """Load + concat every cleaned upload that has a recognizable call id, tagging
+    each row with its source filename. Returns (pooled_df|None, used, skipped).
+    Columns align by name (missing -> NaN) so slightly-different exports still pool."""
     dfs: List[pd.DataFrame] = []
     used: List[Dict[str, Any]] = []
     skipped: List[Dict[str, Any]] = []
@@ -207,46 +209,136 @@ def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
         if detect_column(df, "incident_number") is None:
             skipped.append({"filename": up.original_filename, "reason": "no recognizable call-id column"})
             continue
+        df = df.copy()
+        df["__source_file"] = up.original_filename
         dfs.append(df)
         used.append({"upload_id": str(up.id), "filename": up.original_filename, "rows": int(len(df))})
-
     if not dfs:
-        return {"error": "No cleaned data with a recognizable call id to combine."}
+        return None, used, skipped
+    return pd.concat(dfs, ignore_index=True, sort=False), used, skipped
 
-    pooled = pd.concat(dfs, ignore_index=True, sort=False)   # union of columns, aligned by name
+
+def _pooled_deduped(uploads: List[DataUpload], db):
+    """Pool + drop overlapping duplicate unit-responses. Returns (pooled_df|None, meta).
+    pooled_df keeps the __source_file column; callers drop it before metrics."""
+    pooled, used, skipped = _pool(uploads, db)
+    if pooled is None:
+        return None, {
+            "files_combined": 0, "files_total": len(uploads),
+            "files_skipped": len(skipped), "skipped_files": skipped,
+            "rows_pooled": 0, "rows_used": 0, "deduped": 0,
+            "date_min": None, "date_max": None, "files": [],
+        }
     rows_pooled = len(pooled)
     deduped = 0
-    if len(dfs) > 1:
-        # Collapse the same unit-response appearing in overlapping exports, keyed on
-        # (call id, unit, dispatch time) where available — robust to files that carry
-        # different peripheral columns (exact-row de-dup would miss those).
-        key = [c for c in (
-            detect_column(pooled, "incident_number"),
-            detect_column(pooled, "unit"),
-            detect_mapped_column(pooled, "dispatch_time", None),
-        ) if c]
-        before = len(pooled)
-        pooled = pooled.drop_duplicates(subset=key) if key else pooled.drop_duplicates()
-        deduped = before - len(pooled)
+    if len(used) > 1:
+        key = _dedup_key(pooled)
+        dup = pooled.duplicated(subset=key, keep="first") if key else pooled.duplicated(keep="first")
+        deduped = int(dup.sum())
+        pooled = pooled[~dup]
     pmin, pmax = _bounds(pooled)
-
-    metrics = _metrics_for(pooled, "Combined - all datasets")
-    if not metrics:
-        return {"error": "Could not compute combined metrics."}
-
-    return {
-        "metrics": metrics,
-        "generated_at": None,
-        "pool": {
-            "files_combined": len(used),
-            "files_total": len(uploads),
-            "files_skipped": len(skipped),
-            "skipped_files": skipped,
-            "rows_pooled": rows_pooled,
-            "rows_used": int(len(pooled)),
-            "deduped": int(deduped),
-            "date_min": pmin,
-            "date_max": pmax,
-            "files": used,
-        },
+    meta = {
+        "files_combined": len(used), "files_total": len(uploads),
+        "files_skipped": len(skipped), "skipped_files": skipped,
+        "rows_pooled": rows_pooled, "rows_used": int(len(pooled)), "deduped": deduped,
+        "date_min": pmin, "date_max": pmax, "files": used,
     }
+    return pooled, meta
+
+
+def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
+    """Pool every cleaned upload with a recognizable call id into ONE dashboard.
+    Overlapping records are collapsed on the natural key; call volume counts unique
+    incident ids so overlaps never double-count."""
+    pooled, meta = _pooled_deduped(uploads, db)
+    if pooled is None:
+        return {"error": "No cleaned data with a recognizable call id to combine.", "pool": meta}
+    body = pooled.drop(columns=["__source_file"], errors="ignore")
+    metrics = _metrics_for(body, "Combined - all datasets")
+    if not metrics:
+        return {"error": "Could not compute combined metrics.", "pool": meta}
+    return {"metrics": metrics, "generated_at": None, "pool": meta}
+
+
+def combined_dashboard_filtered(uploads: List[DataUpload], db, filters: Dict[str, Any]) -> Dict[str, Any]:
+    """Same pool, with dashboard filters applied — returns the metrics dict directly
+    (like filtered_dashboard) so the combined view's filter bar renders it."""
+    from .ems_filter_service import apply_dashboard_filters
+    pooled, meta = _pooled_deduped(uploads, db)
+    if pooled is None:
+        return {"empty": True, "filters_applied": [], "row_count": 0, "pool": meta}
+    body = pooled.drop(columns=["__source_file"], errors="ignore")
+    body, applied = apply_dashboard_filters(body, filters or {}, None)
+    if body.empty:
+        return {"empty": True, "filters_applied": applied, "row_count": 0, "pool": meta}
+    metrics = _metrics_for(body, "Combined - all datasets")
+    if not metrics:
+        return {"empty": True, "filters_applied": applied, "row_count": int(len(body)), "pool": meta}
+    metrics["filters_applied"] = applied
+    metrics["row_count"] = int(len(body))
+    metrics["pool"] = meta
+    return metrics
+
+
+def combined_filter_options(uploads: List[DataUpload], db) -> Dict[str, Any]:
+    """Filter options (units / municipalities / call types / date range / IFT count)
+    over the pooled, de-duped data — so the combined view's filter bar is populated."""
+    from .ems_filter_service import detect_interfacility_rows
+    pooled, meta = _pooled_deduped(uploads, db)
+    if pooled is None:
+        return {"units": [], "municipalities": [], "call_types": [], "date_range": {}, "interfacility_count": 0}
+    body = pooled.drop(columns=["__source_file"], errors="ignore")
+
+    def uniq(field: str) -> List[str]:
+        col = detect_mapped_column(body, field, None)
+        if not col:
+            return []
+        vals = body[col].astype(str).str.strip().replace("", pd.NA).dropna().unique()
+        return sorted(str(v) for v in vals if str(v) not in ("nan", "None", ""))[:300]
+
+    date_col = detect_mapped_column(body, "incident_date", None)
+    dr: Dict[str, str] = {}
+    if date_col:
+        p = pd.to_datetime(body[date_col], errors="coerce").dropna()
+        if len(p):
+            dr = {"min": str(p.min().date()), "max": str(p.max().date())}
+    return {
+        "units": uniq("unit"),
+        "municipalities": uniq("municipality"),
+        "call_types": uniq("incident_type"),
+        "date_range": dr,
+        "interfacility_count": int(detect_interfacility_rows(body).sum()),
+    }
+
+
+def combined_overlaps(uploads: List[DataUpload], db, limit: int = 1000) -> Dict[str, Any]:
+    """List the overlapping unit-responses removed when pooling — each with the file
+    it came from and the file whose (kept) row it duplicated, so the client can see
+    WHAT was removed and WHY."""
+    pooled, used, _skipped = _pool(uploads, db)
+    if pooled is None or len(used) <= 1:
+        return {"removed": [], "total": 0, "shown": 0, "key_fields": []}
+    key = _dedup_key(pooled)
+    if not key:
+        return {"removed": [], "total": 0, "shown": 0, "key_fields": []}
+    dup = pooled.duplicated(subset=key, keep="first")
+    total = int(dup.sum())
+    first = pooled[~dup]
+    inc = detect_column(pooled, "incident_number")
+    unit = detect_column(pooled, "unit")
+    disp = detect_mapped_column(pooled, "dispatch_time", None)
+    # key tuple -> source file of the kept (first) row it duplicates
+    first_keys = list(zip(*[first[k].astype(str) for k in key]))
+    keep_src = dict(zip(first_keys, first["__source_file"]))
+    rem = pooled[dup].head(limit)
+    rem_keys = list(zip(*[rem[k].astype(str) for k in key])) if len(rem) else []
+    out: List[Dict[str, Any]] = []
+    for (_, r), kv in zip(rem.iterrows(), rem_keys):
+        out.append({
+            "incident": None if inc is None else r.get(inc),
+            "unit": None if unit is None else r.get(unit),
+            "dispatch_time": None if disp is None else r.get(disp),
+            "from_file": r.get("__source_file"),
+            "duplicate_of_file": keep_src.get(kv),
+        })
+    return {"removed": out, "total": total, "shown": len(out), "key_fields": key}
