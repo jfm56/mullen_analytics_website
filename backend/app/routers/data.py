@@ -1237,6 +1237,55 @@ async def get_combined_dashboard(
     return combined_dashboard(uploads, db)
 
 
+@router.post("/combined-dashboard/filter")
+async def post_combined_dashboard_filter(
+    body: DashboardFilterRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Combined dashboard with dashboard filters applied across the whole pool."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        raise HTTPException(status_code=400, detail="No client selected.")
+    uploads = _client_cleaned_uploads(db, client_id)
+    if not uploads:
+        raise HTTPException(status_code=404, detail="No cleaned datasets to combine.")
+    from ..services.ems_daterange_service import combined_dashboard_filtered
+    return combined_dashboard_filtered(uploads, db, body.model_dump(exclude_none=False))
+
+
+@router.get("/combined-dashboard/filter-options")
+async def get_combined_filter_options(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Filter options (units / municipalities / call types / date range) over the pool."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        return {"units": [], "municipalities": [], "call_types": [], "date_range": {}, "interfacility_count": 0}
+    uploads = _client_cleaned_uploads(db, client_id)
+    from ..services.ems_daterange_service import combined_filter_options
+    return combined_filter_options(uploads, db)
+
+
+@router.get("/combined-dashboard/overlaps")
+async def get_combined_overlaps(
+    request: Request,
+    limit: int = 1000,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """The overlapping unit-responses removed when pooling — what was removed and why."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        raise HTTPException(status_code=400, detail="No client selected.")
+    uploads = _client_cleaned_uploads(db, client_id)
+    from ..services.ems_daterange_service import combined_overlaps
+    return combined_overlaps(uploads, db, limit=min(max(limit, 1), 5000))
+
+
 # ============================================================================
 # GET /api/data/uploads/{upload_id}/columns/settings
 # ============================================================================
