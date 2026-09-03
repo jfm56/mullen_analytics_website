@@ -276,6 +276,63 @@ function CompareCharts({ slots, slotUploads, slotMetrics }) {
   );
 }
 
+function OverlapsModal({ onClose }) {
+  const [data, setData] = useState(null);
+  const [err, setErr]   = useState('');
+  useEffect(() => {
+    dataUploads.getCombinedOverlaps(2000).then(setData).catch(e => setErr(e.message || 'Failed to load'));
+  }, []);
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between px-5 py-3 border-b gap-4">
+          <div>
+            <h3 className="font-bold text-gray-900">Overlapping rows removed</h3>
+            <p className="text-xs text-gray-500 mt-0.5 max-w-2xl">
+              These unit-responses appeared in more than one dataset. When exports overlap in time the
+              same record shows up in each file, so we keep the first copy and drop the rest — matched on
+              call id + unit + dispatch time — so calls aren&apos;t double-counted.
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none flex-shrink-0">×</button>
+        </div>
+        <div className="overflow-auto p-4">
+          {err && <p className="text-sm text-red-600">{err}</p>}
+          {!data && !err && <p className="text-sm text-gray-500">Loading…</p>}
+          {data && (
+            <>
+              <p className="text-xs text-gray-500 mb-2">
+                {Number(data.total || 0).toLocaleString()} removed total
+                {data.shown < data.total ? ` — showing first ${Number(data.shown).toLocaleString()}` : ''}.
+              </p>
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50 text-gray-500 uppercase tracking-wide sticky top-0">
+                  <tr>
+                    {['Call ID', 'Unit', 'Dispatch time', 'From file', 'Duplicate of'].map(h => (
+                      <th key={h} className="px-2 py-1.5 text-left font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {(data.removed || []).map((r, i) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="px-2 py-1.5 font-medium text-gray-800">{r.incident ?? '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600">{r.unit ?? '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600">{r.dispatch_time ?? '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 truncate max-w-[160px]" title={r.from_file}>{r.from_file}</td>
+                      <td className="px-2 py-1.5 text-gray-600 truncate max-w-[160px]" title={r.duplicate_of_file}>{r.duplicate_of_file ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PortalDashboardPage() {
   const [uploads, setUploads]     = useState([]);
   const [selectedId, setSelectedId] = useState('');
@@ -284,6 +341,7 @@ export default function PortalDashboardPage() {
   const [dashLoading, setDashLoading] = useState(false);
   const [error, setError]         = useState('');
   const [dashTab, setDashTab]     = useState('overview');
+  const [overlapsOpen, setOverlapsOpen] = useState(false);
 
   // Compare mode
   const [compareMode, setCompareMode]   = useState(false);
@@ -521,14 +579,22 @@ export default function PortalDashboardPage() {
                 <span>{dashboard.pool.files_combined} datasets pooled</span>
                 {dashboard.pool.date_min && <span>{dashboard.pool.date_min} → {dashboard.pool.date_max}</span>}
                 <span>{Number(dashboard.pool.rows_used || 0).toLocaleString()} responses</span>
-                {dashboard.pool.deduped > 0 && <span className="text-indigo-500">{Number(dashboard.pool.deduped).toLocaleString()} overlapping rows removed</span>}
+                {dashboard.pool.deduped > 0 && (
+                  <button type="button" onClick={() => setOverlapsOpen(true)}
+                    className="text-indigo-600 underline hover:no-underline font-medium">
+                    {Number(dashboard.pool.deduped).toLocaleString()} overlapping rows removed
+                  </button>
+                )}
                 {dashboard.pool.files_skipped > 0 && <span className="text-amber-600">{dashboard.pool.files_skipped} incompatible file(s) excluded</span>}
               </div>
             )}
             <div className="bg-white border rounded-xl shadow-sm p-6">
               <EMSDashboard metrics={dashboard.metrics} generatedAt={null} uploadId={null}
-                uploadInfo={{ original_filename: 'Combined — all datasets' }} />
+                uploadInfo={{ original_filename: 'Combined — all datasets' }}
+                filterApply={(f) => dataUploads.getCombinedDashboardFiltered(f)}
+                filterOptions={() => dataUploads.getCombinedFilterOptions()} />
             </div>
+            {overlapsOpen && <OverlapsModal onClose={() => setOverlapsOpen(false)} />}
           </div>
         ) : (
         <>

@@ -726,6 +726,10 @@ export const dataUploads = {
   downloadCleanedUrl: (uploadId) => `/api/proxy/data/uploads/${uploadId}/download-cleaned`,
   getDashboard: (uploadId) => apiFetch(`/api/data/uploads/${uploadId}/dashboard`),
   getCombinedDashboard: () => apiFetch(`/api/data/combined-dashboard`),
+  getCombinedDashboardFiltered: (body) =>
+    apiFetch(`/api/data/combined-dashboard/filter`, { method: 'POST', body: JSON.stringify(body) }),
+  getCombinedFilterOptions: () => apiFetch(`/api/data/combined-dashboard/filter-options`),
+  getCombinedOverlaps: (limit = 1000) => apiFetch(`/api/data/combined-dashboard/overlaps?limit=${limit}`),
   getClientDashboard: (clientId, params = {}) => {
     const q = new URLSearchParams();
     if (params.project_id) q.set('project_id', params.project_id);

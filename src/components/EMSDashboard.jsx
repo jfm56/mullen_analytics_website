@@ -894,26 +894,28 @@ function FilteredMetricsView({ metrics, dataDateRange, onClearFilters }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInfo, onRefresh }) {
+export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInfo, onRefresh, filterApply, filterOptions }) {
   const [filteredMetrics, setFilteredMetrics] = useState(null);
   const [filterLoading, setFilterLoading]     = useState(false);
   const [compareOpen, setCompareOpen]         = useState(false);
   const [mappingOpen, setMappingOpen]         = useState(false);
   const [filterKey, setFilterKey]             = useState(0);
-  const hasFilters = uploadId != null;
+  const hasFilters = uploadId != null || !!filterApply;
 
   const handleFilterApply = useCallback(async (filters) => {
-    if (!uploadId) return;
+    if (!uploadId && !filterApply) return;
     setFilterLoading(true);
     try {
-      const result = await dashboardFilter.filter(uploadId, filters);
+      const result = filterApply
+        ? await filterApply(filters)
+        : await dashboardFilter.filter(uploadId, filters);
       setFilteredMetrics(result);
     } catch (e) {
       console.error('filter error', e);
     } finally {
       setFilterLoading(false);
     }
-  }, [uploadId]);
+  }, [uploadId, filterApply]);
 
   const handleClearFilters = useCallback(() => {
     setFilteredMetrics(null);   // drop the filtered view -> show the full dataset
@@ -976,7 +978,7 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
 
       {hasFilters && (
         <DashboardFilterBar key={filterKey} uploadId={uploadId} onFilterApply={handleFilterApply}
-          onCompareOpen={() => setCompareOpen(true)} />
+          onCompareOpen={uploadId ? () => setCompareOpen(true) : null} loadOptions={filterOptions} />
       )}
       {filterLoading && (
         <div className="text-xs text-blue-500 animate-pulse px-1">Applying filters…</div>
