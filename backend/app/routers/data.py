@@ -1334,6 +1334,74 @@ async def get_combined_predictive(
     return get_predictive_dashboard(None, db, df=df, overrides={})
 
 
+def _combined_working_df(request: Request, current_user: User, db: Session):
+    """Pooled + de-duped combined DataFrame for the caller's client, or None."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        return None
+    uploads = _client_cleaned_uploads(db, client_id)
+    if not uploads:
+        return None
+    from ..services.ems_daterange_service import get_combined_df
+    return get_combined_df(uploads, db)
+
+
+@router.get("/combined-dashboard/ift")
+async def get_combined_ift(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """IFT outlook over the pooled data."""
+    df = _combined_working_df(request, current_user, db)
+    if df is None:
+        return {"available": False, "reason": "No combined data available."}
+    from ..services.ems_ift_service import get_ift_outlook
+    return get_ift_outlook(None, db, df=df, overrides={})
+
+
+@router.get("/combined-dashboard/emergency-transport")
+async def get_combined_emergency_transport(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Emergency-transport outlook over the pooled data."""
+    df = _combined_working_df(request, current_user, db)
+    if df is None:
+        return {"available": False, "reason": "No combined data available."}
+    from ..services.ems_emergency_transport_service import get_emergency_transport_outlook
+    return get_emergency_transport_outlook(None, db, df=df, overrides={})
+
+
+@router.get("/combined-dashboard/geographic")
+async def get_combined_geographic(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Geographic dashboard over the pooled data."""
+    df = _combined_working_df(request, current_user, db)
+    if df is None:
+        return {"available": False, "reason": "No combined data available."}
+    from ..services.ems_geographic_service import get_geographic_dashboard
+    return get_geographic_dashboard(None, db, df=df, overrides={})
+
+
+@router.get("/combined-dashboard/mva-hotspots")
+async def get_combined_mva(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """MVA hotspots over the pooled data."""
+    df = _combined_working_df(request, current_user, db)
+    if df is None:
+        return {"available": False, "reason": "No combined data available."}
+    from ..services.ems_mva_service import get_mva_hotspots
+    return get_mva_hotspots(None, db, df=df, overrides={})
+
+
 # ============================================================================
 # GET /api/data/uploads/{upload_id}/columns/settings
 # ============================================================================

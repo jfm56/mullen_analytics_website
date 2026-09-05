@@ -29,17 +29,17 @@ const TREND = {
   stable:  { Icon: Minus,        cls: 'text-gray-400', label: 'Stable' },
 };
 
-export default function GeographicHeatMap({ uploadId }) {
+export default function GeographicHeatMap({ uploadId, combined = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!uploadId) return;
+    if (!combined && !uploadId) return;
     setLoading(true); setError(''); setData(null);
-    apiFetch(`/data/uploads/${uploadId}/geographic`)
+    apiFetch(combined ? `/data/combined-dashboard/geographic` : `/data/uploads/${uploadId}/geographic`)
       .then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
-  }, [uploadId]);
+  }, [uploadId, combined]);
 
   if (loading) return (
     <div className="bg-white border rounded-xl p-6 animate-pulse space-y-3">

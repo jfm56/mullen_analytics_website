@@ -588,14 +588,40 @@ export default function PortalDashboardPage() {
                 {dashboard.pool.files_skipped > 0 && <span className="text-amber-600">{dashboard.pool.files_skipped} incompatible file(s) excluded</span>}
               </div>
             )}
-            <AiInsights combined />
-            <div className="bg-white border rounded-xl shadow-sm p-6">
-              <EMSDashboard metrics={dashboard.metrics} generatedAt={null} uploadId={null}
-                uploadInfo={{ original_filename: 'Combined — all datasets' }}
-                filterApply={(f) => dataUploads.getCombinedDashboardFiltered(f)}
-                filterOptions={() => dataUploads.getCombinedFilterOptions()} />
-            </div>
-            <PredictiveAnalytics combined />
+            <PageTabs
+              activeTab={dashTab}
+              onChange={setDashTab}
+              tabs={[
+                { id: 'overview',    label: 'Overview',    icon: <LayoutDashboard size={15} /> },
+                { id: 'predictions', label: 'Predictions', icon: <TrendingUp size={15} /> },
+                { id: 'scheduling',  label: 'Scheduling',  icon: <CalendarClock size={15} /> },
+                { id: 'geographic',  label: 'Geographic',  icon: <MapPin size={15} /> },
+              ]}
+            />
+            {(dashTab === 'overview' || !['predictions', 'scheduling', 'geographic'].includes(dashTab)) && (
+              <div className="space-y-5">
+                <AiInsights combined />
+                <div className="bg-white border rounded-xl shadow-sm p-6">
+                  <EMSDashboard metrics={dashboard.metrics} generatedAt={null} uploadId={null}
+                    uploadInfo={{ original_filename: 'Combined — all datasets' }}
+                    filterApply={(f) => dataUploads.getCombinedDashboardFiltered(f)}
+                    filterOptions={() => dataUploads.getCombinedFilterOptions()} />
+                </div>
+              </div>
+            )}
+            {dashTab === 'predictions' && <PredictiveAnalytics combined />}
+            {dashTab === 'scheduling' && (
+              <div className="space-y-5">
+                <IftOutlook combined />
+                <EmergencyTransportOutlook combined />
+              </div>
+            )}
+            {dashTab === 'geographic' && (
+              <div className="space-y-5">
+                <GeographicHeatMap combined />
+                <MvaHotspots combined />
+              </div>
+            )}
             {overlapsOpen && <OverlapsModal onClose={() => setOverlapsOpen(false)} />}
           </div>
         ) : (
