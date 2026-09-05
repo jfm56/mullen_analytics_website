@@ -283,7 +283,8 @@ def _build_summary(upload, db) -> Dict[str, Any]:
 
 
 def _signature(summary: Dict[str, Any]) -> str:
-    p = summary.get("period") or {}
+    p = summary.get("period")
+    p = p if isinstance(p, dict) else {}          # combined view passes a plain string
     v = summary.get("volume") or {}
     return f"{p.get('end')}|{p.get('days_of_history')}|{v.get('total_calls')}"
 
@@ -365,7 +366,7 @@ async def interpret_combined(metrics: Dict[str, Any], agency: str, period: str, 
     if not (metrics.get("call_volume") or {}).get("total_calls"):
         return {"available": False, "reason": "Not enough cleaned data to interpret yet."}
     summary = _summary_from_metrics(metrics, agency, period, "Combined - all datasets")
-    return await _interpret(summary, f"combined:{agency}:{_signature(summary)}", refresh)
+    return await _interpret(summary, f"combined:{agency}:{period}:{_signature(summary)}", refresh)
 
 
 async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = False) -> Dict[str, Any]:
