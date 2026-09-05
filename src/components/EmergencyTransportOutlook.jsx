@@ -26,17 +26,17 @@ function Kpi({ label, value, Icon, sub }) {
   );
 }
 
-export default function EmergencyTransportOutlook({ uploadId }) {
+export default function EmergencyTransportOutlook({ uploadId, combined = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!uploadId) return;
+    if (!combined && !uploadId) return;
     setLoading(true); setError(''); setData(null);
-    apiFetch(`/data/uploads/${uploadId}/emergency-transport?horizon=14`)
+    apiFetch(combined ? `/data/combined-dashboard/emergency-transport` : `/data/uploads/${uploadId}/emergency-transport?horizon=14`)
       .then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
-  }, [uploadId]);
+  }, [uploadId, combined]);
 
   if (loading) return (
     <div className="bg-white border rounded-xl p-6 animate-pulse space-y-3">

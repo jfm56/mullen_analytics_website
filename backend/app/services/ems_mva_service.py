@@ -34,15 +34,19 @@ def _is_mva(series: pd.Series) -> pd.Series:
     return mask
 
 
-def get_mva_hotspots(upload, db) -> Dict[str, Any]:
-    df = _load_df(upload)
-    if df is None or df.empty:
-        return {"available": False, "reason": "No cleaned data available for this upload."}
-
-    try:
-        overrides = get_column_overrides(upload, db) or {}
-    except Exception:  # noqa: BLE001
-        overrides = {}
+def get_mva_hotspots(upload, db, df: Optional[pd.DataFrame] = None, overrides: Optional[Dict] = None) -> Dict[str, Any]:
+    if df is None:
+        df = _load_df(upload)
+        if df is None or df.empty:
+            return {"available": False, "reason": "No cleaned data available for this upload."}
+        try:
+            overrides = get_column_overrides(upload, db) or {}
+        except Exception:  # noqa: BLE001
+            overrides = {}
+    else:
+        if df.empty:
+            return {"available": False, "reason": "No cleaned data available."}
+        overrides = overrides or {}
 
     type_col = detect_mapped_column(df, "patient_category", overrides) or detect_mapped_column(df, "incident_type", overrides)
     if not type_col:

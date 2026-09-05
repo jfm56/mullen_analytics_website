@@ -73,14 +73,20 @@ def _hours(df: pd.DataFrame, dt: pd.Series, mask: pd.Series) -> pd.Series:
     return h[(h >= 0) & (h <= 23)]
 
 
-def get_emergency_transport_outlook(upload, db, horizon_days: int = 14) -> Dict[str, Any]:
-    df = _load_df(upload)
-    if df is None or df.empty:
-        return {"available": False, "reason": "No cleaned data available for this upload."}
-    try:
-        ov = get_column_overrides(upload, db) or {}
-    except Exception:  # noqa: BLE001
-        ov = {}
+def get_emergency_transport_outlook(upload, db, horizon_days: int = 14,
+                                    df: Optional[pd.DataFrame] = None, overrides: Optional[Dict] = None) -> Dict[str, Any]:
+    if df is None:
+        df = _load_df(upload)
+        if df is None or df.empty:
+            return {"available": False, "reason": "No cleaned data available for this upload."}
+        try:
+            ov = get_column_overrides(upload, db) or {}
+        except Exception:  # noqa: BLE001
+            ov = {}
+    else:
+        if df.empty:
+            return {"available": False, "reason": "No cleaned data available."}
+        ov = overrides or {}
     _, dt = _resolve_dt(df, ov)
     if dt is None:
         return {"available": False, "reason": "No usable dispatch/received date column detected."}

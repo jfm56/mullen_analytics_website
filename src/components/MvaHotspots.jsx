@@ -35,17 +35,17 @@ function Kpi({ label, value, sub, Icon }) {
 
 function fmtHour(h) { return h == null ? '—' : `${h}:00`; }
 
-export default function MvaHotspots({ uploadId }) {
+export default function MvaHotspots({ uploadId, combined = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!uploadId) return;
+    if (!combined && !uploadId) return;
     setLoading(true); setError(''); setData(null);
-    apiFetch(`/data/uploads/${uploadId}/mva-hotspots`)
+    apiFetch(combined ? `/data/combined-dashboard/mva-hotspots` : `/data/uploads/${uploadId}/mva-hotspots`)
       .then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
-  }, [uploadId]);
+  }, [uploadId, combined]);
 
   if (loading) return (
     <div className="bg-white border rounded-xl p-6 animate-pulse space-y-3">

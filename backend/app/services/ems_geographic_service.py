@@ -91,15 +91,20 @@ def _detect_location_column(df: pd.DataFrame, overrides: Dict) -> Optional[str]:
     return None
 
 
-def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None) -> Dict[str, Any]:
-    df = _load_df(upload)
-    if df is None or df.empty:
-        return {"available": False, "reason": "No cleaned data available for this upload."}
-
-    try:
-        overrides = get_column_overrides(upload, db) or {}
-    except Exception:  # noqa: BLE001
-        overrides = {}
+def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None,
+                             df: Optional[pd.DataFrame] = None, overrides: Optional[Dict] = None) -> Dict[str, Any]:
+    if df is None:
+        df = _load_df(upload)
+        if df is None or df.empty:
+            return {"available": False, "reason": "No cleaned data available for this upload."}
+        try:
+            overrides = get_column_overrides(upload, db) or {}
+        except Exception:  # noqa: BLE001
+            overrides = {}
+    else:
+        if df.empty:
+            return {"available": False, "reason": "No cleaned data available."}
+        overrides = overrides or {}
 
     loc_col = _detect_location_column(df, overrides)
     if not loc_col:
