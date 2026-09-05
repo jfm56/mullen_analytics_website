@@ -328,6 +328,48 @@ async def interpret_dashboard(upload, db, refresh: bool = False) -> Dict[str, An
         return {"available": False, "reason": "Not enough cleaned data to interpret yet."}
 
     cache_key = f"{getattr(upload, 'id', '')}:{_signature(summary)}"
+    return await _interpret(summary, cache_key, refresh)
+
+
+def _summary_from_metrics(metrics: Dict[str, Any], agency: str, period: str, scope: str) -> Dict[str, Any]:
+    """Build the AI summary from an already-computed metrics dict — used by the
+    combined view, which pools many datasets rather than one upload."""
+    cv = metrics.get("call_volume") or {}
+    rt = metrics.get("response_times") or {}
+    up = metrics.get("unit_performance") or {}
+    return {
+        "agency": agency,
+        "period": period,
+        "scope": scope,
+        "volume": {
+            "total_calls": cv.get("total_calls"),
+            "count_basis": cv.get("count_basis"),
+            "emergency_calls": cv.get("emergency_calls"),
+            "interfacility_calls": cv.get("interfacility_calls"),
+            "busiest_day_of_week": cv.get("busiest_day_of_week"),
+            "top_call_types": _top_labels(cv.get("by_incident_type"), 8),
+            "top_municipalities": _top_labels(cv.get("by_municipality"), 8),
+        },
+        "response_times": {k: rt.get(k) for k in
+            ("metric_label", "median_minutes", "mean_minutes", "p90_minutes", "max_minutes", "sample_size")
+            if rt.get(k) is not None},
+        "top_units": _top_labels(up.get("calls_per_unit") or up.get("by_unit"), 8),
+    }
+
+
+async def interpret_combined(metrics: Dict[str, Any], agency: str, period: str, refresh: bool = False) -> Dict[str, Any]:
+    """AI interpretation for the combined (all-datasets) view, from pooled metrics."""
+    if not is_insights_available():
+        return {"available": False, "key_missing": True,
+                "reason": "AI interpretation is off — set ANTHROPIC_API_KEY in backend/.env to enable it."}
+    if not (metrics.get("call_volume") or {}).get("total_calls"):
+        return {"available": False, "reason": "Not enough cleaned data to interpret yet."}
+    summary = _summary_from_metrics(metrics, agency, period, "Combined - all datasets")
+    return await _interpret(summary, f"combined:{agency}:{_signature(summary)}", refresh)
+
+
+async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = False) -> Dict[str, Any]:
+    """Send a prepared summary to the model and return the parsed interpretation."""
     if not refresh and cache_key in _CACHE:
         return {**_CACHE[cache_key], "cached": True}
 

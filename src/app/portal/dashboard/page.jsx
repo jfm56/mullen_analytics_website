@@ -588,12 +588,14 @@ export default function PortalDashboardPage() {
                 {dashboard.pool.files_skipped > 0 && <span className="text-amber-600">{dashboard.pool.files_skipped} incompatible file(s) excluded</span>}
               </div>
             )}
+            <AiInsights combined />
             <div className="bg-white border rounded-xl shadow-sm p-6">
               <EMSDashboard metrics={dashboard.metrics} generatedAt={null} uploadId={null}
                 uploadInfo={{ original_filename: 'Combined — all datasets' }}
                 filterApply={(f) => dataUploads.getCombinedDashboardFiltered(f)}
                 filterOptions={() => dataUploads.getCombinedFilterOptions()} />
             </div>
+            <PredictiveAnalytics combined />
             {overlapsOpen && <OverlapsModal onClose={() => setOverlapsOpen(false)} />}
           </div>
         ) : (

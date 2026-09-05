@@ -267,28 +267,34 @@ def _staffing(
     }
 
 
-def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[Dict] = None) -> Dict[str, Any]:
+def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[Dict] = None,
+                             df: Optional[pd.DataFrame] = None,
+                             overrides: Optional[Dict] = None) -> Dict[str, Any]:
     """Main entry point used by the API. Returns forecast + patterns + staffing.
 
     Result is cached per (upload, cleaning signature, horizon, settings) so the
     Predictions tab + TurnoverRisk + AI insights reuse one computation instead of
     re-training the forecast on every request."""
-    _ckey = (
-        str(getattr(upload, "id", "")), _result_sig(upload), horizon,
-        repr(sorted(settings.items())) if settings else "",
-    )
-    _hit = _DASH_CACHE.get(_ckey)
-    if _hit is not None:
-        return _hit
-
-    df = _load_df(upload)
-    if df is None or df.empty:
-        return {"available": False, "reason": "No cleaned data available for this upload."}
-
-    try:
-        overrides = get_column_overrides(upload, db) or {}
-    except Exception:  # noqa: BLE001
-        overrides = {}
+    use_cache = df is None
+    if use_cache:
+        _ckey = (
+            str(getattr(upload, "id", "")), _result_sig(upload), horizon,
+            repr(sorted(settings.items())) if settings else "",
+        )
+        _hit = _DASH_CACHE.get(_ckey)
+        if _hit is not None:
+            return _hit
+        df = _load_df(upload)
+        if df is None or df.empty:
+            return {"available": False, "reason": "No cleaned data available for this upload."}
+        try:
+            overrides = get_column_overrides(upload, db) or {}
+        except Exception:  # noqa: BLE001
+            overrides = {}
+    else:
+        if df.empty:
+            return {"available": False, "reason": "No cleaned data available."}
+        overrides = overrides or {}
 
     dt_col, dt = _resolve_dt(df, overrides)
     if dt is None:
@@ -322,11 +328,12 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
     except Exception:  # noqa: BLE001
         pass
     ift_outlook = None
-    try:
-        from .ems_ift_service import get_ift_outlook
-        ift_outlook = get_ift_outlook(upload, db)
-    except Exception:  # noqa: BLE001
-        pass
+    if upload is not None:
+        try:
+            from .ems_ift_service import get_ift_outlook
+            ift_outlook = get_ift_outlook(upload, db)
+        except Exception:  # noqa: BLE001
+            pass
 
     staffing = _staffing(
         daily, hour, settings,
@@ -367,7 +374,8 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
         "staffing": staffing,
         "warnings": warnings,
     }
-    if len(_DASH_CACHE) > 16:
-        _DASH_CACHE.clear()
-    _DASH_CACHE[_ckey] = result
+    if use_cache:
+        if len(_DASH_CACHE) > 16:
+            _DASH_CACHE.clear()
+        _DASH_CACHE[_ckey] = result
     return result

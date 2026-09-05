@@ -1286,6 +1286,54 @@ async def get_combined_overlaps(
     return combined_overlaps(uploads, db, limit=min(max(limit, 1), 5000))
 
 
+@router.get("/combined-dashboard/ai-insights")
+async def get_combined_ai_insights(
+    request: Request,
+    refresh: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """AI executive interpretation of the combined (all-datasets) dashboard."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        return {"available": False, "reason": "No client selected."}
+    uploads = _client_cleaned_uploads(db, client_id)
+    if not uploads:
+        return {"available": False, "reason": "No cleaned datasets to interpret."}
+    from ..services.ems_daterange_service import combined_dashboard
+    combo = combined_dashboard(uploads, db)
+    metrics = combo.get("metrics")
+    if not metrics:
+        return {"available": False, "reason": combo.get("error") or "No combined metrics available."}
+    pool = combo.get("pool") or {}
+    cprof = db.query(Profile).filter(Profile.id == client_id).first()
+    agency = (getattr(cprof, "company", None) if cprof else None) or "Your agency"
+    period = f"{pool.get('date_min')} to {pool.get('date_max')}"
+    from ..services.ems_ai_insights_service import interpret_combined
+    return await interpret_combined(metrics, agency, period, refresh=refresh)
+
+
+@router.get("/combined-dashboard/predictive")
+async def get_combined_predictive(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Predictive analytics (forecast + patterns + staffing) over the pooled data."""
+    client_id = _effective_client_id(request, current_user, db)
+    if not client_id:
+        return {"available": False, "reason": "No client selected."}
+    uploads = _client_cleaned_uploads(db, client_id)
+    if not uploads:
+        return {"available": False, "reason": "No cleaned datasets."}
+    from ..services.ems_daterange_service import get_combined_df
+    from ..services.ems_predictive_service import get_predictive_dashboard
+    df = get_combined_df(uploads, db)
+    if df is None:
+        return {"available": False, "reason": "No combined data available."}
+    return get_predictive_dashboard(None, db, df=df, overrides={})
+
+
 # ============================================================================
 # GET /api/data/uploads/{upload_id}/columns/settings
 # ============================================================================

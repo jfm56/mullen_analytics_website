@@ -45,18 +45,19 @@ function Kpi({ label, value, Icon }) {
   );
 }
 
-export default function PredictiveAnalytics({ uploadId }) {
+export default function PredictiveAnalytics({ uploadId, combined = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('forecast');
 
   useEffect(() => {
-    if (!uploadId) return;
+    if (!combined && !uploadId) return;
     setLoading(true); setError(''); setData(null);
-    apiFetch(`/data/uploads/${uploadId}/predictive`)
+    const base = combined ? `/data/combined-dashboard/predictive` : `/data/uploads/${uploadId}/predictive`;
+    apiFetch(base)
       .then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
-  }, [uploadId]);
+  }, [uploadId, combined]);
 
   if (loading) return (
     <div className="bg-white border rounded-xl p-6 animate-pulse space-y-3">

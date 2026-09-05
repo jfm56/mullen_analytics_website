@@ -32,7 +32,7 @@ function Shell({ children }) {
   );
 }
 
-export default function AiInsights({ uploadId }) {
+export default function AiInsights({ uploadId, combined = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,16 +40,17 @@ export default function AiInsights({ uploadId }) {
   const [showData, setShowData] = useState(false);
 
   const load = useCallback((refresh = false) => {
-    if (!uploadId) return;
+    if (!combined && !uploadId) return;
     if (refresh) setRefreshing(true); else setLoading(true);
     setError('');
-    apiFetch(`/data/uploads/${uploadId}/ai-insights${refresh ? '?refresh=true' : ''}`)
+    const base = combined ? `/data/combined-dashboard/ai-insights` : `/data/uploads/${uploadId}/ai-insights`;
+    apiFetch(`${base}${refresh ? '?refresh=true' : ''}`)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => { setLoading(false); setRefreshing(false); });
-  }, [uploadId]);
+  }, [uploadId, combined]);
 
-  useEffect(() => { setData(null); load(false); }, [uploadId, load]);
+  useEffect(() => { setData(null); load(false); }, [uploadId, combined, load]);
 
   if (loading) return (
     <Shell>

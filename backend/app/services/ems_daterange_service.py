@@ -256,6 +256,15 @@ def _pooled_deduped(uploads: List[DataUpload], db):
     return pooled, meta
 
 
+def get_combined_df(uploads: List[DataUpload], db):
+    """The pooled + de-duped combined DataFrame (no metrics), for engines that run
+    directly on a DataFrame (predictive, etc.). None if nothing is poolable."""
+    pooled, _meta = _pooled_deduped(uploads, db)
+    if pooled is None:
+        return None
+    return pooled.drop(columns=["__source_file"], errors="ignore")
+
+
 def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
     """Pool every cleaned upload with a recognizable call id into ONE dashboard.
     Overlapping records are collapsed on the natural key; call volume counts unique
