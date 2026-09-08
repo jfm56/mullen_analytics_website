@@ -26,12 +26,19 @@ router = APIRouter(prefix="/revenue-checker", tags=["revenue-checker"])
 _NOTIFY_TO = os.getenv("ADMIN_EMAIL") or os.getenv("CONTACT_EMAIL") or "jmullen@mullenanalytics.com"
 
 
+_TOOLS = {
+    "revenue_checker": "Inbound - revenue checker",
+    "profit_calculator": "Inbound - profit calculator",
+}
+
+
 class RevenueCheckerLead(BaseModel):
     name: Optional[str] = None
     email: str
     company: Optional[str] = None
     message: Optional[str] = None
     revenue_summary: Optional[str] = None   # optional text snapshot of their numbers + analysis
+    tool: Optional[str] = None              # which free tool this came from
 
 
 @router.post("/lead")
@@ -53,13 +60,17 @@ async def submit_revenue_lead(payload: RevenueCheckerLead, request: Request, db:
         parts.append("--- Revenue snapshot (from the checker) ---\n" + payload.revenue_summary.strip())
     need = "\n\n".join(parts) or None
 
+    tool = (payload.tool or "revenue_checker").strip().lower()
+    signal = _TOOLS.get(tool, "Inbound - tool")
+    source = tool if tool in _TOOLS else "revenue_checker"
+
     lead = Lead(
         company=company[:300],
         contact_name=(payload.name or None),
         contact_email=email[:320],
         vertical="smb",
-        source="revenue_checker",
-        signal="Inbound - revenue checker",
+        source=source,
+        signal=signal,
         need_summary=need,
         status="researched",
         score=80,   # warm inbound: sorts to the top of the admin leads list

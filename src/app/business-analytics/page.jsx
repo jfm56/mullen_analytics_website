@@ -143,6 +143,10 @@ export default function BusinessAnalyticsPage() {
               className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors">
               Try the free Revenue Checker <ArrowRight size={16} />
             </Link>
+            <Link href="/profit-calculator"
+              className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+              Try the free Profit Calculator <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>
