@@ -134,10 +134,16 @@ export default function BusinessAnalyticsPage() {
               </div>
             ))}
           </div>
-          <Link href="/business-dashboard-example"
-            className="mt-10 inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors">
-            See an example dashboard <ArrowRight size={16} />
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link href="/business-dashboard-example"
+              className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+              See an example dashboard <ArrowRight size={16} />
+            </Link>
+            <Link href="/revenue-checker"
+              className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+              Try the free Revenue Checker <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </section>
 
