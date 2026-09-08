@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight } from 'lucide-react';
+import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight, LineChart, Calculator } from 'lucide-react';
 import ScheduleCTA from '@/components/ScheduleCTA';
 
 // NOTE: The marketing home uses a FIXED palette (always light, with navy bands),
@@ -198,6 +198,52 @@ export default function Home() {
                 </span>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FREE TOOLS — self-serve lead magnets, no signup */}
+      <section className="py-20 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Free &middot; No signup</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Try a free tool</h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              Get a read on your numbers in a couple of minutes. Everything runs in your browser — nothing is
+              stored or sent unless you ask us to take a look.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <Link href="/revenue-checker"
+              className="group flex flex-col bg-slate-50 border border-slate-200 rounded-xl p-7 hover:shadow-md hover:border-blue-500 hover:-translate-y-0.5 transition-all duration-200">
+              <div className="w-11 h-11 rounded-lg bg-blue-600/10 text-blue-700 flex items-center justify-center mb-4">
+                <LineChart size={22} strokeWidth={2} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">Business Revenue Checker</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6 flex-1">
+                Enter 12 months of revenue and see your trend, momentum, year-over-year change, and a simple
+                forecast — plus a quick health read.
+              </p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+                Check your revenue
+                <ArrowRight size={15} strokeWidth={2.5} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </span>
+            </Link>
+            <Link href="/profit-calculator"
+              className="group flex flex-col bg-slate-50 border border-slate-200 rounded-xl p-7 hover:shadow-md hover:border-blue-500 hover:-translate-y-0.5 transition-all duration-200">
+              <div className="w-11 h-11 rounded-lg bg-blue-600/10 text-blue-700 flex items-center justify-center mb-4">
+                <Calculator size={22} strokeWidth={2} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">Profit Calculator</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6 flex-1">
+                Plug in your pricing, costs, and volume to see margins, contribution per unit, break-even, and how
+                long it takes to earn back your startup costs.
+              </p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+                Calculate your profit
+                <ArrowRight size={15} strokeWidth={2.5} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </span>
+            </Link>
           </div>
         </div>
       </section>

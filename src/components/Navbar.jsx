@@ -37,6 +37,13 @@ const NAV = [
     ],
   },
   { label: 'Case Studies', href: '/portfolio' },
+  {
+    label: 'Free Tools',
+    items: [
+      { label: 'Revenue Checker', href: '/revenue-checker', desc: 'Spot trends in 12 months of revenue' },
+      { label: 'Profit Calculator', href: '/profit-calculator', desc: 'Margins, break-even & startup payback' },
+    ],
+  },
   { label: 'Pricing', href: '/pricing' },
   {
     label: 'Contact Us',
