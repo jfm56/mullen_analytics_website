@@ -196,7 +196,7 @@ export default function RevenueCheckerPage() {
               <h3 className="text-base font-bold text-slate-900">Monthly revenue + forecast</h3>
               <span className="text-xs text-slate-400">solid = actual · striped = projected</span>
             </div>
-            <div className="flex items-end gap-1.5 h-52">
+            <div className="flex gap-1.5 h-52">
               {r.y.map((v, i) => (
                 <Bar key={i} label={labels[i]} title={`${labels[i]}: ${fmtUSD(v)}`} h={(v / chartMax) * 100} color="#2563eb" />
               ))}
@@ -255,7 +255,7 @@ function Kpi({ label, value, sub, good, icon }) {
 function Bar({ label, title, h, color, forecast }) {
   return (
     <div className="flex-1 flex flex-col items-center gap-1.5 group min-w-0">
-      <div className="w-full flex items-end justify-center" style={{ height: '100%' }}>
+      <div className="w-full flex-1 flex items-end min-h-0">
         <div
           className="w-full rounded-t transition-colors"
           style={{
