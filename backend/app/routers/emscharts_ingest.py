@@ -39,6 +39,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from ..config import get_settings
 from ..database import SessionLocal
 from ..models.data_upload import DataCleaningResult, DataUpload, EMSDashboardMetrics
+from ..models.user import User
 from ..services.email import send_email
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,9 @@ _INGEST_USER = os.getenv("EMSCHARTS_INGEST_USER") or ""
 _INGEST_PASSWORD = os.getenv("EMSCHARTS_INGEST_PASSWORD") or ""
 _SBEMS_CLIENT_ID = os.getenv("EMSCHARTS_SBEMS_CLIENT_ID") or ""
 _ALERT_TO = os.getenv("ADMIN_EMAIL") or os.getenv("CONTACT_EMAIL") or "jmullen@mullenanalytics.com"
+# Email a "dashboard updated" notice to the admin + the client on each successful
+# ingest. Set EMSCHARTS_NOTIFY_UPDATES=0 to turn these off.
+_NOTIFY_UPDATES = os.getenv("EMSCHARTS_NOTIFY_UPDATES", "1").strip().lower() not in ("0", "false", "no", "off", "")
 
 _DISPOSITION_FILENAME = re.compile(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?', re.IGNORECASE)
 
@@ -289,6 +293,22 @@ def _process_upload(upload_id: str) -> None:
             "emscharts ingest: upload %s cleaned (%s -> %s rows)",
             upload_id, stats.get("row_count_original"), stats.get("row_count_cleaned"),
         )
+
+        # Notify the admin + the client that the dashboard has fresh data.
+        if _NOTIFY_UPDATES:
+            try:
+                client = db.query(User).filter(User.id == upload.client_id).first()
+                agency = None
+                if client and client.profile:
+                    agency = (client.profile.company or client.profile.full_name or "").strip() or None
+                recipients: list[str] = []
+                for addr in (_ALERT_TO, (client.email if client else None)):
+                    addr = (addr or "").strip()
+                    if addr and addr.lower() not in {r.lower() for r in recipients}:
+                        recipients.append(addr)
+                _notify_update(recipients, agency, upload, stats)
+            except Exception as exc:  # noqa: BLE001
+                logger.info("emscharts ingest: update notification skipped: %s", exc)
     except Exception as exc:  # noqa: BLE001
         logger.error("emscharts ingest: processing failed for %s: %s", upload_id, exc)
         try:
@@ -301,6 +321,47 @@ def _process_upload(upload_id: str) -> None:
         _alert_failure(upload_id, str(exc))
     finally:
         db.close()
+
+
+def _notify_update(recipients: list, agency: Optional[str], upload: DataUpload, stats: dict) -> None:
+    """Email the admin + client an aggregate 'dashboard updated' notice (no patient data)."""
+    if not recipients:
+        return
+    label = agency or "your organization"
+    app_url = (getattr(settings, "app_url", "") or "").rstrip("/")
+    dash_url = f"{app_url}/portal/dashboard" if app_url else "the client portal"
+    loaded = datetime.utcnow().strftime("%b %d, %Y %H:%M UTC")
+    fname = upload.original_filename or "export.csv"
+    n_clean = stats.get("row_count_cleaned")
+    n_orig = stats.get("row_count_original")
+    count_txt = f"{n_clean}" + (f" of {n_orig}" if n_orig else "")
+    btn = (
+        f"<a href='{dash_url}' style='display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;"
+        f"border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px'>View the dashboard</a>"
+        if app_url else ""
+    )
+    html = (
+        "<div style='font-family:Arial,sans-serif;color:#111827;max-width:560px'>"
+        "<h2 style='font-size:22px;margin:0 0 12px'>Dashboard updated</h2>"
+        f"<p style='font-size:15px;line-height:24px;margin:0 0 16px'>New data has just been loaded into the "
+        f"<strong>{label}</strong> analytics dashboard.</p>"
+        "<table style='font-size:14px;border-collapse:collapse;margin:0 0 20px'>"
+        f"<tr><td style='padding:4px 16px 4px 0;color:#6b7280'>Records loaded</td><td style='padding:4px 0'><strong>{count_txt}</strong></td></tr>"
+        f"<tr><td style='padding:4px 16px 4px 0;color:#6b7280'>File</td><td style='padding:4px 0'>{fname}</td></tr>"
+        f"<tr><td style='padding:4px 16px 4px 0;color:#6b7280'>Loaded</td><td style='padding:4px 0'>{loaded}</td></tr>"
+        "<tr><td style='padding:4px 16px 4px 0;color:#6b7280'>Source</td><td style='padding:4px 0'>emsCharts (automatic)</td></tr>"
+        "</table>"
+        f"{btn}"
+        f"<p style='font-size:12px;color:#9ca3af;margin:28px 0 0'>You're receiving this because automatic "
+        f"emsCharts data delivery is enabled for {label}. &mdash; Mullen Analytics &amp; Data Solutions</p>"
+        "</div>"
+    )
+    subject = f"{agency} dashboard updated — new data loaded" if agency else "Your Mullen Analytics dashboard was updated"
+    for to in recipients:
+        try:
+            asyncio.run(send_email(to, subject, html))
+        except Exception as exc:  # noqa: BLE001
+            logger.info("emscharts ingest: update email to %s skipped: %s", to, exc)
 
 
 def _alert_failure(upload_id: str, reason: str) -> None:
