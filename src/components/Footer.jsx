@@ -15,6 +15,11 @@ const WHO_WE_SERVE = [
   { label: 'Biomedical Research', href: '/biomedical-research' },
 ];
 
+const TOOLS = [
+  { label: 'Revenue Checker', href: '/revenue-checker' },
+  { label: 'Profit Calculator', href: '/profit-calculator' },
+];
+
 const COMPANY = [
   { label: 'Capabilities', href: '/capabilities' },
   { label: 'Products', href: '/products' },
@@ -42,7 +47,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#040e1c] border-t border-white/[0.07]">
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5 mb-12">
 
           {/* Brand */}
           <div>
@@ -85,6 +90,16 @@ export default function Footer() {
             <p className={heading}>Company</p>
             <div className="flex flex-col gap-3">
               {COMPANY.map(({ label, href }) => (
+                <Link key={href} href={href} className={footerLink}>{label}</Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Free Tools */}
+          <div>
+            <p className={heading}>Free Tools</p>
+            <div className="flex flex-col gap-3">
+              {TOOLS.map(({ label, href }) => (
                 <Link key={href} href={href} className={footerLink}>{label}</Link>
               ))}
             </div>
