@@ -132,6 +132,12 @@ async def ingest_export(
 ):
     """Receive a scheduled emsCharts CSV, store it as an SBEMS upload, clean in the background."""
     _check_auth(creds)
+    # Log what emsCharts actually sent — invaluable for validating the first delivery.
+    logger.info(
+        "emscharts ingest: %s %s content-type=%r content-length=%s path_filename=%r",
+        request.method, request.url.path, request.headers.get("content-type"),
+        request.headers.get("content-length"), path_filename,
+    )
     client_uuid = _client_uuid()
 
     filename, contents = await _extract_csv(request)
