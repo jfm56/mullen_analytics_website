@@ -9,6 +9,7 @@ import WeatherTrafficForecast from '@/components/WeatherTrafficForecast';
 import IftOutlook from '@/components/IftOutlook';
 import PageTabs from '@/components/ui/PageTabs';
 import GeographicHeatMap from '@/components/GeographicHeatMap';
+import StagingRecommender from '@/components/StagingRecommender';
 import EmergencyTransportOutlook from '@/components/EmergencyTransportOutlook';
 import MvaHotspots from '@/components/MvaHotspots';
 import DateRangeCompare from '@/components/DateRangeCompare';
@@ -618,6 +619,7 @@ export default function PortalDashboardPage() {
             )}
             {dashTab === 'geographic' && (
               <div className="space-y-5">
+                <StagingRecommender combined />
                 <GeographicHeatMap combined />
                 <MvaHotspots combined />
               </div>
@@ -678,6 +680,7 @@ export default function PortalDashboardPage() {
 
         {dashTab === 'geographic' && (
           <div className="space-y-5">
+            <StagingRecommender uploadId={selectedId} />
             <GeographicHeatMap uploadId={selectedId} />
             <MvaHotspots uploadId={selectedId} />
           </div>
