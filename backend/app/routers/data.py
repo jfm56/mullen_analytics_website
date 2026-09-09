@@ -624,6 +624,25 @@ async def get_upload_geographic(
     return get_geographic_dashboard(upload, db)
 
 
+@router.get("/uploads/{upload_id}/staging")
+async def get_upload_staging(
+    upload_id: UUID,
+    time_block: Optional[str] = None,
+    season: Optional[str] = None,
+    weather: Optional[str] = None,
+    units: int = 3,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Recommended ambulance staging locations for the given (or current) conditions."""
+    upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    _assert_upload_access(db, upload, current_user)
+    from ..services.ems_staging_service import recommend_staging
+    return recommend_staging(upload, db, time_block=time_block, season=season, weather=weather, units=units)
+
+
 # ============================================================================
 # GET /api/data/uploads/{upload_id}/response-time-risk
 # ============================================================================
@@ -1386,6 +1405,25 @@ async def get_combined_geographic(
         return {"available": False, "reason": "No combined data available."}
     from ..services.ems_geographic_service import get_geographic_dashboard
     return get_geographic_dashboard(None, db, df=df, overrides={})
+
+
+@router.get("/combined-dashboard/staging")
+async def get_combined_staging(
+    request: Request,
+    time_block: Optional[str] = None,
+    season: Optional[str] = None,
+    weather: Optional[str] = None,
+    units: int = 3,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Recommended ambulance staging locations over the pooled data."""
+    df = _combined_working_df(request, current_user, db)
+    if df is None:
+        return {"available": False, "reason": "No combined data available."}
+    from ..services.ems_staging_service import recommend_staging
+    return recommend_staging(None, db, df=df, overrides={}, time_block=time_block,
+                             season=season, weather=weather, units=units)
 
 
 @router.get("/combined-dashboard/mva-hotspots")
