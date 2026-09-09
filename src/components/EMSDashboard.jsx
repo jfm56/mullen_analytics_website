@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   BarChart as RBarChart, Bar, LineChart as RLineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -900,6 +900,10 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
   const [compareOpen, setCompareOpen]         = useState(false);
   const [mappingOpen, setMappingOpen]         = useState(false);
   const [filterKey, setFilterKey]             = useState(0);
+  // Default the dashboard to the last month of data (see effect below).
+  const [defaultResolved, setDefaultResolved] = useState(false);
+  const [cleared, setCleared]                 = useState(false);
+  const defaultStartedRef                     = useRef(false);
   const hasFilters = uploadId != null || !!filterApply;
 
   const handleFilterApply = useCallback(async (filters) => {
@@ -919,6 +923,8 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
 
   const handleClearFilters = useCallback(() => {
     setFilteredMetrics(null);   // drop the filtered view -> show the full dataset
+    setCleared(true);           // don't re-seed the last-month default into the bar
+    setDefaultResolved(true);   // ensure the full dataset renders (not the loading state)
     setFilterKey(k => k + 1);    // remount the filter bar so its inputs reset to empty
   }, []);
 
@@ -926,6 +932,35 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
     setMappingOpen(false);
     onRefresh?.();
   }, [onRefresh]);
+
+  // The most recent ~month of data (ending at the latest dispatch date), used as
+  // the dashboard's default view. Derived from the full metrics' by-day series.
+  const defaultRange = useMemo(() => {
+    const byDay = metrics?.call_volume?.by_day;
+    if (!byDay || !byDay.length) return null;
+    const end = String(byDay[byDay.length - 1].date || '').slice(0, 10);
+    const [y, m, d] = end.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCMonth(dt.getUTCMonth() - 1);
+    return [dt.toISOString().slice(0, 10), end];
+  }, [metrics]);
+
+  // On first load, default the view to the last month of data (once).
+  useEffect(() => {
+    if (defaultStartedRef.current) return;
+    if (!hasFilters) return;                       // filtering must be wired up
+    if (!defaultRange) { setDefaultResolved(true); return; }  // no dates -> show full
+    defaultStartedRef.current = true;
+    (async () => {
+      await handleFilterApply({
+        units: [], municipalities: [], call_types: [],
+        exclude_interfacility: false, emergency_only: false,
+        date_range: defaultRange,
+      });
+      setDefaultResolved(true);
+    })();
+  }, [hasFilters, defaultRange, handleFilterApply]);
 
   if (!metrics) return (
     <div className="space-y-3 p-6 text-center">
@@ -978,13 +1013,16 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
 
       {hasFilters && (
         <DashboardFilterBar key={filterKey} uploadId={uploadId} onFilterApply={handleFilterApply}
-          onCompareOpen={uploadId ? () => setCompareOpen(true) : null} loadOptions={filterOptions} />
+          onCompareOpen={uploadId ? () => setCompareOpen(true) : null} loadOptions={filterOptions}
+          initialFilters={!cleared && defaultRange ? { date_range: defaultRange } : {}} />
       )}
       {filterLoading && (
         <div className="text-xs text-blue-500 animate-pulse px-1">Applying filters…</div>
       )}
 
-      {showFiltered ? (
+      {(hasFilters && !defaultResolved && !filteredMetrics) ? (
+        <div className="py-16 text-center text-sm text-blue-500 animate-pulse">Loading the last month of data…</div>
+      ) : showFiltered ? (
         (filteredMetrics.error || filteredMetrics.empty) ? (
           <FilteredMetricsView metrics={filteredMetrics} dataDateRange={dataDateRange} onClearFilters={handleClearFilters} />
         ) : (
