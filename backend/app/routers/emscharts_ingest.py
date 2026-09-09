@@ -51,9 +51,11 @@ _INGEST_USER = os.getenv("EMSCHARTS_INGEST_USER") or ""
 _INGEST_PASSWORD = os.getenv("EMSCHARTS_INGEST_PASSWORD") or ""
 _SBEMS_CLIENT_ID = os.getenv("EMSCHARTS_SBEMS_CLIENT_ID") or ""
 _ALERT_TO = os.getenv("ADMIN_EMAIL") or os.getenv("CONTACT_EMAIL") or "jmullen@mullenanalytics.com"
-# Email a "dashboard updated" notice to the admin + the client on each successful
-# ingest. Set EMSCHARTS_NOTIFY_UPDATES=0 to turn these off.
+# Email a "dashboard updated" notice on each successful ingest. Goes to the admin
+# only by default; set EMSCHARTS_NOTIFY_CLIENT=1 to also email the client.
+# Set EMSCHARTS_NOTIFY_UPDATES=0 to turn the notices off entirely.
 _NOTIFY_UPDATES = os.getenv("EMSCHARTS_NOTIFY_UPDATES", "1").strip().lower() not in ("0", "false", "no", "off", "")
+_NOTIFY_CLIENT = os.getenv("EMSCHARTS_NOTIFY_CLIENT", "0").strip().lower() in ("1", "true", "yes", "on")
 
 _DISPOSITION_FILENAME = re.compile(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?', re.IGNORECASE)
 
@@ -294,18 +296,23 @@ def _process_upload(upload_id: str) -> None:
             upload_id, stats.get("row_count_original"), stats.get("row_count_cleaned"),
         )
 
-        # Notify the admin + the client that the dashboard has fresh data.
+        # Notify that the dashboard has fresh data — admin only by default
+        # (set EMSCHARTS_NOTIFY_CLIENT=1 to also email the client).
         if _NOTIFY_UPDATES:
             try:
                 client = db.query(User).filter(User.id == upload.client_id).first()
                 agency = None
                 if client and client.profile:
                     agency = (client.profile.company or client.profile.full_name or "").strip() or None
+                candidates = [_ALERT_TO]
+                if _NOTIFY_CLIENT and client and client.email:
+                    candidates.append(client.email)
                 recipients: list[str] = []
-                for addr in (_ALERT_TO, (client.email if client else None)):
+                for addr in candidates:
                     addr = (addr or "").strip()
                     if addr and addr.lower() not in {r.lower() for r in recipients}:
                         recipients.append(addr)
+                logger.info("emscharts ingest: sending update email to %s", recipients)
                 _notify_update(recipients, agency, upload, stats)
             except Exception as exc:  # noqa: BLE001
                 logger.info("emscharts ingest: update notification skipped: %s", exc)
@@ -359,9 +366,10 @@ def _notify_update(recipients: list, agency: Optional[str], upload: DataUpload, 
     subject = f"{agency} dashboard updated — new data loaded" if agency else "Your Mullen Analytics dashboard was updated"
     for to in recipients:
         try:
-            asyncio.run(send_email(to, subject, html))
+            sent = asyncio.run(send_email(to, subject, html))
+            logger.info("emscharts ingest: update email to %s -> sent=%s", to, sent)
         except Exception as exc:  # noqa: BLE001
-            logger.info("emscharts ingest: update email to %s skipped: %s", to, exc)
+            logger.info("emscharts ingest: update email to %s failed: %s", to, exc)
 
 
 def _alert_failure(upload_id: str, reason: str) -> None:
