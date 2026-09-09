@@ -128,6 +128,53 @@ def ingest_healthcheck(creds: Optional[HTTPBasicCredentials] = Depends(security)
     }
 
 
+@router.get("/selftest-email")
+async def selftest_email(creds: Optional[HTTPBasicCredentials] = Depends(security)):
+    """Diagnostic: call SendGrid directly and return the real result (status + error).
+
+    Auth-gated; sends a single test email to the admin address only. Used to debug
+    why 'dashboard updated' emails aren't arriving. Safe to remove once resolved.
+    """
+    import httpx
+    _check_auth(creds)
+    api_key = getattr(settings, "sendgrid_api_key", "") or ""
+    from_email = getattr(settings, "smtp_from_email", "") or ""
+    from_name = getattr(settings, "smtp_from_name", "") or ""
+    out = {
+        "configured": bool(api_key and from_email),
+        "api_key_present": bool(api_key),
+        "api_key_len": len(api_key),
+        "from_email": from_email,
+        "from_name": from_name,
+        "to": _ALERT_TO,
+    }
+    if not out["configured"]:
+        out["note"] = "SENDGRID_API_KEY or SMTP_FROM_EMAIL is empty at runtime."
+        return out
+    payload = {
+        "personalizations": [{"to": [{"email": _ALERT_TO}]}],
+        "from": {"email": from_email, "name": from_name},
+        "subject": "emsCharts ingest — email self-test",
+        "content": [{"type": "text/html",
+                     "value": "<p>Self-test from the emsCharts ingest endpoint. "
+                              "If you received this, SendGrid delivery works.</p>"}],
+    }
+    try:
+        async with httpx.AsyncClient() as c:
+            r = await c.post(
+                "https://api.sendgrid.com/v3/mail/send",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json=payload, timeout=15,
+            )
+        out["status_code"] = r.status_code
+        out["sent"] = 200 <= r.status_code < 300
+        out["response_body"] = (r.text or "")[:600]
+    except Exception as exc:  # noqa: BLE001
+        out["sent"] = False
+        out["error"] = str(exc)[:600]
+    return out
+
+
 @router.api_route("/ingest", methods=["POST", "PUT"])
 @router.api_route("/ingest/{path_filename:path}", methods=["POST", "PUT"])
 async def ingest_export(
