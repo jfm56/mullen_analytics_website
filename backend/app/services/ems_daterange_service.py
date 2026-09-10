@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -25,6 +26,33 @@ from .ems_analytics_service import compute_ems_metrics, detect_column, detect_ma
 from .ems_filter_service import _load_cleaned_df
 
 logger = logging.getLogger(__name__)
+
+# Cache the pooled + de-duped DataFrame so a single dashboard session (which fires
+# many combined endpoints across tabs) doesn't re-decompress + re-parse every CSV
+# and re-run the dedup on each call. Keyed on the client's upload set + each
+# upload's clean-state signature, so it refreshes automatically when a dataset is
+# added, removed, or re-cleaned. Bounded to keep memory in check on small dynos.
+_POOL_CACHE: "OrderedDict[tuple, tuple]" = OrderedDict()
+_POOL_CACHE_MAX = 3
+# Computed full-combined dashboard (unfiltered) — the Overview base load hits this
+# on every open. Same invalidation key as the pool cache. Small (a metrics dict).
+_DASH_CACHE: "OrderedDict[tuple, dict]" = OrderedDict()
+_DASH_CACHE_MAX = 3
+
+
+def _pool_cache_key(uploads: List[DataUpload]) -> tuple:
+    return tuple(sorted(
+        (str(u.id), str(getattr(u, "updated_at", "") or ""), int(u.row_count_cleaned or 0))
+        for u in uploads
+    ))
+
+
+def _cache_pool(key: tuple, result: tuple) -> tuple:
+    _POOL_CACHE[key] = result
+    _POOL_CACHE.move_to_end(key)
+    while len(_POOL_CACHE) > _POOL_CACHE_MAX:
+        _POOL_CACHE.popitem(last=False)
+    return result
 
 def _norm(c: str) -> str:
     return str(c).strip().lower()
@@ -231,15 +259,24 @@ def _pool(uploads: List[DataUpload], db):
 
 def _pooled_deduped(uploads: List[DataUpload], db):
     """Pool + drop overlapping duplicate unit-responses. Returns (pooled_df|None, meta).
-    pooled_df keeps the __source_file column; callers drop it before metrics."""
+    pooled_df keeps the __source_file column; callers drop it before metrics.
+
+    Cached per (upload set + clean-state); callers always copy (via .drop(...) or a
+    filter) before mutating, so returning the shared frame is safe."""
+    key = _pool_cache_key(uploads)
+    cached = _POOL_CACHE.get(key)
+    if cached is not None:
+        _POOL_CACHE.move_to_end(key)
+        return cached
+
     pooled, used, skipped = _pool(uploads, db)
     if pooled is None:
-        return None, {
+        return _cache_pool(key, (None, {
             "files_combined": 0, "files_total": len(uploads),
             "files_skipped": len(skipped), "skipped_files": skipped,
             "rows_pooled": 0, "rows_used": 0, "deduped": 0,
             "date_min": None, "date_max": None, "files": [],
-        }
+        }))
     rows_pooled = len(pooled)
     deduped = 0
     if len(used) > 1:
@@ -253,7 +290,7 @@ def _pooled_deduped(uploads: List[DataUpload], db):
         "rows_pooled": rows_pooled, "rows_used": int(len(pooled)), "deduped": deduped,
         "date_min": pmin, "date_max": pmax, "files": used,
     }
-    return pooled, meta
+    return _cache_pool(key, (pooled, meta))
 
 
 def get_combined_df(uploads: List[DataUpload], db):
@@ -268,7 +305,13 @@ def get_combined_df(uploads: List[DataUpload], db):
 def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
     """Pool every cleaned upload with a recognizable call id into ONE dashboard.
     Overlapping records are collapsed on the natural key; call volume counts unique
-    incident ids so overlaps never double-count."""
+    incident ids so overlaps never double-count. Cached per upload-state."""
+    key = _pool_cache_key(uploads)
+    hit = _DASH_CACHE.get(key)
+    if hit is not None:
+        _DASH_CACHE.move_to_end(key)
+        return hit
+
     pooled, meta = _pooled_deduped(uploads, db)
     if pooled is None:
         return {"error": "No cleaned data with a recognizable call id to combine.", "pool": meta}
@@ -276,7 +319,12 @@ def combined_dashboard(uploads: List[DataUpload], db) -> Dict[str, Any]:
     metrics = _metrics_for(body, "Combined - all datasets")
     if not metrics:
         return {"error": "Could not compute combined metrics.", "pool": meta}
-    return {"metrics": metrics, "generated_at": None, "pool": meta}
+    result = {"metrics": metrics, "generated_at": None, "pool": meta}
+    _DASH_CACHE[key] = result
+    _DASH_CACHE.move_to_end(key)
+    while len(_DASH_CACHE) > _DASH_CACHE_MAX:
+        _DASH_CACHE.popitem(last=False)
+    return result
 
 
 def combined_dashboard_filtered(uploads: List[DataUpload], db, filters: Dict[str, Any]) -> Dict[str, Any]:
