@@ -16,6 +16,7 @@ const WHO_WE_SERVE = [
 ];
 
 const TOOLS = [
+  { label: 'Free Assessments', href: '/free-assessments' },
   { label: 'Revenue Checker', href: '/revenue-checker' },
   { label: 'Profit Calculator', href: '/profit-calculator' },
 ];
@@ -97,7 +98,7 @@ export default function Footer() {
 
           {/* Free Tools */}
           <div>
-            <p className={heading}>Free Tools</p>
+            <p className={heading}>Free</p>
             <div className="flex flex-col gap-3">
               {TOOLS.map(({ label, href }) => (
                 <Link key={href} href={href} className={footerLink}>{label}</Link>

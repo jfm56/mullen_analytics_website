@@ -29,6 +29,8 @@ _NOTIFY_TO = os.getenv("ADMIN_EMAIL") or os.getenv("CONTACT_EMAIL") or "jmullen@
 _TOOLS = {
     "revenue_checker": "Inbound - revenue checker",
     "profit_calculator": "Inbound - profit calculator",
+    "assessment_business": "Inbound - Free Business Profit & Data Checkup",
+    "assessment_ems": "Inbound - Free EMS Data & Performance Assessment",
 }
 
 

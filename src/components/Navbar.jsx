@@ -38,11 +38,14 @@ const NAV = [
   },
   { label: 'Case Studies', href: '/portfolio' },
   {
-    label: 'Free Tools',
+    label: 'Free',
     items: [
-      { label: 'Revenue Checker', href: '/revenue-checker', desc: 'Spot trends in 12 months of revenue' },
+      { label: 'Business Profit & Data Checkup', href: '/free-assessments/business', desc: 'Free assessment — find where you’re losing money' },
+      { label: 'EMS Data & Performance Assessment', href: '/free-assessments/ems', desc: 'Free assessment for EMS & fire agencies' },
+      { label: 'Revenue Checker', href: '/revenue-checker', desc: 'Instant read on 12 months of revenue' },
       { label: 'Profit Calculator', href: '/profit-calculator', desc: 'Margins, break-even & startup payback' },
     ],
+    footer: { label: 'All free assessments & tools', href: '/free-assessments' },
   },
   { label: 'Pricing', href: '/pricing' },
   {
