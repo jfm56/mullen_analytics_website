@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight, LineChart, Calculator } from 'lucide-react';
+import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight, LineChart, Calculator, Building2, Ambulance } from 'lucide-react';
 import ScheduleCTA from '@/components/ScheduleCTA';
 
 // NOTE: The marketing home uses a FIXED palette (always light, with navy bands),
@@ -151,6 +151,42 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* FREE ASSESSMENTS — priority lead-gen offer, high on the page */}
+      <section className="py-16 bg-blue-600">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Free · No obligation</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Free Assessments</h2>
+            <p className="text-base text-blue-100 max-w-2xl mx-auto leading-relaxed">
+              We review a sample of the data you already collect and hand you 3–5 specific opportunities — no new
+              software, no obligation.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link href="/free-assessments/business"
+              className="group bg-white rounded-2xl p-7 shadow-lg hover:-translate-y-1 transition-all duration-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-xl bg-blue-600/10 text-blue-700 flex items-center justify-center"><Building2 size={22} /></div>
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-600">For Businesses</p>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">Profit &amp; Data Checkup</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">Find where your business could be losing money — a 20–30 min consult plus a one-page Opportunity Report.</p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">Claim yours <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-1" /></span>
+            </Link>
+            <Link href="/free-assessments/ems"
+              className="group bg-white rounded-2xl p-7 shadow-lg hover:-translate-y-1 transition-all duration-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-xl bg-blue-600/10 text-blue-700 flex items-center justify-center"><Ambulance size={22} /></div>
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-600">For EMS &amp; Fire Agencies</p>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">EMS Data &amp; Performance Assessment</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">Turn your CAD/ePCR data into operational intelligence — a de-identified sample plus a 30-min findings review.</p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">Claim yours <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-1" /></span>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* WHAT WE DO — white section, tinted cards */}
       <section className="py-24 bg-white">
