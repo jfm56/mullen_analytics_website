@@ -1,6 +1,7 @@
 'use client';
 
 import { trackStartTrial, trackRequestDemo } from '../../lib/conversions';
+import PrivateSecureAI from '@/components/PrivateSecureAI';
 
 const APP_URL = 'https://app.mullenanalytics.com';
 // New prospects start a trial; existing clients launch straight into the app's
@@ -248,6 +249,8 @@ export default function EmsQaPage() {
           </div>
         </div>
       </section>
+
+      <PrivateSecureAI domain="your EMS QA/QI data" />
 
       {/* FINAL CTA */}
       <section className="py-28" style={{ background: 'linear-gradient(135deg, #071829 0%, #0D2240 50%, #071829 100%)' }}>
