@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import PrivateSecureAI from '@/components/PrivateSecureAI';
 import {
   BarChart3, BrainCircuit, Zap, Check, ShieldCheck, Siren, BadgeCheck, Lock,
 } from 'lucide-react';
@@ -186,6 +187,8 @@ export default function HealthcarePage() {
           </div>
         </div>
       </section>
+
+      <PrivateSecureAI domain="protected health information" />
 
       {/* FINAL CTA — navy band */}
       <section className="py-28 bg-navy-deep">
