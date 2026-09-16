@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Minus, Sparkles, Lock, Send, CheckCircle2 } from 'lucide-react';
+import { logToolUsage } from '@/lib/toolUsage';
 
 const num = (s) => {
   const n = parseFloat(String(s ?? '').replace(/[^0-9.\-]/g, ''));
@@ -51,10 +52,12 @@ export default function ProfitCalculatorPage() {
     const paybackMonths = startup > 0 && profit > 0 ? startup / profit : null;
     const dir = profit > 1 ? 'up' : profit < -1 ? 'down' : 'flat';
 
-    setResult({
+    const r = {
       price, units, varPer, fixed, startup, revenue, varTotal, cmPerUnit, profit,
       grossMargin, netMargin, breakevenUnits, paybackMonths, annualProfit: profit * 12, dir,
-    });
+    };
+    setResult(r);
+    logToolUsage('profit_calculator', { ...v }, r);
     setTimeout(() => document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
@@ -73,7 +76,7 @@ export default function ProfitCalculatorPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-white leading-[1.1] tracking-tight mb-5">Business Profit Calculator</h1>
           <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
             Plug in your pricing, costs, and sales volume to see your real monthly profit, margins, break-even point,
-            and how fast your startup investment pays back. Runs in your browser — nothing is sent unless you ask for help.
+            and how fast your startup investment pays back. Free — no signup.
           </p>
         </div>
       </section>
@@ -118,7 +121,7 @@ export default function ProfitCalculatorPage() {
 
           <div className="flex items-center gap-4 pt-1">
             <button onClick={calc} className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base transition-colors">Calculate profit</button>
-            <span className="flex items-center gap-1.5 text-xs text-slate-400"><Lock size={12} /> Calculated in your browser.</span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400"><Lock size={12} /> Calculated instantly. Entries saved anonymously to improve the tool — no name unless you message us.</span>
           </div>
           {result?.error && <p className="text-sm text-amber-700">{result.error}</p>}
         </div>

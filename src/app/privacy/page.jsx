@@ -59,6 +59,10 @@ export default function PrivacyPolicyPage() {
           spend on a page, your approximate region (from your browser&rsquo;s time zone), and your device type. It does
           <strong> not</strong> store your IP address (your IP is used only momentarily to rate-limit abuse), and it does
           not attempt to identify you personally.</p>
+          <p><strong>Interactive tools.</strong> Our free calculators (such as the Revenue Checker and Profit Calculator)
+          record the figures you enter and the results they produce so we can understand how the tools are used and
+          improve them. This is stored under an anonymous identifier and is <strong>not</strong> linked to your name or
+          email unless you separately choose to message us through the tool. Your IP address is not stored.</p>
         </Section>
 
         <Section id="cookies" title="2. Cookies &amp; Similar Technologies">

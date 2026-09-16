@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Minus, Activity, CalendarRange, Sparkles, Lock, Send, CheckCircle2 } from 'lucide-react';
+import { logToolUsage } from '@/lib/toolUsage';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function monthLabels() {
@@ -85,10 +86,12 @@ export default function RevenueCheckerPage() {
 
     const dir = trendPct > 3 ? 'up' : trendPct < -3 ? 'down' : 'flat';
 
-    setResult({
+    const r = {
       y, total, avg, bestI, worstI, trendPct, momentumPct, yoyPct,
       forecast, nextQuarter, steady, cv, dir,
-    });
+    };
+    setResult(r);
+    logToolUsage('revenue_checker', { monthly: y, prior_year: py }, r);
     setTimeout(() => document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
@@ -109,7 +112,7 @@ export default function RevenueCheckerPage() {
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
             Enter your last 12 months of revenue and get an instant read on growth, trend, momentum, and what next
-            quarter looks like — plus plain-English takeaways. Your numbers stay in your browser.
+            quarter looks like — plus plain-English takeaways. Free — no signup.
           </p>
         </div>
       </section>
@@ -159,7 +162,7 @@ export default function RevenueCheckerPage() {
           </div>
 
           <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400">
-            <Lock size={12} /> Calculated entirely in your browser — nothing is sent anywhere unless you ask for help below.
+            <Lock size={12} /> Calculated instantly in your browser. We save your entries anonymously to improve this tool — no name or email unless you message us.
           </p>
           {result?.error && <p className="mt-3 text-sm text-amber-700">{result.error}</p>}
         </div>
