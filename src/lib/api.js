@@ -139,6 +139,12 @@ export const plans = {
   list: () => apiFetch('/api/plans'),
 };
 
+// Public marketing-tool usage (Revenue Checker / Profit Calculator) — admin read.
+export const tools = {
+  adminUsage: (tool, limit = 300) =>
+    apiFetch(`/api/tools/admin/usage?limit=${limit}${tool ? `&tool=${encodeURIComponent(tool)}` : ''}`),
+};
+
 /**
  * Billing — self-serve subscription checkout (Stripe)
  */
