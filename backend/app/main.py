@@ -15,6 +15,7 @@ from .routers import plans as plans_router
 from .routers import analytics_ingest, analytics_admin, leads_admin, outreach as outreach_router, revenue_checker
 from .routers import emscharts_ingest
 from .routers import tools as tools_router
+from .routers import dispatch as dispatch_router
 from .models import tool_usage as _tool_usage_models  # noqa: F401 – register with Base
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
 from .models import error_log as _error_log_models  # noqa: F401 – register with Base
@@ -83,6 +84,7 @@ app.include_router(outreach_router.router, prefix="/api")    # lead outreach + p
 app.include_router(revenue_checker.router, prefix="/api")    # public revenue-checker lead capture
 app.include_router(emscharts_ingest.router, prefix="/api")   # emsCharts scheduled-export auto-ingest webhook
 app.include_router(tools_router.router, prefix="/api")       # public tool usage capture + admin read
+app.include_router(dispatch_router.router, prefix="/api")    # AI dispatch resource predictor (R&D)
 
 
 @app.on_event("startup")
