@@ -145,6 +145,11 @@ export const tools = {
     apiFetch(`/api/tools/admin/usage?limit=${limit}${tool ? `&tool=${encodeURIComponent(tool)}` : ''}`),
 };
 
+// AI-assisted dispatch resource predictor (R&D prototype).
+export const dispatch = {
+  predict: (text) => apiFetch('/api/dispatch/predict', { method: 'POST', body: JSON.stringify({ text }) }),
+};
+
 /**
  * Billing — self-serve subscription checkout (Stripe)
  */

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   Home, Upload, BarChart3, Search, FileText,
   MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
-  Activity, ExternalLink, MailWarning,
+  Activity, ExternalLink, MailWarning, Siren,
 } from 'lucide-react';
 import { auth, emsQa } from '@/lib/api';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
@@ -16,6 +16,7 @@ const NAV = [
   { label: 'Home',          href: '/portal',                Icon: Home },
   { label: 'Upload Data',   href: '/portal/uploads',        Icon: Upload },
   { label: 'Dashboards',    href: '/portal/dashboard',      Icon: BarChart3 },
+  { label: 'Dispatch AI',   href: '/portal/dispatch-predictor', Icon: Siren },
   { label: 'Data Explorer', href: '/portal/data-explorer',  Icon: Search },
   { label: 'Reports',       href: '/portal/reports',        Icon: FileText },
   { label: 'Messages',      href: '/portal/messages',       Icon: MessageSquare },
