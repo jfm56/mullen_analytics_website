@@ -241,10 +241,14 @@ def apply_dashboard_filters(
             parsed = pd.to_datetime(df[date_col], errors="coerce")
             start = pd.to_datetime(date_range[0], errors="coerce")
             end   = pd.to_datetime(date_range[1], errors="coerce")
+            mask = pd.Series(True, index=df.index)
             if pd.notna(start):
-                df = df[parsed >= start]
+                mask &= parsed >= start.normalize()
             if pd.notna(end):
-                df = df[pd.to_datetime(df[date_col], errors="coerce") <= end]
+                # Inclusive of the entire end day: "To 8/31" must cover 8/31 00:00–23:59,
+                # so compare against the START of the next day (< end+1d), not 8/31 00:00.
+                mask &= parsed < (end.normalize() + pd.Timedelta(days=1))
+            df = df[mask]
             applied.append(f"date_range: {date_range[0]} – {date_range[1]}")
 
     # Units (case-insensitive)
