@@ -51,7 +51,7 @@ function MultiSelect({ label, options, selected, onChange, placeholder }) {
             <input
               type="text"
               placeholder={`Search ${placeholder || label}…`}
-              className="w-full text-xs border rounded px-2 py-1 focus:outline-none"
+              className="w-full text-xs border rounded px-2 py-1 text-gray-900 placeholder:text-gray-400 focus:outline-none"
               autoFocus
               onChange={e => {
                 const el = e.target.closest('.absolute').querySelector('.opts');
@@ -63,7 +63,7 @@ function MultiSelect({ label, options, selected, onChange, placeholder }) {
             {options.length === 0
               ? <p className="text-xs text-gray-400 px-2 py-1">No options</p>
               : options.map(opt => (
-                <label key={opt} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 cursor-pointer rounded text-xs">
+                <label key={opt} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 cursor-pointer rounded text-xs text-gray-800">
                   <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} className="flex-shrink-0" />
                   <span className="truncate">{opt}</span>
                 </label>
@@ -158,11 +158,11 @@ export default function DashboardFilterBar({ uploadId, onFilterApply, onCompareO
           <span className="text-xs text-gray-400">From</span>
           <input type="date" value={filters.date_range?.[0] || ''}
             onChange={e => setF('date_range', [e.target.value, filters.date_range?.[1] || ''])}
-            className="text-xs border-none focus:outline-none w-32" />
+            className="text-xs text-gray-900 border-none focus:outline-none w-32" />
           <span className="text-xs text-gray-400">–</span>
           <input type="date" value={filters.date_range?.[1] || ''}
             onChange={e => setF('date_range', [filters.date_range?.[0] || '', e.target.value])}
-            className="text-xs border-none focus:outline-none w-32" />
+            className="text-xs text-gray-900 border-none focus:outline-none w-32" />
           {(filters.date_range?.[0] || filters.date_range?.[1]) && (
             <button type="button" onClick={() => setF('date_range', null)}
               className="text-gray-300 hover:text-red-500 text-sm leading-none ml-0.5" title="Clear dates">×</button>
