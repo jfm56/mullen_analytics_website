@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
@@ -162,6 +163,15 @@ def _get_ignored_columns(upload_id: UUID, db: Session) -> set:
 # Dashboard filter options
 # ---------------------------------------------------------------------------
 
+_MUNI_PREFIX_RE = re.compile(r"^\s*\d+\s*-\s*")
+
+
+def _norm_muni(s: Any) -> str:
+    """Strip the leading grid-code prefix ('46 -Town of Clinton' -> 'Town of Clinton')
+    so old and new export formats compare/dedupe as the same municipality."""
+    return _MUNI_PREFIX_RE.sub("", str(s)).strip()
+
+
 def build_filter_options(upload: DataUpload, db: Session) -> Dict[str, Any]:
     """Return distinct values for each filterable dimension."""
     df = _load_cleaned_df(upload, db)
@@ -196,7 +206,7 @@ def build_filter_options(upload: DataUpload, db: Session) -> Dict[str, Any]:
 
     return {
         "units":               _unique(unit_col),
-        "municipalities":      _unique(muni_col),
+        "municipalities":      sorted({_norm_muni(v) for v in _unique(muni_col)} - {""}),
         "call_types":          _unique(type_col),
         "date_range":          date_range,
         "interfacility_count": ift_count,
@@ -266,13 +276,14 @@ def apply_dashboard_filters(
             df = df[df[unit_col].astype(str).str.strip().str.lower().isin(lower_units)]
             applied.append(f"units: {units}")
 
-    # Municipalities (case-insensitive)
+    # Municipalities (case-insensitive; prefix-agnostic so "45 -Town of Clinton"
+    # and the normalized "Town of Clinton" both match — mixed export formats).
     munis = filters.get("municipalities")
     if munis:
         muni_col = detect_mapped_column(df, "municipality", overrides)
         if muni_col:
-            lower_munis = {m.lower() for m in munis}
-            df = df[df[muni_col].astype(str).str.strip().str.lower().isin(lower_munis)]
+            wanted = {_norm_muni(m).lower() for m in munis}
+            df = df[df[muni_col].astype(str).map(lambda s: _norm_muni(s).lower()).isin(wanted)]
             applied.append(f"municipalities: {munis}")
 
     # Call types (case-insensitive)

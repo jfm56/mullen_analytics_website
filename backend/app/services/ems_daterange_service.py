@@ -369,15 +369,20 @@ def combined_filter_options(uploads: List[DataUpload], db) -> Dict[str, Any]:
         vals = body[col].astype(str).str.strip().replace("", pd.NA).dropna().unique()
         return sorted(str(v) for v in vals if str(v) not in ("nan", "None", ""))[:300]
 
+    from .ems_filter_service import _norm_muni
     date_col = detect_mapped_column(body, "incident_date", None)
+    dt_col = detect_mapped_column(body, "dispatch_time", None)
     dr: Dict[str, str] = {}
-    if date_col:
-        p = pd.to_datetime(body[date_col], errors="coerce").dropna()
-        if len(p):
-            dr = {"min": str(p.min().date()), "max": str(p.max().date())}
+    parsed = pd.to_datetime(body[date_col], errors="coerce") if date_col else pd.Series(pd.NaT, index=body.index)
+    if dt_col:
+        parsed = parsed.fillna(pd.to_datetime(body[dt_col], errors="coerce"))
+    p = parsed.dropna()
+    if len(p):
+        dr = {"min": str(p.min().date()), "max": str(p.max().date())}
+    munis = sorted({_norm_muni(m) for m in uniq("municipality")} - {""})[:300]
     return {
         "units": uniq("unit"),
-        "municipalities": uniq("municipality"),
+        "municipalities": munis,
         "call_types": uniq("incident_type"),
         "date_range": dr,
         "interfacility_count": int(detect_interfacility_rows(body).sum()),

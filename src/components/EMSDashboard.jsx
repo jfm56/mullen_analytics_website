@@ -933,17 +933,26 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
     onRefresh?.();
   }, [onRefresh]);
 
-  // The most recent ~month of data (ending at the latest dispatch date), used as
-  // the dashboard's default view. Derived from the full metrics' by-day series.
+  // Default the view to the full PRIOR calendar month (e.g. in September → all of
+  // August 1–31). If the data doesn't reach that month, fall back to the trailing
+  // ~month ending at the latest dispatch date so the default is never empty.
   const defaultRange = useMemo(() => {
     const byDay = metrics?.call_volume?.by_day;
-    if (!byDay || !byDay.length) return null;
-    const end = String(byDay[byDay.length - 1].date || '').slice(0, 10);
-    const [y, m, d] = end.split('-').map(Number);
-    if (!y || !m || !d) return null;
-    const dt = new Date(Date.UTC(y, m - 1, d));
-    dt.setUTCMonth(dt.getUTCMonth() - 1);
-    return [dt.toISOString().slice(0, 10), end];
+    const maxDate = (byDay && byDay.length) ? String(byDay[byDay.length - 1].date || '').slice(0, 10) : null;
+    const now = new Date();
+    const firstThis = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const firstPrev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+    const prevStart = firstPrev.toISOString().slice(0, 10);
+    const prevEnd = new Date(firstThis.getTime() - 86400000).toISOString().slice(0, 10);
+    if (maxDate && maxDate < prevStart) {
+      const [y, m, d] = maxDate.split('-').map(Number);
+      if (y && m && d) {
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        dt.setUTCMonth(dt.getUTCMonth() - 1);
+        return [dt.toISOString().slice(0, 10), maxDate];
+      }
+    }
+    return [prevStart, prevEnd];
   }, [metrics]);
 
   // On first load, default the view to the last month of data (once).
