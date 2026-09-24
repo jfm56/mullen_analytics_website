@@ -17,6 +17,7 @@ import {
   BarChart2, Activity, Users, Shield, FileText,
   ChevronDown, ChevronUp, Lightbulb, Download,
   Settings, Calendar, Database, Zap,
+  Building2, ClipboardCheck,
 } from 'lucide-react';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -436,6 +437,9 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
   const rt  = metrics.response_times   || {};
   const up  = metrics.unit_performance || {};
   const dq  = metrics.data_quality     || {};
+  const tr   = metrics.transport         || {};
+  const disp = metrics.dispositions      || {};
+  const comp = metrics.data_completeness || {};
 
   const insights = generateInsights(metrics);
   const { score: dqScore, issues: dqIssues } = computeDQScore(dq, sum);
@@ -704,6 +708,90 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
           <p className="text-xs text-gray-400 italic">{up.reason || 'Unit data not available.'}</p>
         )}
       </Section>
+
+      {/* ── Transport & Destinations ── */}
+      {tr.available && (
+        <Section id="transport" title="Transport & Destinations" icon={Building2} defaultOpen={true}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard icon={Activity} label="Transport Rate"
+                value={tr.transport_rate_pct != null ? `${tr.transport_rate_pct}%` : '—'} color="purple"
+                tooltip="Share of calls that ended in a patient transport to a facility." />
+              <StatCard label="Transported"   value={fmt(tr.transported_calls)} color="blue" />
+              <StatCard label="Non-Transport" value={fmt(tr.non_transport_calls)} color="gray"
+                tooltip="Refusals, cancellations, treat/no-transport, standby, public assist." />
+              <StatCard label="Facilities Used" value={tr.by_hospital?.length ?? '—'} color="indigo" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-gray-600">Receiving Hospitals</p>
+                  <ExportCSVButton data={tr.by_hospital} filename="transport_by_hospital.csv" />
+                </div>
+                <HBarChart data={tr.by_hospital} color={CHART.primary} top={10} />
+              </div>
+              {Array.isArray(tr.by_destination_basis) && tr.by_destination_basis.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-2">Why This Destination</p>
+                  <HBarChart data={tr.by_destination_basis} color={CHART.good} top={8} />
+                </div>
+              )}
+            </div>
+            {tr.mileage && (
+              <p className="text-xs text-gray-500">
+                Transport mileage recorded on {fmt(tr.mileage.records_with_mileage)} calls · median{' '}
+                {tr.mileage.median_miles} mi · {fmt(tr.mileage.total_miles)} total miles.
+              </p>
+            )}
+            {Array.isArray(disp.by_disposition) && disp.by_disposition.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-gray-600">Call Dispositions</p>
+                  <ExportCSVButton data={disp.by_disposition} filename="dispositions.csv" />
+                </div>
+                <HBarChart data={disp.by_disposition} color={CHART.warn} top={10} />
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* ── Response Documentation (completeness / QA-QI) ── */}
+      {comp.available && (
+        <Section id="completeness" title="Response Documentation" icon={ClipboardCheck}
+          defaultOpen={(comp.enroute_documented_pct != null && comp.enroute_documented_pct < 95) ||
+                       (comp.arrival_documented_pct != null && comp.arrival_documented_pct < 95)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard label="Arrival Documented"
+                value={comp.arrival_documented_pct != null ? `${comp.arrival_documented_pct}%` : '—'}
+                color={comp.arrival_documented_pct == null ? 'gray' : comp.arrival_documented_pct >= 95 ? 'green' : 'orange'}
+                tooltip="Calls with an on-scene arrival time recorded (true cancellations excluded)." />
+              <StatCard label="En Route Documented"
+                value={comp.enroute_documented_pct != null ? `${comp.enroute_documented_pct}%` : '—'}
+                color={comp.enroute_documented_pct == null ? 'gray' : comp.enroute_documented_pct >= 95 ? 'green' : 'orange'}
+                tooltip="Calls with an en route time recorded (true cancellations excluded)." />
+              <StatCard label="Cancelled Calls" value={fmt(comp.cancelled_calls)} color="gray"
+                tooltip="Calls cancelled before completion — no arrival expected, so they don't count as documentation gaps." />
+              <StatCard label="Total Calls" value={fmt(comp.total_calls)} color="blue" />
+            </div>
+            {((comp.missing_arrival_gap || 0) > 0 || (comp.missing_enroute_gap || 0) > 0) && (
+              <div className="text-xs text-gray-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5 space-y-1">
+                <p className="font-semibold text-amber-800">Documentation gaps — real responses missing a time</p>
+                {(comp.missing_arrival_gap || 0) > 0 && (
+                  <p>• <strong>{comp.missing_arrival_gap}</strong> call{comp.missing_arrival_gap === 1 ? '' : 's'} missing an <strong>arrival</strong> time
+                    {comp.missing_arrival_cancelled ? <> ({comp.missing_arrival_cancelled} true cancellation{comp.missing_arrival_cancelled === 1 ? '' : 's'} excluded)</> : null}.</p>
+                )}
+                {(comp.missing_enroute_gap || 0) > 0 && (
+                  <p>• <strong>{comp.missing_enroute_gap}</strong> call{comp.missing_enroute_gap === 1 ? '' : 's'} missing an <strong>en route</strong> time
+                    {comp.missing_enroute_cancelled ? <> ({comp.missing_enroute_cancelled} true cancellation{comp.missing_enroute_cancelled === 1 ? '' : 's'} excluded)</> : null}.</p>
+                )}
+                <p className="text-amber-700/80">A unit responded but the time wasn't logged — a concrete crew-documentation (QA/QI) target. Cancellations are separated so they don't distort response-time metrics.</p>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* ── Data Quality ── */}
       <Section id="data_quality" title="Data Quality" icon={Shield}
