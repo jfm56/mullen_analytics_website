@@ -516,12 +516,51 @@ def _transport_destinations(df: pd.DataFrame, overrides: Optional[Dict] = None) 
     return out
 
 
+_OUTCOME_ORDER = ["Transported", "Cancelled", "Standby", "Refused", "Other"]
+
+
+def _outcome_categories(df: pd.DataFrame, disp_col: Optional[str], canc_col: Optional[str]) -> pd.Series:
+    """Classify each call into a coarse outcome bucket. Priority is
+    Transported > Cancelled so 'Transported By BLS, ALS Cancelled' (a completed
+    BLS transport where only the ALS tier was cancelled) counts as a transport,
+    not a cancellation. Order applied so the highest-priority match wins."""
+    n = len(df)
+    s = (df[disp_col].astype(str).str.strip().str.lower()
+         if disp_col else pd.Series([""] * n, index=df.index))
+    cancelled_flag = pd.Series(False, index=df.index)
+    if canc_col:
+        cancelled_flag = (df[canc_col].astype(str).str.strip()
+                          .replace({"nan": "", "none": "", "nat": ""}).replace("", pd.NA).notna())
+    transported = s.str.match(r"transport")        # "Transported By ..."
+    standby     = s.str.match(r"stand\s*by")        # "Standby", "Stand By ..."
+    refused     = s.str.contains("refus", na=False)  # "Patient Refused Care", "Treated, Refused Transport"
+    cancelled   = s.str.match(r"cancel") | cancelled_flag
+    cat = pd.Series("Other", index=df.index)
+    cat = cat.mask(refused, "Refused")
+    cat = cat.mask(cancelled, "Cancelled")
+    cat = cat.mask(standby, "Standby")
+    cat = cat.mask(transported, "Transported")      # highest priority — applied last
+    return cat
+
+
 def _dispositions(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str, Any]:
-    """Call-outcome mix (transported BLS/ALS, refusal, cancelled, treat/no-transport)."""
+    """Call-outcome mix: a coarse Transported / Cancelled / Standby / Refused / Other
+    rollup for at-a-glance counts, plus the detailed disposition breakdown."""
     disp_col = detect_mapped_column(df, "disposition", overrides)
-    if not disp_col:
+    canc_col = detect_mapped_column(df, "cancelled_time", overrides)
+    if not disp_col and not canc_col:
         return {"available": False, "reason": "no disposition column found — set column mapping"}
-    return {"available": True, "by_disposition": _value_counts_top(df[disp_col], top=15)}
+    total = int(len(df))
+    out: Dict[str, Any] = {"available": True, "total_calls": total}
+    if disp_col:
+        out["by_disposition"] = _value_counts_top(df[disp_col], top=15)
+    vc = _outcome_categories(df, disp_col, canc_col).value_counts()
+    out["summary"] = [
+        {"label": k, "count": int(vc.get(k, 0)),
+         "share": round(100.0 * int(vc.get(k, 0)) / total, 1) if total else 0.0}
+        for k in _OUTCOME_ORDER if int(vc.get(k, 0)) > 0
+    ]
+    return out
 
 
 def _data_completeness(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str, Any]:

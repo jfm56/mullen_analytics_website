@@ -17,8 +17,13 @@ import {
   BarChart2, Activity, Users, Shield, FileText,
   ChevronDown, ChevronUp, Lightbulb, Download,
   Settings, Calendar, Database, Zap,
-  Building2, ClipboardCheck,
+  Building2, ClipboardCheck, PieChart,
 } from 'lucide-react';
+
+// Outcome-bucket → StatCard color (Call Outcomes rollup)
+const OUTCOME_COLORS = {
+  Transported: 'green', Cancelled: 'red', Standby: 'indigo', Refused: 'orange', Other: 'gray',
+};
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n) => n != null ? Number(n).toLocaleString() : '—';
@@ -743,13 +748,31 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
                 {tr.mileage.median_miles} mi · {fmt(tr.mileage.total_miles)} total miles.
               </p>
             )}
+          </div>
+        </Section>
+      )}
+
+      {/* ── Call Outcomes ── */}
+      {disp.available && ((Array.isArray(disp.summary) && disp.summary.length > 0) ||
+        (Array.isArray(disp.by_disposition) && disp.by_disposition.length > 0)) && (
+        <Section id="outcomes" title="Call Outcomes" icon={PieChart} defaultOpen={true}>
+          <div className="space-y-4">
+            {Array.isArray(disp.summary) && disp.summary.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {disp.summary.map(c => (
+                  <StatCard key={c.label} label={c.label} value={fmt(c.count)}
+                    sub={c.share != null ? `${c.share}% of calls` : undefined}
+                    color={OUTCOME_COLORS[c.label] || 'gray'} />
+                ))}
+              </div>
+            )}
             {Array.isArray(disp.by_disposition) && disp.by_disposition.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-600">Call Dispositions</p>
+                  <p className="text-xs font-medium text-gray-600">Detailed dispositions</p>
                   <ExportCSVButton data={disp.by_disposition} filename="dispositions.csv" />
                 </div>
-                <HBarChart data={disp.by_disposition} color={CHART.warn} top={10} />
+                <HBarChart data={disp.by_disposition} color={CHART.warn} top={12} />
               </div>
             )}
           </div>
