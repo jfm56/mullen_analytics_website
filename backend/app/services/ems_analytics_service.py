@@ -664,6 +664,29 @@ def _data_quality(df: pd.DataFrame, cleaning_stats: Dict[str, Any]) -> Dict[str,
 # Public entry point
 # ---------------------------------------------------------------------------
 
+# Non-transport apparatus / mutual-aid unit-name markers — excluded from the BLS
+# ambulance run count (a rescue truck, engine, or another agency's mutual-aid unit
+# rolling on a call is not one of this agency's ambulance runs).
+_NON_AMBULANCE_UNIT = (
+    r"rescue|mutual\s*aid|engine|chief|command|squad|fire|brush|tanker|ladder|"
+    r"utility|marine|boat|atv|gator|qrs|truck|quint|water|dive|hazmat|drone"
+)
+
+
+def _bls_ambulance_runs(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Optional[int]:
+    """Count unit-responses made by transport ambulances — every run EXCEPT
+    non-transport apparatus (rescue / engine / command) and mutual-aid units. For a
+    BLS agency this is the BLS ambulance run count, landing between unique incidents
+    and total unit responses."""
+    unit_col = detect_mapped_column(df, "unit", overrides)
+    if not unit_col:
+        return None
+    u = df[unit_col].astype(str).str.strip()
+    valid = u.replace({"nan": "", "None": "", "NaN": ""}).str.len().gt(0)
+    non_amb = u.str.contains(_NON_AMBULANCE_UNIT, case=False, regex=True, na=False)
+    return int((valid & ~non_amb).sum())
+
+
 def _collapse_to_incidents(df: pd.DataFrame, overrides: Optional[Dict] = None) -> pd.DataFrame:
     """Reduce multi-unit incidents to ONE row each, keeping the FIRST dispatched
     unit that actually responded: among an incident's rows, prefer those with an
@@ -759,6 +782,7 @@ def compute_ems_metrics(
         "incident_collapse": {
             "unit_responses": int(len(df)),
             "incidents":      int(len(df_inc)),
+            "bls_ambulance_runs": _bls_ambulance_runs(df, overrides),
             "basis":          "first dispatched & responding unit per incident",
         },
     }
