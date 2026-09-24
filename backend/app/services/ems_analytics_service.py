@@ -60,11 +60,18 @@ _ALIASES: Dict[str, List[str]] = {
                         "unitname", "unit_name", "truck", "vehicle"],
     "incident_type":   ["incident_type", "call_type", "nature", "complaint",
                         "type_of_service_ihscene", "calltype", "type_of_call",
-                        "incident_nature", "call_nature"],
+                        "incident_nature", "call_nature", "dispatched_as"],
     "municipality":    ["municipality", "city", "township", "zone",
-                        "scene_grid", "vehicle_grid",
+                        "scene_grid", "scene_grid_lookup_table", "vehicle_grid",
                         "response_area", "district", "area", "town"],
-    "service_type":    ["service_type", "type_of_service_ihscene", "call_type"],
+    "service_type":    ["service_type", "type_of_service_ihscene", "call_type",
+                        "ambulance_transport_code"],
+    "disposition":     ["disposition", "disposition_outcome", "transport_disposition",
+                        "patient_disposition", "outcome"],
+    # Scene GPS (new emsCharts export) — enables point-level / cross-street analysis.
+    "scene_gps":       ["scene_location_gps", "scene_gps", "scene_lat_long", "scene_latitude_longitude"],
+    "dispatch_gps":    ["dispatch_location_gps", "dispatch_gps", "vehicle_gps"],
+    "destination_gps": ["destination_location_gps", "destination_gps"],
     "patient_category": ["patient_category", "patient_type", "chief_complaint"],
     "response_mode":   ["response_mode", "mode_of_response", "lights_and_siren"],
     "priority":        ["priority", "dispatch_priority_codetable", "dispatch_priority", "acuity"],
@@ -95,6 +102,60 @@ def detect_mapped_column(
         if mapped == "":
             return None  # explicit "Not Available"
     return detect_column(df, field)
+
+
+# Curated equivalences for pooling datasets whose exports name the SAME concept
+# differently (e.g. old files use "scene_grid", the newer emsCharts export uses
+# "scene_grid_lookup_table"). We coalesce ONLY genuinely-equivalent columns —
+# deliberately NOT vehicle_grid / zone / area, which are distinct fields that can
+# co-exist in a single dataset. Each list is priority order (first non-null wins).
+_COALESCE: Dict[str, List[str]] = {
+    "incident_number": ["incident_number", "incident_no", "incident_nbr", "call_number",
+                        "call_no", "incident_id", "dispatch_id", "dispatch_no",
+                        "cad_incident_number", "cad_number", "cad_id"],
+    "municipality":    ["municipality", "township", "city", "town", "scene_grid",
+                        "scene_grid_lookup_table"],
+    "incident_type":   ["incident_type", "call_type", "nature", "complaint",
+                        "type_of_service_ihscene", "dispatched_as"],
+    "unit":            ["unit", "unit_id", "responding_unit", "apparatus",
+                        "unit_name", "unitname", "truck"],
+    "disposition":     ["disposition", "disposition_outcome", "transport_disposition"],
+    "incident_date":   ["incident_date", "call_date", "dispatch_date", "date_dispatched", "calldate"],
+    "dispatch_time":   ["dispatch_time", "dispatched", "time_dispatched", "dispatch_dt", "dt_disp"],
+    "enroute_time":    ["enroute_time", "en_route_time", "enroute", "date_enroute", "dt_enroute"],
+    "arrival_time":    ["arrival_time", "arrived", "on_scene_time", "date_arrived", "dt_arrive"],
+    "scene_gps":       ["scene_location_gps", "scene_gps"],
+}
+
+
+def coalesce_aliases(df: pd.DataFrame) -> pd.DataFrame:
+    """Merge equivalent-but-differently-named columns into one canonical-named column.
+
+    Lets datasets that use different column names for the same concept pool and
+    filter as one (a row from any format lands in the canonical column). No-op when
+    only one matching column is present, so single-schema data is unaffected.
+    """
+    if df is None or df.empty:
+        return df
+    cols_lower = {c.lower(): c for c in df.columns}
+    _BLANK = {"", "nan", "nat", "none", "null"}
+    for field, names in _COALESCE.items():
+        present = [cols_lower[n] for n in names if n in cols_lower]
+        if not present:
+            continue
+        series = df[present[0]]
+        for c in present[1:]:
+            invalid = series.isna() | series.astype(str).str.strip().str.lower().isin(_BLANK)
+            series = series.where(~invalid, df[c])
+        df[field] = series
+
+    # Normalize municipality values so old ("46 -Town of Clinton") and new
+    # ("Town of Clinton") formats match when filtering/grouping — strip the leading
+    # grid-code prefix and trim, mirroring the geographic service's _normalize_location.
+    if "municipality" in df.columns:
+        s = df["municipality"].astype("string").str.replace(r"^\s*\d+\s*-\s*", "", regex=True).str.strip()
+        df["municipality"] = s.replace({"": pd.NA, "nan": pd.NA, "none": pd.NA, "null": pd.NA})
+    return df
 
 
 def _safe(value: Any) -> Any:
