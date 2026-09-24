@@ -10,17 +10,122 @@ rates with a graceful fallback when a weather cell is too sparse to trust.
 """
 import logging
 import math
+import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
+import httpx
 import pandas as pd
 
 from . import weather_service
+from .ems_analytics_service import detect_mapped_column
 from .ems_column_mapping_service import get_column_overrides
 from .ems_geographic_service import _centroid_for, _detect_location_column, _normalize_location
 from .ems_predictive_service import _load_df, _resolve_dt
 
 logger = logging.getLogger(__name__)
+
+# ── Scene GPS (newer emsCharts export) → point-level, cross-street staging ──
+_LATLNG_RE = re.compile(r"(-?\d{1,3}(?:\.\d+)?)\s*[,;| ]\s*(-?\d{1,3}(?:\.\d+)?)")
+_GEO_CACHE: Dict[Tuple[float, float], str] = {}
+_MIN_GPS_POINTS = 8   # need a reasonable cloud of points before clustering is meaningful
+
+
+def _parse_latlng(val: Any) -> Optional[Tuple[float, float]]:
+    """Parse a scene-GPS cell into (lat, lng). Tolerant of 'lat,lng', 'lat lng',
+    '(lat, lng)'. Service area is NJ, so we auto-correct lng,lat order and reject
+    (0,0) / out-of-range junk."""
+    if val is None:
+        return None
+    s = str(val).strip()
+    if not s or s.lower() in ("nan", "none", "null"):
+        return None
+    m = _LATLNG_RE.search(s)
+    if not m:
+        return None
+    try:
+        a, b = float(m.group(1)), float(m.group(2))
+    except (TypeError, ValueError):
+        return None
+    # NJ service area ~ lat 38–43, lng -77 to -72; swap if given lng,lat.
+    if (-77 <= a <= -72) and (38 <= b <= 43):
+        a, b = b, a
+    lat, lng = a, b
+    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        return None
+    if abs(lat) < 0.01 and abs(lng) < 0.01:
+        return None
+    return (lat, lng)
+
+
+def _reverse_geocode(lat: float, lng: float) -> str:
+    """Nearest road + town for a coordinate, via OpenStreetMap Nominatim. Cached and
+    fail-soft: returns the coordinate string if lookup is unavailable."""
+    key = (round(lat, 4), round(lng, 4))
+    if key in _GEO_CACHE:
+        return _GEO_CACHE[key]
+    label = None
+    try:
+        r = httpx.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": lat, "lon": lng, "format": "jsonv2", "zoom": 17, "addressdetails": 1},
+            headers={"User-Agent": "MullenAnalytics/1.0 (jmullen@mullenanalytics.com)"},
+            timeout=8.0,
+        )
+        r.raise_for_status()
+        a = (r.json() or {}).get("address", {}) or {}
+        road = a.get("road") or a.get("pedestrian") or a.get("footway") or a.get("cycleway")
+        town = (a.get("town") or a.get("city") or a.get("village") or a.get("hamlet")
+                or a.get("municipality") or a.get("township") or a.get("suburb"))
+        if road and town:
+            label = f"{road}, {town}"
+        else:
+            label = road or town
+    except Exception as exc:  # noqa: BLE001
+        logger.info("staging reverse-geocode failed (%s,%s): %s", lat, lng, exc)
+    if not label:
+        label = f"{lat:.4f}, {lng:.4f}"
+    _GEO_CACHE[key] = label
+    return label
+
+
+def _gps_staging(pts_df: pd.DataFrame, units: int) -> List[Dict[str, Any]]:
+    """Demand-weighted k-means over scene coordinates → up to `units` optimal staging
+    points (each cluster center minimizes travel to its calls), reverse-geocoded to
+    the nearest road. Returns [] if clustering isn't possible."""
+    try:
+        import numpy as np
+        from sklearn.cluster import KMeans
+    except Exception:  # noqa: BLE001
+        return []
+    pts = pts_df[["gps_lat", "gps_lng"]].to_numpy(dtype=float)
+    n = len(pts)
+    if n == 0:
+        return []
+    k = max(1, min(int(units), n))
+    lat0 = float(pts[:, 0].mean())
+    scale = math.cos(math.radians(lat0)) or 1.0     # keep east–west distance true when clustering
+    X = np.column_stack([pts[:, 0], pts[:, 1] * scale])
+    try:
+        km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("staging: KMeans failed: %s", exc)
+        return []
+    centers = km.cluster_centers_.astype(float).copy()
+    centers[:, 1] = centers[:, 1] / scale
+    labels = km.labels_
+    clusters = [(float(centers[i][0]), float(centers[i][1]), int((labels == i).sum()))
+                for i in range(k) if int((labels == i).sum()) > 0]
+    clusters.sort(key=lambda c: -c[2])
+    out: List[Dict[str, Any]] = []
+    for rank, (clat, clng, cnt) in enumerate(clusters, 1):
+        label = _reverse_geocode(clat, clng)
+        out.append({
+            "rank": rank, "lat": round(clat, 5), "lng": round(clng, 5),
+            "label": label, "area": label, "calls": cnt,
+            "share": round(cnt / n * 100, 1), "mapped": True,
+        })
+    return out
 
 # Time-of-day blocks (24h). Coarse enough to stay dense per municipality.
 TIME_BLOCKS = [
@@ -123,6 +228,16 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
     if work.empty:
         return {"available": False, "reason": "No calls have both a location and a timestamp."}
 
+    # Scene GPS (newer export) → point-level staging; absent on older uploads.
+    gps_col = detect_mapped_column(df, "scene_gps", overrides)
+    if gps_col and gps_col in df.columns:
+        gps = df.loc[work.index, gps_col].map(_parse_latlng)
+        work["gps_lat"] = gps.map(lambda p: p[0] if p else None)
+        work["gps_lng"] = gps.map(lambda p: p[1] if p else None)
+    else:
+        work["gps_lat"] = None
+        work["gps_lng"] = None
+
     work["block"] = work["dt"].dt.hour.map(_BLOCK_OF_HOUR)
     work["season"] = work["dt"].dt.month.map(_SEASON_OF_MONTH)
     work["date"] = work["dt"].dt.strftime("%Y-%m-%d")
@@ -200,24 +315,34 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
             "mapped": centroid is not None,
         })
 
-    # ── coverage-aware greedy top-K over mappable municipalities ──
-    pool = [a for a in areas if a["mapped"]]
+    # ── Recommended posts: cluster real scene GPS when available (point-level /
+    # cross-street), else coverage-aware greedy over municipality centroids ──
+    method = "centroid"
     recommended: List[Dict[str, Any]] = []
-    chosen_pts: List[tuple] = []
-    while pool and len(recommended) < units:
-        best, best_score = None, -1.0
-        for a in pool:
-            if chosen_pts:
-                dnear = min(_haversine_km((a["lat"], a["lng"]), c) for c in chosen_pts)
-                overlap = math.exp(-dnear / _D0_KM)         # ~1 if very close, →0 far apart
-            else:
-                overlap = 0.0
-            score = a["share"] * (0.45 + 0.55 * (1 - overlap))   # demand, weighted for coverage
-            if score > best_score:
-                best, best_score = a, score
-        recommended.append({**best, "rank": len(recommended) + 1})
-        chosen_pts.append((best["lat"], best["lng"]))
-        pool = [a for a in pool if a["area"] != best["area"]]
+    gps_pts = subset[["gps_lat", "gps_lng"]].dropna()
+    gps_count = int(len(gps_pts))
+    if gps_count >= max(_MIN_GPS_POINTS, units):
+        recommended = _gps_staging(gps_pts, units)
+        if recommended:
+            method = "gps"
+
+    if not recommended:
+        pool = [a for a in areas if a["mapped"]]
+        chosen_pts: List[tuple] = []
+        while pool and len(recommended) < units:
+            best, best_score = None, -1.0
+            for a in pool:
+                if chosen_pts:
+                    dnear = min(_haversine_km((a["lat"], a["lng"]), c) for c in chosen_pts)
+                    overlap = math.exp(-dnear / _D0_KM)     # ~1 if very close, →0 far apart
+                else:
+                    overlap = 0.0
+                score = a["share"] * (0.45 + 0.55 * (1 - overlap))   # demand, weighted for coverage
+                if score > best_score:
+                    best, best_score = a, score
+            recommended.append({**best, "rank": len(recommended) + 1})
+            chosen_pts.append((best["lat"], best["lng"]))
+            pool = [a for a in pool if a["area"] != best["area"]]
 
     return {
         "available": True,
@@ -234,6 +359,8 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
         "expected_calls_per_day": round(total / n_days, 1),
         "window_days": n_days,
         "sample_calls": total,
+        "method": method,
+        "gps_points": gps_count,
         "weather_available": weather_available,
         "note": note,
         "center": {"lat": clat, "lng": clng},
