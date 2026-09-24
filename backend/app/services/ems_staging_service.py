@@ -406,6 +406,11 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
     # the static municipal centroid — so posts sit where calls actually happen
     # whenever coordinates exist, regardless of the selected season/weather.
     demand_centroids = _area_demand_centroids(work)
+    # How many pooled calls carry usable referring/scene coordinates (across ALL
+    # conditions) — surfaced so the UI can tell whether a coordinate-bearing export
+    # is actually loaded vs. showing municipal centroids for lack of coordinates.
+    coordinate_calls = (int(work[["gps_lat", "gps_lng"]].dropna().shape[0])
+                        if "gps_lat" in work.columns else 0)
 
     areas: List[Dict[str, Any]] = []
     for area, cnt in counts.items():
@@ -491,6 +496,7 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
         ),
         "gps_points": gps_count,
         "gps_excluded": gps_excluded,
+        "coordinate_calls": coordinate_calls,
         "weather_available": weather_available,
         "note": note,
         "center": {"lat": clat, "lng": clng},
