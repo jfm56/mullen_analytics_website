@@ -144,6 +144,9 @@ export default function StagingRecommender({ uploadId, combined = false }) {
               <span className="font-semibold text-blue-700">{sel.block_label} · {sel.season_label} · {sel.weather_label}</span>
               {data.expected_calls_per_day != null && <span className="text-blue-600">~{data.expected_calls_per_day} calls expected</span>}
               <span className="text-gray-500">{Number(data.sample_calls || 0).toLocaleString()} matching historical calls</span>
+              {data.method === 'gps' && (
+                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold"><Navigation size={11} /> GPS-optimized · {Number(data.gps_points || 0).toLocaleString()} located calls</span>
+              )}
               {sel.weather && sel.weather !== 'any' && !sel.weather_used && (
                 <span className="text-amber-600">weather pattern too sparse — using typical</span>
               )}
@@ -168,7 +171,9 @@ export default function StagingRecommender({ uploadId, combined = false }) {
               {rec.length > 0 && (
                 <p className="text-[11px] text-gray-400 flex items-start gap-1 pt-1">
                   <MapPin size={11} className="mt-0.5 flex-shrink-0" />
-                  Ranked by predicted demand and spread for coverage. Locations are municipality centroids.
+                  {data.method === 'gps'
+                    ? 'Optimal staging points clustered from the actual call GPS — nearest road shown; a human sets the exact post.'
+                    : 'Ranked by predicted demand and spread for coverage. Locations are municipality centroids.'}
                 </p>
               )}
             </div>
