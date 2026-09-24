@@ -68,8 +68,17 @@ _ALIASES: Dict[str, List[str]] = {
                         "ambulance_transport_code"],
     "disposition":     ["disposition", "disposition_outcome", "transport_disposition",
                         "patient_disposition", "outcome"],
-    # Scene GPS (new emsCharts export) — enables point-level / cross-street analysis.
+    # Scene / referring GPS (new emsCharts export) — the incident (demand) location,
+    # enables point-level / cross-street staging. "Referring" is emsCharts' term for
+    # the scene / origin (vs "Receiving" = destination hospital). Both combined
+    # "lat,lng" columns and separate latitude/longitude columns are supported.
     "scene_gps":       ["scene_location_gps", "scene_gps", "scene_lat_long", "scene_latitude_longitude"],
+    "referring_gps":   ["referring_location_gps", "referring_gps", "referring_lat_long",
+                        "referring_latitude_longitude", "referring_gps_coordinates", "referring_coordinates"],
+    "scene_lat":       ["scene_latitude", "scene_lat"],
+    "scene_lng":       ["scene_longitude", "scene_lng", "scene_lon", "scene_long"],
+    "referring_lat":   ["referring_latitude", "referring_lat"],
+    "referring_lng":   ["referring_longitude", "referring_lng", "referring_lon", "referring_long"],
     "dispatch_gps":    ["dispatch_location_gps", "dispatch_gps", "vehicle_gps"],
     "destination_gps": ["destination_location_gps", "destination_gps"],
     "patient_category": ["patient_category", "patient_type", "chief_complaint"],

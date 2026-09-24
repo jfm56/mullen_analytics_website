@@ -58,6 +58,58 @@ def _parse_latlng(val: Any) -> Optional[Tuple[float, float]]:
     return (lat, lng)
 
 
+def _coerce_latlng(a: Any, b: Any) -> Optional[Tuple[float, float]]:
+    """Two SEPARATE latitude / longitude cells → validated (lat, lng). Same NJ
+    lng,lat auto-swap and junk rejection as _parse_latlng, for exports that ship
+    referring/scene coordinates in two columns rather than one 'lat,lng' string."""
+    try:
+        lat = float(str(a).strip())
+        lng = float(str(b).strip())
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(lat) or math.isnan(lng):
+        return None
+    if (-77 <= lat <= -72) and (38 <= lng <= 43):   # given as (lng, lat) → swap
+        lat, lng = lng, lat
+    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        return None
+    if abs(lat) < 0.01 and abs(lng) < 0.01:
+        return None
+    return (lat, lng)
+
+
+def _resolve_scene_points(df: pd.DataFrame, index, overrides: Optional[Dict]):
+    """Per-call incident (demand) coordinates for staging, from an explicit
+    scene/referring source ONLY — never dispatch (station) or destination
+    (hospital) GPS, which would bias posts toward quarters or the ED.
+
+    Handles both a combined 'lat,lng' column and separate latitude/longitude
+    columns, preferring scene, then referring. Returns (lat_series, lng_series,
+    source) aligned to *index*, or (None, None, None) when no usable source."""
+    # 1) combined "lat,lng" GPS column
+    for field, src in (("scene_gps", "scene"), ("referring_gps", "referring")):
+        col = detect_mapped_column(df, field, overrides)
+        if col and col in df.columns:
+            gps = df.loc[index, col].map(_parse_latlng)
+            lat = gps.map(lambda p: p[0] if p else None)
+            lng = gps.map(lambda p: p[1] if p else None)
+            if lat.notna().sum() > 0:
+                return lat, lng, src
+    # 2) separate latitude / longitude columns
+    for latf, lngf, src in (("scene_lat", "scene_lng", "scene"),
+                            ("referring_lat", "referring_lng", "referring")):
+        lat_col = detect_mapped_column(df, latf, overrides)
+        lng_col = detect_mapped_column(df, lngf, overrides)
+        if lat_col and lng_col and lat_col in df.columns and lng_col in df.columns:
+            pairs = [_coerce_latlng(a, b)
+                     for a, b in zip(df.loc[index, lat_col], df.loc[index, lng_col])]
+            lat = pd.Series([p[0] if p else None for p in pairs], index=index)
+            lng = pd.Series([p[1] if p else None for p in pairs], index=index)
+            if lat.notna().sum() > 0:
+                return lat, lng, src
+    return None, None, None
+
+
 def _reverse_geocode(lat: float, lng: float) -> str:
     """Nearest road + town for a coordinate, via OpenStreetMap Nominatim. Cached and
     fail-soft: returns the coordinate string if lookup is unavailable."""
@@ -254,15 +306,16 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
     if work.empty:
         return {"available": False, "reason": "No calls have both a location and a timestamp."}
 
-    # Scene GPS (newer export) → point-level staging; absent on older uploads.
-    gps_col = detect_mapped_column(df, "scene_gps", overrides)
-    if gps_col and gps_col in df.columns:
-        gps = df.loc[work.index, gps_col].map(_parse_latlng)
-        work["gps_lat"] = gps.map(lambda p: p[0] if p else None)
-        work["gps_lng"] = gps.map(lambda p: p[1] if p else None)
+    # Scene / referring GPS (newer export) → point-level staging on the incident
+    # (demand) location; absent on older uploads (falls back to municipality).
+    scene_lat, scene_lng, gps_source = _resolve_scene_points(df, work.index, overrides)
+    if scene_lat is not None:
+        work["gps_lat"] = scene_lat
+        work["gps_lng"] = scene_lng
     else:
         work["gps_lat"] = None
         work["gps_lng"] = None
+        gps_source = None
 
     work["block"] = work["dt"].dt.hour.map(_BLOCK_OF_HOUR)
     work["season"] = work["dt"].dt.month.map(_SEASON_OF_MONTH)
@@ -395,6 +448,7 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
         "window_days": n_days,
         "sample_calls": total,
         "method": method,
+        "gps_source": gps_source if method == "gps" else None,
         "gps_points": gps_count,
         "gps_excluded": gps_excluded,
         "weather_available": weather_available,
