@@ -731,9 +731,24 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-medium text-gray-600">Receiving Hospitals</p>
-                  <ExportCSVButton data={tr.by_hospital} filename="transport_by_hospital.csv" />
+                  {tr.by_hospital?.length > 0 && (
+                    <ExportCSVButton data={tr.by_hospital} filename="transport_by_hospital.csv" />
+                  )}
                 </div>
-                <HBarChart data={tr.by_hospital} color={CHART.primary} top={10} />
+                {tr.by_hospital?.length > 0 ? (
+                  <>
+                    <HBarChart data={tr.by_hospital} color={CHART.primary} top={10} />
+                    {tr.hospital_recorded_calls != null && tr.transported_calls > tr.hospital_recorded_calls && (
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        {fmt(tr.hospital_recorded_calls)} of {fmt(tr.transported_calls)} transports have a recorded receiving hospital.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">
+                    Receiving hospital not recorded for these calls — transport counts come from disposition.
+                  </p>
+                )}
               </div>
               {Array.isArray(tr.by_destination_basis) && tr.by_destination_basis.length > 0 && (
                 <div>
