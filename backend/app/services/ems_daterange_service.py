@@ -254,7 +254,13 @@ def _pool(uploads: List[DataUpload], db):
         used.append({"upload_id": str(up.id), "filename": up.original_filename, "rows": int(len(df))})
     if not dfs:
         return None, used, skipped
-    return pd.concat(dfs, ignore_index=True, sort=False), used, skipped
+    pooled = pd.concat(dfs, ignore_index=True, sort=False)
+    # Normalize equivalent-but-differently-named columns (old files use "scene_grid",
+    # the newer export uses "scene_grid_lookup_table", etc.) so mixed-format datasets
+    # pool + filter as one instead of NaN-ing each other's rows out.
+    from .ems_analytics_service import coalesce_aliases
+    pooled = coalesce_aliases(pooled)
+    return pooled, used, skipped
 
 
 def _pooled_deduped(uploads: List[DataUpload], db):

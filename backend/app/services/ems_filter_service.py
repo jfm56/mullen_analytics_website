@@ -237,8 +237,14 @@ def apply_dashboard_filters(
     date_range = filters.get("date_range")
     if date_range and len(date_range) == 2:
         date_col = detect_mapped_column(df, "incident_date", overrides)
-        if date_col:
-            parsed = pd.to_datetime(df[date_col], errors="coerce")
+        dt_col   = detect_mapped_column(df, "dispatch_time", overrides)
+        if date_col or dt_col:
+            # Prefer the incident date; fall back to dispatch time for rows/formats
+            # that don't carry a separate incident-date column, so no row is dropped
+            # just because its date lives under a different column name.
+            parsed = pd.to_datetime(df[date_col], errors="coerce") if date_col else pd.Series(pd.NaT, index=df.index)
+            if dt_col:
+                parsed = parsed.fillna(pd.to_datetime(df[dt_col], errors="coerce"))
             start = pd.to_datetime(date_range[0], errors="coerce")
             end   = pd.to_datetime(date_range[1], errors="coerce")
             mask = pd.Series(True, index=df.index)
