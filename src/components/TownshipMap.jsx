@@ -10,8 +10,10 @@ function radiusFor(count, max) {
   return minR + (maxR - minR) * Math.sqrt(count / max);
 }
 
-export default function TownshipMap({ center, points, color }) {
+export default function TownshipMap({ center, points, color, heatPoints }) {
   const max = points.reduce((m, p) => Math.max(m, p.call_count), 0);
+  const hp = Array.isArray(heatPoints) ? heatPoints : [];
+  const hmax = hp.reduce((m, p) => Math.max(m, p.weight || 1), 0) || 1;
   return (
     <MapContainer
       center={[center.lat, center.lng]}
@@ -23,6 +25,17 @@ export default function TownshipMap({ center, points, color }) {
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      {/* Referring-coordinate heat layer — actual call locations (under the volume circles) */}
+      {hp.map((p, i) => (
+        <CircleMarker
+          key={`h${i}`}
+          center={[p.lat, p.lng]}
+          radius={3 + 7 * Math.sqrt((p.weight || 1) / hmax)}
+          pathOptions={{ color: '#F97316', fillColor: '#F97316', fillOpacity: 0.30, weight: 0, stroke: false }}
+        >
+          <Tooltip>{`${p.weight || 1} call${(p.weight || 1) === 1 ? '' : 's'} here`}</Tooltip>
+        </CircleMarker>
+      ))}
       {points.map((p) => {
         const markerColor = color || TREND_COLOR[p.trend] || '#0EA5E9';
         return (

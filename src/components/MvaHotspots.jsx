@@ -100,7 +100,7 @@ export default function MvaHotspots({ uploadId, combined = false }) {
 
         {points.length > 0 && (
           <div>
-            <TownshipMap center={data.center} points={points} color={CHART.bad} />
+            <TownshipMap center={data.center} points={points} color={CHART.bad} heatPoints={data.heat_points} />
             <p className="text-[11px] text-gray-500 mt-2"><span className="font-medium text-gray-600">Circle size = collision volume.</span> Red = MVA concentration by township.</p>
           </div>
         )}
