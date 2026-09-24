@@ -480,19 +480,42 @@ def _transport_destinations(df: pd.DataFrame, overrides: Optional[Dict] = None) 
     receiving hospital and are reported as the non-transport share, so the rate
     isn't inflated. Runs on the incident-collapsed frame (one row per call)."""
     hosp_col = detect_mapped_column(df, "destination_hospital", overrides)
-    if not hosp_col:
-        return {"available": False, "reason": "no receiving-hospital column found — set column mapping"}
-    s = (df[hosp_col].astype(str).str.strip()
-         .replace({"nan": "", "None": "", "NaN": ""}).replace("", pd.NA))
+    disp_col = detect_mapped_column(df, "disposition", overrides)
+    canc_col = detect_mapped_column(df, "cancelled_time", overrides)
+    if not hosp_col and not disp_col:
+        return {"available": False,
+                "reason": "no receiving-hospital or disposition column found — set column mapping"}
     total = int(len(df))
-    transported = int(s.notna().sum())
+
+    # Transported count: disposition is authoritative — a call is transported even
+    # when the receiving-hospital field is left blank (many exports don't populate
+    # it). Only fall back to receiving-hospital presence when there's no disposition.
+    transported: Optional[int] = None
+    basis: Optional[str] = None
+    if disp_col:
+        transported = int((_outcome_categories(df, disp_col, canc_col) == "Transported").sum())
+        basis = "disposition"
+
+    hospitals: List[Dict[str, Any]] = []
+    hosp_recorded = 0
+    if hosp_col:
+        s = (df[hosp_col].astype(str).str.strip()
+             .replace({"nan": "", "None": "", "NaN": ""}).replace("", pd.NA))
+        hosp_recorded = int(s.notna().sum())
+        hospitals = _value_counts_top(s, top=15)
+        if transported is None:
+            transported, basis = hosp_recorded, "receiving_hospital"
+
+    transported = int(transported or 0)
     out: Dict[str, Any] = {
         "available": True,
         "total_calls": total,
         "transported_calls": transported,
         "non_transport_calls": int(total - transported),
         "transport_rate_pct": round(100.0 * transported / total, 1) if total else None,
-        "by_hospital": _value_counts_top(s, top=15),
+        "transported_basis": basis,
+        "hospital_recorded_calls": hosp_recorded,
+        "by_hospital": hospitals,
     }
     # Mileage — only surface when the column is actually populated (some exports
     # ship the column empty). Guards against a "0 miles" section on absent data.
