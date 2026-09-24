@@ -127,6 +127,32 @@ def _gps_staging(pts_df: pd.DataFrame, units: int) -> List[Dict[str, Any]]:
         })
     return out
 
+
+def _core_points(pts_df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
+    """Drop geographically far outlier calls (mutual aid / long-distance transports /
+    bad coordinates) so staging stays in the core response area, not dragged to a lone
+    distant call. Robust Tukey rule on distance from the median center, with a 12 km
+    floor so genuinely spread areas aren't over-trimmed. Returns (core_df, n_excluded)."""
+    try:
+        import numpy as np
+    except Exception:  # noqa: BLE001
+        return pts_df, 0
+    pts = pts_df[["gps_lat", "gps_lng"]].to_numpy(dtype=float)
+    if len(pts) < 6:
+        return pts_df, 0
+    clat, clng = float(np.median(pts[:, 0])), float(np.median(pts[:, 1]))
+    d = np.array([_haversine_km((p[0], p[1]), (clat, clng)) for p in pts])
+    q1, q3 = np.percentile(d, [25, 75])
+    # Keep everything within a generous max-staging radius (~40 km / 25 mi) OR within
+    # the data's own spread (Tukey) for agencies larger than that — whichever is more
+    # permissive. Only genuinely far-flung calls (distant mutual aid / transports) drop.
+    thresh = max(40.0, float(q3 + 1.5 * (q3 - q1)))
+    keep = d <= thresh
+    n_excl = int((~keep).sum())
+    if n_excl == 0 or int(keep.sum()) < 3:
+        return pts_df, 0
+    return pts_df[keep], n_excl
+
 # Time-of-day blocks (24h). Coarse enough to stay dense per municipality.
 TIME_BLOCKS = [
     ("overnight", "Overnight (12–6 AM)", range(0, 6)),
@@ -321,10 +347,13 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
     recommended: List[Dict[str, Any]] = []
     gps_pts = subset[["gps_lat", "gps_lng"]].dropna()
     gps_count = int(len(gps_pts))
+    gps_excluded = 0
     if gps_count >= max(_MIN_GPS_POINTS, units):
-        recommended = _gps_staging(gps_pts, units)
+        core, gps_excluded = _core_points(gps_pts)
+        recommended = _gps_staging(core, units)
         if recommended:
             method = "gps"
+            gps_count = int(len(core))
 
     if not recommended:
         pool = [a for a in areas if a["mapped"]]
@@ -344,6 +373,12 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
             chosen_pts.append((best["lat"], best["lng"]))
             pool = [a for a in pool if a["area"] != best["area"]]
 
+    if method == "gps" and gps_excluded > 0:
+        note = ((note + " ") if note else "") + (
+            f"{gps_excluded} call{'s' if gps_excluded != 1 else ''} far outside the core response area "
+            "(mutual aid / long-distance transport) excluded so staging stays in your coverage zone."
+        )
+
     return {
         "available": True,
         "recommended": recommended,
@@ -361,6 +396,7 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
         "sample_calls": total,
         "method": method,
         "gps_points": gps_count,
+        "gps_excluded": gps_excluded,
         "weather_available": weather_available,
         "note": note,
         "center": {"lat": clat, "lng": clng},
