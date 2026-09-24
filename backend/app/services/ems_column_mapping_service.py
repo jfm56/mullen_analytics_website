@@ -38,6 +38,7 @@ ANALYTICS_FIELDS: List[str] = [
     "patient_category",
     "response_mode",
     "priority",
+    "scene_gps",
 ]
 
 FIELD_LABELS: Dict[str, str] = {
@@ -56,6 +57,7 @@ FIELD_LABELS: Dict[str, str] = {
     "patient_category":     "Patient Category",
     "response_mode":        "Response Mode",
     "priority":             "Priority / Acuity",
+    "scene_gps":            "Scene / Referring GPS (staging map)",
 }
 
 # Candidate column names in preference order (EMSCharts-specific first)
@@ -119,6 +121,12 @@ AUTO_DETECT_RULES: Dict[str, List[str]] = {
     "priority": [
         "dispatch_priority_codetable", "priority", "dispatch_priority", "acuity",
     ],
+    # Incident (demand) coordinates for the staging map — the scene / "Referring"
+    # location, NOT dispatch (station) or destination (hospital) GPS.
+    "scene_gps": [
+        "scene_location_gps", "scene_gps", "referring_location_gps", "referring_gps",
+        "scene_lat_long", "referring_lat_long", "referring_coordinates",
+    ],
 }
 
 # Translation from analytics field → internal analytics-service field name
@@ -139,6 +147,7 @@ FIELD_TO_INTERNAL: Dict[str, str] = {
     "patient_category":     "patient_category",
     "response_mode":        "response_mode",
     "priority":             "priority",
+    "scene_gps":            "scene_gps",
 }
 
 
