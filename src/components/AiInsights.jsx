@@ -4,8 +4,13 @@ import {
   Sparkles, RefreshCw, AlertTriangle, Lightbulb, CheckCircle2, Info, ChevronDown, ChevronUp,
 } from 'lucide-react';
 
-async function apiFetch(path) {
-  const res = await fetch(`/api/proxy${path}`, { credentials: 'include' });
+async function apiSend(path, body) {
+  const res = await fetch(`/api/proxy${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || `HTTP ${res.status}`); }
   return res.json();
 }
@@ -32,7 +37,7 @@ function Shell({ children }) {
   );
 }
 
-export default function AiInsights({ uploadId, combined = false }) {
+export default function AiInsights({ uploadId, combined = false, filters = null }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,13 +49,20 @@ export default function AiInsights({ uploadId, combined = false }) {
     if (refresh) setRefreshing(true); else setLoading(true);
     setError('');
     const base = combined ? `/data/combined-dashboard/ai-insights` : `/data/uploads/${uploadId}/ai-insights`;
-    apiFetch(`${base}${refresh ? '?refresh=true' : ''}`)
+    apiSend(`${base}${refresh ? '?refresh=true' : ''}`, filters || {})
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => { setLoading(false); setRefreshing(false); });
-  }, [uploadId, combined]);
+  }, [uploadId, combined, filters]);
 
-  useEffect(() => { setData(null); load(false); }, [uploadId, combined, load]);
+  // Re-generate when the dataset OR the applied filters change (filters is lifted
+  // state, so referentially stable between applies). Debounced so the dashboard's
+  // initial default-month apply doesn't fire the LLM twice on load.
+  useEffect(() => {
+    setData(null);
+    const t = setTimeout(() => load(false), 350);
+    return () => clearTimeout(t);
+  }, [uploadId, combined, filters, load]);
 
   if (loading) return (
     <Shell>
@@ -97,12 +109,19 @@ export default function AiInsights({ uploadId, combined = false }) {
 
   return (
     <Shell>
-      <div className="px-5 pt-3 -mb-1 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[11px] text-gray-400">
-          {p.start && p.end ? `${p.start} → ${p.end}` : 'Current data'}
-          {p.days_of_history ? ` · ${p.days_of_history} days` : ''}
-          {data.cached ? ' · cached' : ''}
-        </p>
+      <div className="px-5 pt-3 -mb-1 flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-col gap-1 min-w-0">
+          <p className="text-[11px] text-gray-400">
+            {typeof p === 'string' ? p : (p.start && p.end ? `${p.start} → ${p.end}` : 'Current data')}
+            {p && p.days_of_history ? ` · ${p.days_of_history} days` : ''}
+            {data.cached ? ' · cached' : ''}
+          </p>
+          {Array.isArray(data.active_filters) && data.active_filters.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-700 bg-violet-100 border border-violet-200 rounded-full px-2 py-0.5 self-start">
+              Scoped to: {data.active_filters.join(' · ')}
+            </span>
+          )}
+        </div>
         <button
           onClick={() => load(true)}
           disabled={refreshing}

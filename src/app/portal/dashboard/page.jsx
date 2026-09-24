@@ -350,6 +350,9 @@ export default function PortalDashboardPage() {
   const [slotMetrics, setSlotMetrics]   = useState({});   // { uploadId: metrics }
   const [filters, setFilters]           = useState(EMPTY_FILTERS);
   const [filterLoading, setFilterLoading] = useState(false);
+  // Filters the Overview dashboard currently has applied — lifted so AI Insights
+  // (a sibling of EMSDashboard) can regenerate against the same filtered data.
+  const [appliedFilters, setAppliedFilters] = useState(null);
 
   useEffect(() => {
     apiFetch('/data/uploads')
@@ -369,6 +372,7 @@ export default function PortalDashboardPage() {
     if (!selectedId) return;
     setDashLoading(true);
     setDashboard(null);
+    setAppliedFilters(null);   // reset AI scope when switching dataset
     const load = selectedId === '__combined__'
       ? dataUploads.getCombinedDashboard()
       : dataUploads.getDashboard(selectedId);
@@ -601,12 +605,13 @@ export default function PortalDashboardPage() {
             />
             {(dashTab === 'overview' || !['predictions', 'scheduling', 'geographic'].includes(dashTab)) && (
               <div className="space-y-5">
-                <AiInsights combined />
+                <AiInsights combined filters={appliedFilters} />
                 <div className="bg-white border rounded-xl shadow-sm p-6">
                   <EMSDashboard metrics={dashboard.metrics} generatedAt={null} uploadId={null}
                     uploadInfo={{ original_filename: 'Combined — all datasets' }}
                     filterApply={(f) => dataUploads.getCombinedDashboardFiltered(f)}
-                    filterOptions={() => dataUploads.getCombinedFilterOptions()} />
+                    filterOptions={() => dataUploads.getCombinedFilterOptions()}
+                    onFiltersApplied={setAppliedFilters} />
                 </div>
               </div>
             )}
@@ -642,13 +647,14 @@ export default function PortalDashboardPage() {
 
         {dashTab === 'overview' && (
           <div className="space-y-5">
-          <AiInsights uploadId={selectedId} />
+          <AiInsights uploadId={selectedId} filters={appliedFilters} />
           <div className="bg-white border rounded-xl shadow-sm p-6">
             <EMSDashboard
               metrics={dashboard.metrics}
               generatedAt={dashboard.generated_at}
               uploadId={selectedId}
               uploadInfo={uploads.find(u => u.id === selectedId)}
+              onFiltersApplied={setAppliedFilters}
               onRefresh={() => {
                 setDashLoading(true);
                 dataUploads.getDashboard(selectedId).then(setDashboard).finally(() => setDashLoading(false));
