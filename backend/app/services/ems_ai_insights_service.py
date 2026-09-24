@@ -47,6 +47,9 @@ _SYSTEM = (
     "chute + response, and it is THIS interval the ~9-minute time-to-scene target is measured "
     "against — not the shorter headline response. Cite the interval you mean; never conflate them.\n"
     "- Respect data caveats: if history is short or a sample is small, say so and soften claims.\n"
+    "- If the summary includes 'active_filters', the data is a FILTERED subset (e.g. one "
+    "municipality, emergency-only, a specific month). Interpret ONLY that subset, name the "
+    "filter scope in your headline, and don't generalize to the whole agency.\n"
     "- Recommendations must be concrete, tied to the data (staffing windows, station coverage, "
     "IFT scheduling, response-time targets), and prioritized.\n"
     "- This is operational decision support, not medical advice or a mandate.\n"
@@ -332,16 +335,44 @@ async def interpret_dashboard(upload, db, refresh: bool = False) -> Dict[str, An
     return await _interpret(summary, cache_key, refresh)
 
 
-def _summary_from_metrics(metrics: Dict[str, Any], agency: str, period: str, scope: str) -> Dict[str, Any]:
+def _describe_filters(f: Optional[Dict[str, Any]]) -> List[str]:
+    """Human-readable list of the active dashboard filters, for the AI to name."""
+    if not f:
+        return []
+    parts: List[str] = []
+    dr = f.get("date_range")
+    if isinstance(dr, (list, tuple)) and (dr[0] or (len(dr) > 1 and dr[1])):
+        end = dr[1] if len(dr) > 1 else ""
+        parts.append(f"dates {dr[0] or '…'} to {end or '…'}")
+    for key, label in (("municipalities", "municipalities"), ("units", "units"), ("call_types", "call types")):
+        vals = f.get(key)
+        if vals:
+            shown = ", ".join(map(str, vals[:6]))
+            more = f" +{len(vals) - 6} more" if len(vals) > 6 else ""
+            parts.append(f"{label}: {shown}{more}")
+    if f.get("emergency_only"):
+        parts.append("emergency calls only")
+    if f.get("exclude_interfacility"):
+        parts.append("excluding interfacility transports")
+    if f.get("ift_only"):
+        parts.append("interfacility transports only")
+    return parts
+
+
+def _summary_from_metrics(metrics: Dict[str, Any], agency: str, period: str, scope: str,
+                          filters_applied: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Build the AI summary from an already-computed metrics dict — used by the
-    combined view, which pools many datasets rather than one upload."""
+    combined view (and any filtered view), which pools/filters rather than one upload."""
     cv = metrics.get("call_volume") or {}
     rt = metrics.get("response_times") or {}
     up = metrics.get("unit_performance") or {}
-    return {
+    tr = metrics.get("transport") or {}
+    disp = metrics.get("dispositions") or {}
+    active = _describe_filters(filters_applied)
+    summary: Dict[str, Any] = {
         "agency": agency,
         "period": period,
-        "scope": scope,
+        "scope": ("Filtered subset — " + "; ".join(active)) if active else scope,
         "volume": {
             "total_calls": cv.get("total_calls"),
             "count_basis": cv.get("count_basis"),
@@ -356,17 +387,32 @@ def _summary_from_metrics(metrics: Dict[str, Any], agency: str, period: str, sco
             if rt.get(k) is not None},
         "top_units": _top_labels(up.get("calls_per_unit") or up.get("by_unit"), 8),
     }
+    # Outcome mix + transport rate (available on the newer analytics) enrich the read.
+    if isinstance(disp.get("summary"), list) and disp["summary"]:
+        summary["call_outcomes"] = [f"{c.get('label')} ({c.get('count')})" for c in disp["summary"]]
+    if tr.get("available") and tr.get("transport_rate_pct") is not None:
+        summary["transport_rate_pct"] = tr.get("transport_rate_pct")
+    if active:
+        summary["active_filters"] = active
+        if metrics.get("row_count") is not None:
+            summary["filtered_row_count"] = metrics.get("row_count")
+    return summary
 
 
-async def interpret_combined(metrics: Dict[str, Any], agency: str, period: str, refresh: bool = False) -> Dict[str, Any]:
-    """AI interpretation for the combined (all-datasets) view, from pooled metrics."""
+async def interpret_combined(metrics: Dict[str, Any], agency: str, period: str, refresh: bool = False,
+                             filters_applied: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """AI interpretation for the combined / filtered view, from pooled (optionally
+    filtered) metrics. When filters are active the read is scoped to that subset."""
     if not is_insights_available():
         return {"available": False, "key_missing": True,
                 "reason": "AI interpretation is off — set ANTHROPIC_API_KEY in backend/.env to enable it."}
     if not (metrics.get("call_volume") or {}).get("total_calls"):
-        return {"available": False, "reason": "Not enough cleaned data to interpret yet."}
-    summary = _summary_from_metrics(metrics, agency, period, "Combined - all datasets")
-    return await _interpret(summary, f"combined:{agency}:{period}:{_signature(summary)}", refresh)
+        return {"available": False,
+                "reason": ("No calls match the current filters to interpret."
+                           if filters_applied else "Not enough cleaned data to interpret yet.")}
+    summary = _summary_from_metrics(metrics, agency, period, "Combined - all datasets", filters_applied)
+    filt_sig = "|".join(_describe_filters(filters_applied)) or "nofilter"
+    return await _interpret(summary, f"combined:{agency}:{period}:{filt_sig}:{_signature(summary)}", refresh)
 
 
 async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = False) -> Dict[str, Any]:
@@ -376,6 +422,14 @@ async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = Fa
 
     api_key = _api_key()
     summary_json = json.dumps(summary, indent=2, default=str)
+    active = summary.get("active_filters")
+    scope_note = ""
+    if active:
+        scope_note = (
+            "IMPORTANT: This dashboard view is FILTERED to — " + "; ".join(active) + ". "
+            "Interpret ONLY this subset, name the filter scope in your headline, and do not "
+            "generalize to the whole agency.\n\n"
+        )
     payload = {
         "model": _MODEL,
         "max_tokens": _MAX_TOKENS,
@@ -384,6 +438,7 @@ async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = Fa
             "role": "user",
             "content": (
                 f"Agency: {summary.get('agency')}\n\n"
+                f"{scope_note}"
                 f"Dashboard summary (JSON):\n{summary_json}\n\n"
                 f"{_JSON_CONTRACT}\n\nProduce the executive interpretation as JSON."
             ),
@@ -417,6 +472,8 @@ async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = Fa
         "available": True,
         "model": _MODEL,
         "generated_for": summary.get("period"),
+        "active_filters": summary.get("active_filters") or None,
+        "scope": summary.get("scope"),
         "headline": insight.get("headline"),
         "key_findings": insight.get("key_findings") or [],
         "what_it_means": insight.get("what_it_means"),

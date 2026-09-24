@@ -1020,7 +1020,7 @@ function FilteredMetricsView({ metrics, dataDateRange, onClearFilters }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInfo, onRefresh, filterApply, filterOptions }) {
+export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInfo, onRefresh, filterApply, filterOptions, onFiltersApplied }) {
   const [filteredMetrics, setFilteredMetrics] = useState(null);
   const [filterLoading, setFilterLoading]     = useState(false);
   const [compareOpen, setCompareOpen]         = useState(false);
@@ -1034,6 +1034,9 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
 
   const handleFilterApply = useCallback(async (filters) => {
     if (!uploadId && !filterApply) return;
+    // Tell the parent immediately (before the fetch) so sibling views — e.g. AI
+    // Insights — regenerate against the SAME filtered data shown here.
+    onFiltersApplied?.(filters);
     setFilterLoading(true);
     try {
       const result = filterApply
@@ -1045,14 +1048,15 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
     } finally {
       setFilterLoading(false);
     }
-  }, [uploadId, filterApply]);
+  }, [uploadId, filterApply, onFiltersApplied]);
 
   const handleClearFilters = useCallback(() => {
     setFilteredMetrics(null);   // drop the filtered view -> show the full dataset
     setCleared(true);           // don't re-seed the last-month default into the bar
     setDefaultResolved(true);   // ensure the full dataset renders (not the loading state)
     setFilterKey(k => k + 1);    // remount the filter bar so its inputs reset to empty
-  }, []);
+    onFiltersApplied?.(null);   // sibling views revert to the full, unfiltered read
+  }, [onFiltersApplied]);
 
   const handleMappingSaved = useCallback(() => {
     setMappingOpen(false);
@@ -1085,7 +1089,7 @@ export default function EMSDashboard({ metrics, generatedAt, uploadId, uploadInf
   useEffect(() => {
     if (defaultStartedRef.current) return;
     if (!hasFilters) return;                       // filtering must be wired up
-    if (!defaultRange) { setDefaultResolved(true); return; }  // no dates -> show full
+    if (!defaultRange) { onFiltersApplied?.(null); setDefaultResolved(true); return; }  // no dates -> show full
     defaultStartedRef.current = true;
     (async () => {
       await handleFilterApply({

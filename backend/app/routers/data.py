@@ -730,10 +730,20 @@ async def get_upload_ift_outlook(
 # GET /api/data/uploads/{upload_id}/ai-insights
 # ============================================================================
 
-@router.get("/uploads/{upload_id}/ai-insights")
+def _has_active_filters(f: Optional[dict]) -> bool:
+    """True when the dashboard-filter payload actually narrows the data."""
+    if not f:
+        return False
+    return bool(f.get("units") or f.get("municipalities") or f.get("call_types")
+                or f.get("exclude_interfacility") or f.get("emergency_only")
+                or f.get("ift_only") or f.get("date_range"))
+
+
+@router.post("/uploads/{upload_id}/ai-insights")
 async def get_upload_ai_insights(
     upload_id: UUID,
     refresh: bool = False,
+    body: Optional[DashboardFilterRequest] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -743,7 +753,20 @@ async def get_upload_ai_insights(
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
     _assert_upload_access(db, upload, current_user)
-    from ..services.ems_ai_insights_service import interpret_dashboard
+    filters = body.model_dump(exclude_none=False) if body else None
+    from ..services.ems_ai_insights_service import interpret_dashboard, interpret_combined
+    if _has_active_filters(filters):
+        from ..services.ems_filter_service import filtered_dashboard
+        raw = filtered_dashboard(upload, db, filters)
+        metrics = raw.get("metrics") if isinstance(raw, dict) and "metrics" in raw else raw
+        if not isinstance(metrics, dict) or metrics.get("empty") or metrics.get("error") \
+                or not (metrics.get("call_volume") or {}).get("total_calls"):
+            return {"available": False, "reason": "No calls match the current filters."}
+        agency = getattr(upload, "original_filename", None) or "This dataset"
+        dr = filters.get("date_range")
+        period = (f"{dr[0]} to {dr[1] if len(dr) > 1 else ''}"
+                  if isinstance(dr, (list, tuple)) and (dr[0] or (len(dr) > 1 and dr[1])) else "Filtered view")
+        return await interpret_combined(metrics, agency, period, refresh=refresh, filters_applied=filters)
     return await interpret_dashboard(upload, db, refresh=refresh)
 
 
@@ -1305,31 +1328,45 @@ async def get_combined_overlaps(
     return combined_overlaps(uploads, db, limit=min(max(limit, 1), 5000))
 
 
-@router.get("/combined-dashboard/ai-insights")
+@router.post("/combined-dashboard/ai-insights")
 async def get_combined_ai_insights(
     request: Request,
     refresh: bool = False,
+    body: Optional[DashboardFilterRequest] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """AI executive interpretation of the combined (all-datasets) dashboard."""
+    """AI executive interpretation of the combined dashboard, scoped to the active
+    dashboard filters when any are applied (else the full pooled view)."""
     client_id = _effective_client_id(request, current_user, db)
     if not client_id:
         return {"available": False, "reason": "No client selected."}
     uploads = _client_cleaned_uploads(db, client_id)
     if not uploads:
         return {"available": False, "reason": "No cleaned datasets to interpret."}
-    from ..services.ems_daterange_service import combined_dashboard
-    combo = combined_dashboard(uploads, db)
-    metrics = combo.get("metrics")
-    if not metrics:
-        return {"available": False, "reason": combo.get("error") or "No combined metrics available."}
-    pool = combo.get("pool") or {}
+    filters = body.model_dump(exclude_none=False) if body else None
+    from ..services.ems_daterange_service import combined_dashboard, combined_dashboard_filtered
+    if _has_active_filters(filters):
+        metrics = combined_dashboard_filtered(uploads, db, filters)
+        if not isinstance(metrics, dict) or metrics.get("empty") \
+                or not (metrics.get("call_volume") or {}).get("total_calls"):
+            return {"available": False, "reason": "No calls match the current filters."}
+        pool = metrics.get("pool") or {}
+    else:
+        combo = combined_dashboard(uploads, db)
+        metrics = combo.get("metrics")
+        if not metrics:
+            return {"available": False, "reason": combo.get("error") or "No combined metrics available."}
+        pool = combo.get("pool") or {}
     cprof = db.query(Profile).filter(Profile.id == client_id).first()
     agency = (getattr(cprof, "company", None) if cprof else None) or "Your agency"
-    period = f"{pool.get('date_min')} to {pool.get('date_max')}"
+    dr = (filters or {}).get("date_range")
+    if isinstance(dr, (list, tuple)) and (dr[0] or (len(dr) > 1 and dr[1])):
+        period = f"{dr[0]} to {dr[1] if len(dr) > 1 else ''}"
+    else:
+        period = f"{pool.get('date_min')} to {pool.get('date_max')}"
     from ..services.ems_ai_insights_service import interpret_combined
-    return await interpret_combined(metrics, agency, period, refresh=refresh)
+    return await interpret_combined(metrics, agency, period, refresh=refresh, filters_applied=filters)
 
 
 @router.get("/combined-dashboard/predictive")
