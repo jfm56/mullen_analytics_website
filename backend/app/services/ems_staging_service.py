@@ -205,6 +205,25 @@ def _core_points(pts_df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
         return pts_df, 0
     return pts_df[keep], n_excl
 
+
+def _area_demand_centroids(work: pd.DataFrame, min_pts: int = 3) -> Dict[str, Tuple[float, float]]:
+    """Median referring/scene coordinate per area over ALL coord-bearing calls — a
+    real demand center (cross-street level) that is stable across seasons, unlike a
+    static municipal centroid. Areas with fewer than `min_pts` coordinates are
+    omitted so the caller falls back to the mapped municipal centroid for them.
+    Using every coord-bearing call (not just the selected condition cell) means
+    posts land on real coordinates even when the chosen season/weather is sparse."""
+    out: Dict[str, Tuple[float, float]] = {}
+    if "gps_lat" not in work.columns or "gps_lng" not in work.columns:
+        return out
+    g = work[work["gps_lat"].notna() & work["gps_lng"].notna()]
+    if g.empty:
+        return out
+    for area, grp in g.groupby("area"):
+        if len(grp) >= min_pts:
+            out[str(area)] = (float(grp["gps_lat"].median()), float(grp["gps_lng"].median()))
+    return out
+
 # Time-of-day blocks (24h). Coarse enough to stay dense per municipality.
 TIME_BLOCKS = [
     ("overnight", "Overnight (12–6 AM)", range(0, 6)),
@@ -382,9 +401,16 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
     total = int(counts.sum())
     n_days = int(subset["date"].nunique()) or 1
 
+    # Prefer a demand-weighted centroid from the area's real referring/scene
+    # coordinates (a cross-street-level demand center, stable across seasons) over
+    # the static municipal centroid — so posts sit where calls actually happen
+    # whenever coordinates exist, regardless of the selected season/weather.
+    demand_centroids = _area_demand_centroids(work)
+
     areas: List[Dict[str, Any]] = []
     for area, cnt in counts.items():
-        centroid = _centroid_for(area)
+        dc = demand_centroids.get(area)
+        centroid = dc or _centroid_for(area)
         areas.append({
             "area": area,
             "calls": int(cnt),
@@ -392,6 +418,7 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
             "lat": centroid[0] if centroid else None,
             "lng": centroid[1] if centroid else None,
             "mapped": centroid is not None,
+            "gps_centroid": dc is not None,
         })
 
     # ── Recommended posts: cluster real scene GPS when available (point-level /
@@ -425,6 +452,14 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
             recommended.append({**best, "rank": len(recommended) + 1})
             chosen_pts.append((best["lat"], best["lng"]))
             pool = [a for a in pool if a["area"] != best["area"]]
+        # Label each demand-centroid post with its nearest cross-street (reverse-
+        # geocoded from the referring/scene coordinates) so the centroid path is
+        # point-level too, not just a municipality name.
+        for r in recommended:
+            if r.get("gps_centroid") and r.get("lat") is not None and r.get("lng") is not None:
+                road = _reverse_geocode(r["lat"], r["lng"])
+                if road:
+                    r["cross_street"] = road
 
     if method == "gps" and gps_excluded > 0:
         note = ((note + " ") if note else "") + (
@@ -448,7 +483,12 @@ def recommend_staging(upload=None, db=None, df: Optional[pd.DataFrame] = None,
         "window_days": n_days,
         "sample_calls": total,
         "method": method,
-        "gps_source": gps_source if method == "gps" else None,
+        "gps_source": gps_source,
+        "post_location_source": (
+            "gps_cluster" if method == "gps"
+            else "referring_gps" if any(r.get("gps_centroid") for r in recommended)
+            else "municipality"
+        ),
         "gps_points": gps_count,
         "gps_excluded": gps_excluded,
         "weather_available": weather_available,

@@ -147,6 +147,9 @@ export default function StagingRecommender({ uploadId, combined = false }) {
               {data.method === 'gps' && (
                 <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold"><Navigation size={11} /> GPS-optimized · {Number(data.gps_points || 0).toLocaleString()} located calls</span>
               )}
+              {data.method !== 'gps' && data.post_location_source === 'referring_gps' && (
+                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold"><Navigation size={11} /> On referring coordinates</span>
+              )}
               {sel.weather && sel.weather !== 'any' && !sel.weather_used && (
                 <span className="text-amber-600">weather pattern too sparse — using typical</span>
               )}
@@ -164,6 +167,9 @@ export default function StagingRecommender({ uploadId, combined = false }) {
                   <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{r.rank}</div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{r.area}</p>
+                    {r.cross_street && (
+                      <p className="text-[11px] text-emerald-700 truncate" title={r.cross_street}>near {r.cross_street}</p>
+                    )}
                     <p className="text-xs text-gray-500">{r.share}% of expected calls · {r.calls} historical</p>
                   </div>
                 </div>
@@ -173,6 +179,8 @@ export default function StagingRecommender({ uploadId, combined = false }) {
                   <MapPin size={11} className="mt-0.5 flex-shrink-0" />
                   {data.method === 'gps'
                     ? 'Optimal staging points clustered from the actual call GPS — nearest road shown; a human sets the exact post.'
+                    : data.post_location_source === 'referring_gps'
+                    ? 'Posts placed on each area’s referring-coordinate demand center (nearest road shown), independent of the selected season.'
                     : 'Ranked by predicted demand and spread for coverage. Locations are municipality centroids.'}
                 </p>
               )}
