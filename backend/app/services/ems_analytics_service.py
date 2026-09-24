@@ -75,7 +75,25 @@ _ALIASES: Dict[str, List[str]] = {
     "patient_category": ["patient_category", "patient_type", "chief_complaint"],
     "response_mode":   ["response_mode", "mode_of_response", "lights_and_siren"],
     "priority":        ["priority", "dispatch_priority_codetable", "dispatch_priority", "acuity"],
-    "hour":            ["hour", "hour_of_day", "call_hour"],
+    "hour":            ["hour", "hour_of_day", "call_hour", "hour_of_day_of_dispatch"],
+    # --- Transport / destination (new emsCharts export) ---
+    "destination_hospital": ["receiving_hospital", "receiving_facility", "destination_hospital",
+                             "transported_to", "receiving_hospital_designation"],
+    "destination_area":     ["destination_grid", "destination_municipality", "destination_location"],
+    "destination_basis":    ["destination_basis", "destination_reason", "transport_reason"],
+    "mileage":              ["mileage_total", "total_mileage", "transport_miles", "loaded_miles", "miles"],
+    "referring_facility":   ["common_referring_address_reporting", "referring_facility",
+                             "referring_address", "sending_facility", "transfer_from"],
+    # --- Operational / record-keeping (recognized so they stop flagging as unknown) ---
+    "cancelled_time":       ["date_cancelled", "cancel_time", "cancelled_at", "time_cancelled"],
+    "base_station":         ["basesite", "base_site", "station", "home_station", "quarters"],
+    "record_id":            ["prid", "pcr_number", "pcr_no", "patient_record_id",
+                             "report_number", "report_no"],
+    "dispatch_location":    ["dispatch_location", "response_location", "incident_location", "scene_address"],
+    "outcome_historical":   ["outcome_historical", "historical_outcome"],
+    # Derived date-parts emsCharts ships pre-computed; recognized (we derive our own).
+    "day_of_week":          ["day_of_week_of_dispatch", "dispatch_day_of_week", "day_of_week", "dow"],
+    "month_of_year":        ["month_of_year_of_dispatch", "dispatch_month_of_year", "month_of_year"],
 }
 
 
@@ -447,6 +465,107 @@ def _unit_performance(
     }
 
 
+def _transport_destinations(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str, Any]:
+    """Where patients are transported: receiving-hospital mix + transport rate.
+    Non-transports (refusals, cancellations, treat/no-transport) carry a blank
+    receiving hospital and are reported as the non-transport share, so the rate
+    isn't inflated. Runs on the incident-collapsed frame (one row per call)."""
+    hosp_col = detect_mapped_column(df, "destination_hospital", overrides)
+    if not hosp_col:
+        return {"available": False, "reason": "no receiving-hospital column found — set column mapping"}
+    s = (df[hosp_col].astype(str).str.strip()
+         .replace({"nan": "", "None": "", "NaN": ""}).replace("", pd.NA))
+    total = int(len(df))
+    transported = int(s.notna().sum())
+    out: Dict[str, Any] = {
+        "available": True,
+        "total_calls": total,
+        "transported_calls": transported,
+        "non_transport_calls": int(total - transported),
+        "transport_rate_pct": round(100.0 * transported / total, 1) if total else None,
+        "by_hospital": _value_counts_top(s, top=15),
+    }
+    # Mileage — only surface when the column is actually populated (some exports
+    # ship the column empty). Guards against a "0 miles" section on absent data.
+    mil_col = detect_mapped_column(df, "mileage", overrides)
+    if mil_col:
+        miles = pd.to_numeric(df[mil_col], errors="coerce")
+        # Require a meaningful share populated — some exports ship the column nearly
+        # empty (a lone stray value shouldn't render a "mileage" card).
+        if miles.notna().sum() >= max(10, int(0.10 * len(df))):
+            out["mileage"] = {
+                "records_with_mileage": int(miles.notna().sum()),
+                "total_miles": _safe(round(float(miles.sum()), 1)),
+                "median_miles": _safe(round(float(miles.median()), 1)),
+                "mean_miles": _safe(round(float(miles.mean()), 1)),
+            }
+    basis_col = detect_mapped_column(df, "destination_basis", overrides)
+    if basis_col:
+        vals = _value_counts_top(df[basis_col], top=10)
+        if vals:
+            out["by_destination_basis"] = vals
+    return out
+
+
+def _dispositions(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str, Any]:
+    """Call-outcome mix (transported BLS/ALS, refusal, cancelled, treat/no-transport)."""
+    disp_col = detect_mapped_column(df, "disposition", overrides)
+    if not disp_col:
+        return {"available": False, "reason": "no disposition column found — set column mapping"}
+    return {"available": True, "by_disposition": _value_counts_top(df[disp_col], top=15)}
+
+
+def _data_completeness(df: pd.DataFrame, overrides: Optional[Dict] = None) -> Dict[str, Any]:
+    """Response-time documentation completeness.
+
+    How many calls lack the en route / on-scene timestamps needed to compute a
+    response time — split into legitimate cancellations (no arrival expected) vs
+    genuine documentation gaps (a real response whose time was never recorded).
+    The gap count is a concrete QA/QI target; cancellations are separated so they
+    don't get mistaken for missing documentation."""
+    out: Dict[str, Any] = {"available": True, "total_calls": int(len(df))}
+
+    canc_col = detect_mapped_column(df, "cancelled_time", overrides)
+    disp_col = detect_mapped_column(df, "disposition", overrides)
+    cancelled = pd.Series(False, index=df.index)
+    if canc_col:
+        cancelled = cancelled | (df[canc_col].astype(str).str.strip()
+                                 .replace({"nan": "", "None": ""}).replace("", pd.NA).notna())
+    if disp_col:
+        # Only a *call* cancellation counts (disposition begins with "cancel", e.g.
+        # "Cancelled - Enroute"). "Transported By BLS, ALS Cancelled" is a completed
+        # BLS transport with the ALS tier cancelled — NOT a cancelled call.
+        cancelled = cancelled | (df[disp_col].astype(str).str.strip().str.lower()
+                                 .str.startswith("cancel"))
+    out["cancelled_calls"] = int(cancelled.sum())
+
+    def _missing(field: str) -> Optional[pd.Series]:
+        col = detect_mapped_column(df, field, overrides)
+        if not col:
+            return None
+        v = (df[col].astype(str).str.strip()
+             .replace({"nan": "", "None": "", "NaT": ""}).replace("", pd.NA))
+        return v.isna()
+
+    any_interval = False
+    for field, key in [("arrival_time", "arrival"), ("enroute_time", "enroute")]:
+        miss = _missing(field)
+        if miss is None:
+            continue
+        any_interval = True
+        n = int(miss.sum())
+        gap = int((miss & ~cancelled).sum())
+        out[f"missing_{key}"] = n
+        out[f"missing_{key}_cancelled"] = int((miss & cancelled).sum())
+        out[f"missing_{key}_gap"] = gap  # real responses with no recorded time
+        if len(df):
+            out[f"{key}_documented_pct"] = round(100.0 * (1 - gap / len(df)), 1)
+    out["available"] = any_interval
+    if not any_interval:
+        out["reason"] = "no arrival/en route columns found — set column mapping"
+    return out
+
+
 def _data_quality(df: pd.DataFrame, cleaning_stats: Dict[str, Any]) -> Dict[str, Any]:
     missing = {
         col: int(df[col].isna().sum() + (df[col].astype(str).str.strip() == "").sum())
@@ -561,6 +680,9 @@ def compute_ems_metrics(
         "call_volume":      _call_volume(df_inc, overrides),
         "response_times":   _response_times(df_inc, overrides),
         "unit_performance": _unit_performance(df, rt_series, overrides),
+        "transport":        _transport_destinations(df_inc, overrides),
+        "dispositions":     _dispositions(df_inc, overrides),
+        "data_completeness": _data_completeness(df_inc, overrides),
         "data_quality":     _data_quality(df, cleaning_stats),
         "column_mapping_applied": bool(overrides),
         "incident_collapse": {
