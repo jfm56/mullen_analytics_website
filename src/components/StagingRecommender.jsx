@@ -150,6 +150,11 @@ export default function StagingRecommender({ uploadId, combined = false }) {
               {data.method !== 'gps' && data.post_location_source === 'referring_gps' && (
                 <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold"><Navigation size={11} /> On referring coordinates</span>
               )}
+              {data.method !== 'gps' && data.coordinate_calls != null && (
+                data.coordinate_calls > 0
+                  ? <span className="text-emerald-600">{Number(data.coordinate_calls).toLocaleString()} calls with coordinates</span>
+                  : <span className="text-amber-600">no coordinate data in this dataset — upload an export with Referring Latitude/Longitude</span>
+              )}
               {sel.weather && sel.weather !== 'any' && !sel.weather_used && (
                 <span className="text-amber-600">weather pattern too sparse — using typical</span>
               )}
