@@ -445,6 +445,7 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
   const tr   = metrics.transport         || {};
   const disp = metrics.dispositions      || {};
   const comp = metrics.data_completeness || {};
+  const ic   = metrics.incident_collapse || {};
 
   const insights = generateInsights(metrics);
   const { score: dqScore, issues: dqIssues } = computeDQScore(dq, sum);
@@ -517,7 +518,10 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
       <div>
         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2.5 px-0.5">Executive Summary</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StatCard icon={Phone}     label="Total Calls"      value={fmt(cv.total_calls)}         color="blue" />
+          <StatCard icon={Phone}     label="Total Calls"      value={fmt(cv.total_calls)}         color="blue"
+            tooltip={ic.unit_responses != null && ic.incidents != null && ic.unit_responses > ic.incidents
+              ? `Unique incidents (distinct dispatches). ${fmt(ic.unit_responses)} unit responses were logged — ${fmt(ic.unit_responses - ic.incidents)} extra came from calls where more than one unit responded.`
+              : 'Unique incidents (distinct dispatches).'} />
           <StatCard icon={TrendingUp} label="Avg Calls / Day" value={cv.avg_calls_per_day}        color="blue" />
           <StatCard icon={TrendingUp} label="Avg Calls / Week" value={cv.avg_calls_per_week}      color="indigo" />
           <StatCard icon={Clock}     label="Median Response"  value={fmtMin(rt.median_minutes)}   color="purple"
@@ -530,6 +534,9 @@ function StaticDashboardView({ metrics, generatedAt, uploadInfo, onMap }) {
         {cv.count_basis && (
           <p className="text-[11px] text-gray-400 mt-2 px-0.5">
             Counting <strong>{cv.count_basis}</strong>
+            {ic.unit_responses != null && ic.incidents != null && ic.unit_responses > ic.incidents && (
+              <> · <strong>{fmt(ic.unit_responses)}</strong> unit responses (runs)</>
+            )}
             {cv.emergency_calls != null && <> · {fmt(cv.emergency_calls)} emergency</>}
             {cv.interfacility_calls != null && <> · {fmt(cv.interfacility_calls)} interfacility</>}
           </p>
