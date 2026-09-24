@@ -90,9 +90,14 @@ export default function GeographicHeatMap({ uploadId, combined = false }) {
 
         {points.length > 0 && (
           <div>
-            <TownshipMap center={data.center} points={points} />
+            <TownshipMap center={data.center} points={points} heatPoints={data.heat_points} />
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-gray-500">
               <span className="font-medium text-gray-600">Circle size = call volume.</span>
+              {data.point_source === 'referring_gps' && (
+                <span className="inline-flex items-center gap-1 text-orange-600">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#F97316', opacity: 0.5 }} /> actual call locations (referring GPS) · {Number(data.coordinate_calls || 0).toLocaleString()} located
+                </span>
+              )}
               <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: '#DC2626' }} /> Rising</span>
               <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: '#0EA5E9' }} /> Stable</span>
               <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: '#2563EB' }} /> Falling</span>

@@ -15,7 +15,8 @@ import pandas as pd
 from .ems_analytics_service import detect_mapped_column
 from .ems_column_mapping_service import get_column_overrides
 from .ems_predictive_service import _load_df, _resolve_dt
-from .ems_geographic_service import _normalize_location, _centroid_for
+from .ems_geographic_service import (_normalize_location, _centroid_for,
+                                     _resolve_referring_points, _area_referring_centroids, _heat_points)
 from .ems_response_time_service import _agency_center
 from . import weather_service
 
@@ -68,10 +69,21 @@ def get_mva_hotspots(upload, db, df: Optional[pd.DataFrame] = None, overrides: O
     muni_col = detect_mapped_column(df, "municipality", overrides)
     top_areas: List[Dict[str, Any]] = []
     map_points: List[Dict[str, Any]] = []
+    mva_heat: List[Dict[str, Any]] = []
+    coordinate_calls = 0
+    point_source = "municipality"
     if muni_col:
         mva_df["township"] = mva_df[muni_col].astype(str).map(_normalize_location)
+        # Real referring/scene coordinates → per-township crash demand centers + heat.
+        lat_s, lng_s, _src = _resolve_referring_points(mva_df, overrides)
+        demand_c, coord_pts = _area_referring_centroids(mva_df["township"], lat_s, lng_s)
+        coordinate_calls = int(len(coord_pts))
+        mva_heat = _heat_points(coord_pts)
+        if demand_c:
+            point_source = "referring_gps"
         for name, grp in mva_df.dropna(subset=["township"]).groupby("township"):
-            c = _centroid_for(name)
+            dc = demand_c.get(str(name))
+            c = dc or _centroid_for(name)
             row = {
                 "location": name,
                 "call_count": int(len(grp)),          # keyed for TownshipMap reuse
@@ -80,6 +92,7 @@ def get_mva_hotspots(upload, db, df: Optional[pd.DataFrame] = None, overrides: O
                 "lat": c[0] if c else None,
                 "lng": c[1] if c else None,
                 "mapped": c is not None,
+                "gps_centroid": dc is not None,
             }
             top_areas.append(row)
             if c:
@@ -156,6 +169,9 @@ def get_mva_hotspots(upload, db, df: Optional[pd.DataFrame] = None, overrides: O
         },
         "center": center,
         "map_points": map_points,
+        "heat_points": mva_heat,
+        "coordinate_calls": coordinate_calls,
+        "point_source": point_source,
         "top_areas": top_areas,
         "by_hour": by_hour,
         "by_weekday": by_weekday,

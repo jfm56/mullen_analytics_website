@@ -78,6 +78,43 @@ def _centroid_for(name: str) -> Optional[Tuple[float, float]]:
     return NJ_CENTROIDS.get(_simplify(name))
 
 
+def _resolve_referring_points(df: pd.DataFrame, overrides: Optional[Dict]):
+    """Per-call referring/scene (lat, lng) Series aligned to df.index, plus source.
+    Deferred import of the staging resolver avoids an import cycle."""
+    try:
+        from .ems_staging_service import _resolve_scene_points
+        return _resolve_scene_points(df, df.index, overrides or {})
+    except Exception:  # noqa: BLE001
+        return None, None, None
+
+
+def _area_referring_centroids(area_series, lat_series, lng_series, min_pts: int = 3):
+    """(demand_centroids, coord_points_df). Median referring coordinate per area over
+    coord-bearing calls — a real demand center per municipality — plus the coord-
+    bearing points (area/lat/lng) for a heat layer. Stable across seasons."""
+    cents: Dict[str, Tuple[float, float]] = {}
+    if lat_series is None or lng_series is None:
+        return cents, pd.DataFrame(columns=["area", "lat", "lng"])
+    d = pd.DataFrame({"area": area_series, "lat": lat_series, "lng": lng_series})
+    d = d[d["lat"].notna() & d["lng"].notna()]
+    d = d[d["area"].astype(str).str.strip().str.len() > 0]
+    for area, grp in d.groupby("area"):
+        if len(grp) >= min_pts:
+            cents[str(area)] = (float(grp["lat"].median()), float(grp["lng"].median()))
+    return cents, d
+
+
+def _heat_points(pts_df: pd.DataFrame, cap: int = 600) -> List[Dict[str, Any]]:
+    """Aggregate coord-bearing calls to a ~100 m grid (rounded coords) with weights,
+    capped, for a map point/heat layer — keeps the payload small and the map fast."""
+    if pts_df is None or pts_df.empty:
+        return []
+    g = pts_df.assign(rlat=pts_df["lat"].round(3), rlng=pts_df["lng"].round(3))
+    agg = (g.groupby(["rlat", "rlng"]).size().reset_index(name="w")
+           .sort_values("w", ascending=False).head(cap))
+    return [{"lat": float(r.rlat), "lng": float(r.rlng), "weight": int(r.w)} for r in agg.itertuples()]
+
+
 def _detect_location_column(df: pd.DataFrame, overrides: Dict) -> Optional[str]:
     cols = {c.lower(): c for c in df.columns}
     for cand in ("scene_grid", "municipality", "response_zone", "zone", "zip_code", "incident_address"):
@@ -130,6 +167,14 @@ def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None,
             midpoint = valid.min() + (valid.max() - valid.min()) / 2
             recent_mask = dt >= midpoint  # second half = "recent"
 
+    # Referring/scene coordinates → real per-municipality demand centers (median of
+    # each area's actual call coordinates) + an aggregated heat layer. Falls back to
+    # the static municipal centroid for areas without coordinates.
+    lat_s, lng_s, coord_src = _resolve_referring_points(df, overrides)
+    norm_full = df[loc_col].astype(str).map(_normalize_location)
+    demand_c, coord_pts = _area_referring_centroids(norm_full, lat_s, lng_s)
+    coordinate_calls = int(len(coord_pts))
+
     counts = norm.value_counts()
     location_volume: List[Dict[str, Any]] = []
     map_points: List[Dict[str, Any]] = []
@@ -139,7 +184,8 @@ def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None,
     for name, count in counts.items():
         count = int(count)
         pct = round(count / total_calls * 100, 1) if total_calls else 0.0
-        centroid = _centroid_for(name)
+        dc = demand_c.get(name)
+        centroid = dc or _centroid_for(name)
 
         trend = "n/a"
         projected_30 = None
@@ -163,6 +209,7 @@ def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None,
             "lat": centroid[0] if centroid else None,
             "lng": centroid[1] if centroid else None,
             "mapped": centroid is not None,
+            "gps_centroid": dc is not None,
         }
         location_volume.append(row)
         if centroid:
@@ -172,7 +219,10 @@ def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None,
             map_points.append(row)
 
     top = location_volume[0]["location"] if location_volume else None
-    center = {"lat": lat_sum / mapped, "lng": lng_sum / mapped} if mapped else {"lat": 40.63, "lng": -74.90}
+    if coordinate_calls > 0:
+        center = {"lat": float(coord_pts["lat"].mean()), "lng": float(coord_pts["lng"].mean())}
+    else:
+        center = {"lat": lat_sum / mapped, "lng": lng_sum / mapped} if mapped else {"lat": 40.63, "lng": -74.90}
 
     warnings: List[str] = []
     unmapped = [r["location"] for r in location_volume if not r["mapped"]]
@@ -198,6 +248,9 @@ def get_geographic_dashboard(upload, db, filters: Optional[Dict] = None,
         },
         "center": center,
         "map_points": map_points,
+        "heat_points": _heat_points(coord_pts),
+        "coordinate_calls": coordinate_calls,
+        "point_source": "referring_gps" if demand_c else "municipality",
         "location_volume": location_volume,
         "warnings": warnings,
     }
