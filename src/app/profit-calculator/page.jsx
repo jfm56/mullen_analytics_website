@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Minus, Sparkles, Lock, Send, CheckCircle2 } from 'lucide-react';
 import { logToolUsage } from '@/lib/toolUsage';
-import { trackProfitCalculatorCompleted } from '@/lib/conversions';
+import { trackProfitCalculatorCompleted, trackLead, trackAssessmentSubmitted } from '@/lib/conversions';
 
 const num = (s) => {
   const n = parseFloat(String(s ?? '').replace(/[^0-9.\-]/g, ''));
@@ -258,6 +258,7 @@ function LeadForm({ r, v }) {
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.detail || 'Could not send — please try again.');
       setState('done');
+      try { trackLead({ focus: 'profit_calculator' }); trackAssessmentSubmitted({ focus: 'profit_calculator' }); } catch { /* analytics optional */ }
     } catch (e2) { setErr(e2.message); setState('error'); }
   };
 
@@ -276,8 +277,9 @@ function LeadForm({ r, v }) {
       <div className="flex items-start gap-2 mb-2">
         <Sparkles className="text-sky-400 mt-1 flex-shrink-0" size={20} />
         <div>
-          <h3 className="text-xl font-bold text-white">Want help improving these margins?</h3>
-          <p className="text-sm text-slate-300 mt-1">Send it over and I&apos;ll come back with practical ways to raise your margin, lower break-even, and grow profit — no pitch, no obligation.</p>
+          <h3 className="text-xl font-bold text-white">Want me to analyze this for you?</h3>
+          <p className="text-sm text-slate-300 mt-1">Send it over and I&apos;ll hand you a short Opportunity Report — practical ways to raise your margin, lower break-even, and grow profit. No pitch, no obligation.{' '}
+            <a href="/sample-report" className="text-sky-400 hover:text-sky-300 underline">See a sample report</a>.</p>
         </div>
       </div>
       <form onSubmit={submit} className="mt-5 grid sm:grid-cols-2 gap-3">
