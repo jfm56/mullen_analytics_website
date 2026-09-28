@@ -38,6 +38,21 @@ const icons = {
   ),
 };
 
+export function generateStaticParams() {
+  return services.map((s) => ({ slug: s.slug }));
+}
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const service = services.find((s) => s.slug === slug);
+  if (!service) return { title: "Service | Mullen Analytics & Data Solutions" };
+  return {
+    title: `${service.title} | Mullen Analytics & Data Solutions`,
+    description: service.description,
+    alternates: { canonical: `/services/${slug}` },
+  };
+}
+
 export default async function ServicePage({ params }) {
   const { slug } = await params;
   const service = services.find((s) => s.slug === slug);
