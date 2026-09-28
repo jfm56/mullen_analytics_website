@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Minus, Sparkles, Lock, Send, CheckCircle2 } from 'lucide-react';
 import { logToolUsage } from '@/lib/toolUsage';
+import { trackProfitCalculatorCompleted } from '@/lib/conversions';
 
 const num = (s) => {
   const n = parseFloat(String(s ?? '').replace(/[^0-9.\-]/g, ''));
@@ -58,6 +59,7 @@ export default function ProfitCalculatorPage() {
     };
     setResult(r);
     logToolUsage('profit_calculator', { ...v }, r);
+    try { trackProfitCalculatorCompleted({ industry: v.industry || 'unspecified' }); } catch { /* analytics optional */ }
     setTimeout(() => document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 

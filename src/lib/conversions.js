@@ -45,3 +45,11 @@ export const trackRequestDemo = (params = {}) => trackConversion('request_demo',
 export const trackStartTrial = (params = {}) => trackConversion('start_trial', params);
 export const trackClickPhone = () => trackConversion('click_phone');
 export const trackClickEmail = () => trackConversion('click_email');
+
+// ── Funnel-stage events (GA4-only) so we can see exactly where visitors drop off:
+// tool completion → assessment start → assessment submit → schedule click.
+export const trackScheduleClick = (params = {}) => trackConversion('schedule_clicked', params);
+export const trackRevenueCheckerCompleted = (params = {}) => trackConversion('revenue_checker_completed', params);
+export const trackProfitCalculatorCompleted = (params = {}) => trackConversion('profit_calculator_completed', params);
+export const trackAssessmentStarted = (params = {}) => trackConversion('assessment_started', params);
+export const trackAssessmentSubmitted = (params = {}) => trackConversion('assessment_submitted', params);

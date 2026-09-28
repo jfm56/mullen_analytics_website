@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Minus, Activity, CalendarRange, Sparkles, Lock, Send, CheckCircle2 } from 'lucide-react';
 import { logToolUsage } from '@/lib/toolUsage';
+import { trackRevenueCheckerCompleted } from '@/lib/conversions';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function monthLabels() {
@@ -92,6 +93,7 @@ export default function RevenueCheckerPage() {
     };
     setResult(r);
     logToolUsage('revenue_checker', { monthly: y, prior_year: py }, r);
+    try { trackRevenueCheckerCompleted({ trend: r.dir, months_entered: nonZero }); } catch { /* analytics optional */ }
     setTimeout(() => document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
