@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Send, CheckCircle2, ShieldCheck, Loader2 } from 'lucide-react';
-import { trackLead } from '@/lib/conversions';
+import { trackLead, trackAssessmentStarted, trackAssessmentSubmitted } from '@/lib/conversions';
 
 // Reliable inline lead capture for the free-assessment landing pages. Posts to the
 // public lead endpoint, which STORES the lead first (so it's captured in the admin
@@ -21,6 +21,15 @@ export default function AssessmentRequestForm({
   const [message, setMessage] = useState('');
   const [state, setState] = useState('idle'); // idle | sending | done | error
   const [err, setErr] = useState('');
+  const startedRef = useRef(false);
+
+  // Fire assessment_started once, when the visitor first engages the form — the
+  // top of the funnel, so we can measure start → submit drop-off.
+  const markStarted = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    try { trackAssessmentStarted({ focus: tool }); } catch { /* analytics optional */ }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -39,7 +48,7 @@ export default function AssessmentRequestForm({
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.detail || 'Could not send — please try again.');
       setState('done');
-      try { trackLead({ focus: tool }); } catch { /* analytics optional */ }
+      try { trackLead({ focus: tool }); trackAssessmentSubmitted({ focus: tool }); } catch { /* analytics optional */ }
     } catch (e2) {
       setErr(e2.message || 'Could not send — please try again.');
       setState('error');
@@ -60,7 +69,7 @@ export default function AssessmentRequestForm({
   const label = 'block text-sm font-semibold text-slate-200 mb-1.5';
 
   return (
-    <form onSubmit={submit} className="bg-navy-deep border border-navy-border rounded-2xl p-6 md:p-8 space-y-4">
+    <form onSubmit={submit} onFocusCapture={markStarted} className="bg-navy-deep border border-navy-border rounded-2xl p-6 md:p-8 space-y-4">
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className={label}>Name</label>
