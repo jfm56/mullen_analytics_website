@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Minus, Activity, CalendarRange, Sparkles, Lock, Send, CheckCircle2 } from 'lucide-react';
 import { logToolUsage } from '@/lib/toolUsage';
-import { trackRevenueCheckerCompleted } from '@/lib/conversions';
+import { trackRevenueCheckerCompleted, trackLead, trackAssessmentSubmitted } from '@/lib/conversions';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function monthLabels() {
@@ -314,6 +314,7 @@ function LeadForm({ result, labels }) {
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.detail || 'Could not send — please try again.');
       setState('done');
+      try { trackLead({ focus: 'revenue_checker' }); trackAssessmentSubmitted({ focus: 'revenue_checker' }); } catch { /* analytics optional */ }
     } catch (e2) { setErr(e2.message); setState('error'); }
   };
 
@@ -334,10 +335,11 @@ function LeadForm({ result, labels }) {
       <div className="flex items-start gap-2 mb-2">
         <Sparkles className="text-sky-400 mt-1 flex-shrink-0" size={20} />
         <div>
-          <h3 className="text-xl font-bold text-white">Want help growing this number?</h3>
+          <h3 className="text-xl font-bold text-white">Want me to analyze this for you?</h3>
           <p className="text-sm text-slate-300 mt-1">
-            Send it over and I&apos;ll come back with specific, practical ideas to improve your revenue — forecasting,
-            KPIs, and where the leverage is. No pitch, no obligation.
+            Send it over and I&apos;ll hand you a short Opportunity Report — specific, practical ways to improve your
+            revenue (forecasting, KPIs, where the leverage is). No pitch, no obligation.{' '}
+            <a href="/sample-report" className="text-sky-400 hover:text-sky-300 underline">See a sample report</a>.
           </p>
         </div>
       </div>

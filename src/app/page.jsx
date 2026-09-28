@@ -167,6 +167,10 @@ export default function Home() {
               We review a sample of the data you already collect and hand you 3–5 specific opportunities — no new
               software, no obligation.
             </p>
+            <Link href="/sample-report"
+              className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold text-white/90 hover:text-white underline decoration-white/40 underline-offset-4">
+              See a sample Opportunity Report <ArrowRight size={14} strokeWidth={2.5} />
+            </Link>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             <Link href="/free-assessments/business"
