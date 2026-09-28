@@ -20,6 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://mullenanalytics.com"),
   title: "Mullen Analytics | EMS, Healthcare & Public Safety Analytics Consulting",
   description: "Mullen Analytics builds forecasting models, dashboards, and automation for EMS, fire, hospitals, and healthcare organizations. Explainable, defensible analytics for high-stakes operational decisions.",
   icons: {
