@@ -39,10 +39,32 @@ const FOCUS_AREAS = [
   'Quality improvement analytics', 'Patient flow and clinical operations', 'Research outcome modeling',
 ];
 
+// Results-first case studies: lead with the outcome, then how it was done.
 const SELECTED_WORK = [
-  { sector: 'EMS Operations',      title: 'Demand Forecasting & Staffing Optimization', desc: 'Predictive models and operational dashboards supporting resource allocation decisions for high-volume emergency services.' },
-  { sector: 'Healthcare Analytics', title: 'Explainable ML for Medical Classification',   desc: 'Interpretable machine learning models built for transparency, clinical accountability, and executive-level defensibility.' },
-  { sector: 'Automation',          title: 'Automated Reporting & Document Processing',    desc: 'Practical automation tools reducing manual workload and improving consistency across high-volume operational workflows.' },
+  {
+    sector: 'EMS Operations',
+    title: 'Demand Forecasting & Staffing Optimization',
+    result: 'Coverage gaps and demand peaks pinpointed to specific days, hours and areas.',
+    metrics: ['5 years of call data modeled', 'Forecasts by day · area · season', 'Coverage-aware staffing plan'],
+    solution: 'Turned five years of call data into demand forecasts with a weather/traffic overlay and coverage-aware staffing recommendations.',
+    methods: ['Python', 'SQL', 'Forecasting', 'Operational Analytics'],
+  },
+  {
+    sector: 'Healthcare Analytics',
+    title: 'Explainable ML for Medical Imaging',
+    result: 'Weakly-supervised multi-label classification — explainable and auditable, not a black box.',
+    metrics: ['12 abnormality labels', 'Weak supervision at scale', 'Transparent, defensible outputs'],
+    solution: 'Built interpretable multi-label models with weak supervision, prioritizing transparency and clinical accountability over black-box accuracy.',
+    methods: ['Python', 'PyTorch', 'Weak Supervision', 'Explainable ML'],
+  },
+  {
+    sector: 'Automation',
+    title: 'Automated Reporting & Document Processing',
+    result: 'Manual, error-prone reporting replaced with scheduled, consistent output.',
+    metrics: ['Hours of manual work removed', 'Same rigor on every run', 'Runs on a schedule'],
+    solution: 'Built automation that assembles reports and processes documents on a schedule — consistent, repeatable, and hands-off.',
+    methods: ['Python', 'LLMs', 'Automation', 'AWS'],
+  },
 ];
 
 const TRUST_BADGES = ['Veteran-Owned', 'Former First Responders', 'Explainable Results', 'Procurement-Ready'];
@@ -397,11 +419,25 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6">
             {SELECTED_WORK.map((work) => (
               <Link key={work.title} href="/portfolio"
-                className="block bg-white border border-slate-200 border-t-[3px] border-t-blue-600 rounded-xl p-7 shadow-sm hover:shadow-md transition-all">
+                className="flex flex-col bg-white border border-slate-200 border-t-[3px] border-t-blue-600 rounded-xl p-7 shadow-sm hover:shadow-md transition-all">
                 <Eyebrow>{work.sector}</Eyebrow>
-                <h3 className="text-base font-bold text-slate-900 mb-3 leading-snug">{work.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed mb-5">{work.desc}</p>
-                <span className="text-xs font-semibold text-blue-700">View case study →</span>
+                <p className="text-base font-bold text-slate-900 leading-snug mb-4">{work.result}</p>
+                <ul className="space-y-1.5 mb-5">
+                  {work.metrics.map((m) => (
+                    <li key={m} className="flex items-start gap-2 text-xs text-slate-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" /> {m}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-slate-500 leading-relaxed mb-5">
+                  <span className="font-semibold text-slate-600">{work.title}.</span> {work.solution}
+                </p>
+                <div className="flex flex-wrap gap-1.5 mb-5">
+                  {work.methods.map((m) => (
+                    <span key={m} className="text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded px-2 py-0.5">{m}</span>
+                  ))}
+                </div>
+                <span className="text-xs font-semibold text-blue-700 mt-auto">View case study →</span>
               </Link>
             ))}
           </div>
