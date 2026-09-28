@@ -71,26 +71,31 @@ export default function Home() {
             {/* Message */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-5">
-                Analytics · Machine Learning · Data Engineering
+                Veteran-Owned · Data Science · Real Operational Experience
               </p>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
-                Turn Your Data Into Better Decisions
+                Find the Problems Costing You Money
               </h1>
-              <p className="text-lg text-slate-300 leading-relaxed mb-10">
-                Predict demand. Optimize staffing. Automate reporting. Understand your operations. Mullen
-                Analytics builds practical data, analytics, and automation systems for organizations that
-                need answers they can act on.
+              <p className="text-lg text-slate-300 leading-relaxed mb-8">
+                Use the data you already have to uncover wasted cost, forecast revenue and demand, automate
+                reporting, and make sharper operational decisions — for business, EMS &amp; public safety,
+                and healthcare.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <ScheduleCTA href={CALENDAR_URL}
+                <Link href="/free-assessments"
                   className="px-8 py-4 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base text-center transition-colors">
-                  Schedule a Free Strategy Call
-                </ScheduleCTA>
-                <Link href="/capabilities"
-                  className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
-                  Explore Capabilities
+                  Get a Free Data &amp; Profit Assessment
                 </Link>
+                <ScheduleCTA href={CALENDAR_URL}
+                  className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
+                  Schedule a Strategy Call
+                </ScheduleCTA>
               </div>
+              <p className="text-sm text-slate-400 mt-4 max-w-xl">
+                We review a sample of the data you already collect and hand you{' '}
+                <strong className="text-slate-200">3–5 specific opportunities</strong> to improve revenue,
+                cost, or efficiency. No new software. No obligation.
+              </p>
             </div>
 
             {/* Dashboard preview — balances the hero + shows the product */}
@@ -183,6 +188,38 @@ export default function Home() {
               <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">EMS Data &amp; Performance Assessment</h3>
               <p className="text-sm text-slate-600 leading-relaxed mb-4">Turn your CAD/ePCR data into operational intelligence — a de-identified sample plus a 30-min findings review.</p>
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">Claim yours <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-1" /></span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FOUNDER — surface Jim early; for a small firm, people hire the person */}
+      <section className="py-16 bg-navy-deep border-b border-navy-border">
+        <div className="max-w-4xl mx-auto px-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-sky-400 mb-3 text-center">Why Mullen Analytics</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">Built by an operator, not just a consultant.</h2>
+          <p className="text-base text-slate-300 leading-relaxed text-center max-w-2xl mx-auto mb-7">
+            You&rsquo;re not hiring an anonymous firm — you work directly with the person who does the analysis
+            and builds the system. I spent years in emergency services before earning my M.S. in Data Science,
+            so I read your operation the way an operator does, then back it with real data science and engineering.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-3 text-center sm:text-left">
+            <div>
+              <p className="text-lg font-bold text-white">Jim Mullen, MSDS</p>
+              <p className="text-sm text-slate-400">Founder &amp; Data Scientist</p>
+            </div>
+            <div className="hidden sm:block w-px h-10 bg-navy-border" />
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              {['Former First Responder', 'Veteran', 'M.S. Data Science'].map((m) => (
+                <span key={m} className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500" /> {m}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="text-center mt-7">
+            <Link href="/about" className="inline-flex items-center gap-1.5 text-sm font-semibold text-sky-400 hover:text-sky-300">
+              More about Jim &amp; the approach <ArrowRight size={15} strokeWidth={2.5} />
             </Link>
           </div>
         </div>
