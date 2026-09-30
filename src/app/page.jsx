@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { BarChart3, BrainCircuit, FlaskConical, Database, ArrowRight, LineChart, Calculator, Building2, Ambulance } from 'lucide-react';
+import { ArrowRight, LineChart, Calculator, Building2, Ambulance } from 'lucide-react';
+import { JOURNEY } from '@/data/journey';
 import ScheduleCTA from '@/components/ScheduleCTA';
 
 // NOTE: The marketing home uses a FIXED palette (always light, with navy bands),
@@ -7,13 +8,6 @@ import ScheduleCTA from '@/components/ScheduleCTA';
 // it flip to dark on a visitor's system preference collapses the section rhythm
 // (bg-background and the navy bands become the same color). Navy bands use the
 // fixed --navy-* tokens; everything else uses fixed Tailwind grays.
-
-const DISCIPLINES = [
-  { Icon: BarChart3,   title: 'Data Analytics',        desc: 'Clear, at-a-glance views of how your organization is doing — so the numbers that matter are easy to see and act on, instead of buried in spreadsheets.' },
-  { Icon: BrainCircuit, title: 'Machine Learning & Automation', desc: 'Software that learns from your past to predict what is coming and handle repetitive work automatically — built so you can see how it reached its answer.' },
-  { Icon: FlaskConical, title: 'Data Science',          desc: 'Digging into your data to find the real answers: why something is happening, what is likely next, and what to do about it.' },
-  { Icon: Database,     title: 'Data Engineering',      desc: 'Gathering your data from all the places it lives, cleaning it up, and keeping it in one reliable, up-to-date place you can actually use.' },
-];
 
 const SECTORS = [
   { label: 'Business',          title: 'Business & Commercial',      desc: 'Forecasting, KPI dashboards, customer and operations analytics, and the data infrastructure underneath them.', href: '/industries' },
@@ -251,26 +245,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* WHAT WE DO — white section, tinted cards */}
+      {/* FROM DATA TO DECISIONS — the end-to-end path (one connected strategy) */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-2xl mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What We Do</h2>
+          <div className="max-w-3xl mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-3">End to end</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">From data to decisions</h2>
             <p className="text-base text-slate-600 leading-relaxed">
-              The four things we do — from getting your data organized and trustworthy, to turning it
-              into clear answers your team can act on.
+              We don&apos;t hand you one dashboard and walk away. We take you the whole way — from the raw data you
+              already collect to the decisions that move your operation. Start anywhere on the path; most clients
+              start with a free assessment.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {DISCIPLINES.map(({ Icon, title, desc }) => (
-              <div key={title} className="bg-slate-50 border border-slate-200 rounded-xl p-6">
-                <div className="w-11 h-11 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4">
-                  <Icon size={20} strokeWidth={1.75} className="text-blue-700" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-9">
+            {JOURNEY.map(({ step, title, desc }) => (
+              <div key={step} className="border-l-2 border-slate-100 pl-5">
+                <div className="flex items-baseline gap-2.5 mb-2">
+                  <span className="text-xl font-black text-blue-600 tabular-nums">{step}</span>
+                  <h3 className="text-base font-bold text-slate-900 leading-snug">{title}</h3>
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mb-2">{title}</h3>
                 <p className="text-sm text-slate-600 leading-relaxed">{desc}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-14">
+            <Link href="/free-assessments"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors">
+              Start with a free assessment <ArrowRight size={17} strokeWidth={2.5} />
+            </Link>
           </div>
         </div>
       </section>
