@@ -3,6 +3,7 @@ import {
   BarChart3, BrainCircuit, FlaskConical, Database, Check, ArrowRight,
   ShieldCheck, Users, BadgeCheck, Lock,
 } from 'lucide-react';
+import { JOURNEY } from '@/data/journey';
 
 // Capabilities uses the same FIXED palette as the home page (always light, with
 // navy bands). Organized by what we DO (four disciplines that apply to any
@@ -111,6 +112,32 @@ export default function CapabilitiesPage() {
               className="px-8 py-4 rounded border border-navy-border hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-base text-center transition-colors">
               See what we do
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* END-TO-END PATH — the connected journey these capabilities move you along */}
+      <section className="py-24 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-3xl mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-3">End to end</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">One connected path — from data to decisions</h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              These aren&apos;t a menu of one-off services. They&apos;re steps on a single path: we take you from the
+              raw data you already collect to a system your own team runs. Start anywhere — most clients start with
+              a free assessment.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-9">
+            {JOURNEY.map(({ step, title, desc }) => (
+              <div key={step} className="border-l-2 border-slate-200 pl-5">
+                <div className="flex items-baseline gap-2.5 mb-2">
+                  <span className="text-xl font-black text-blue-600 tabular-nums">{step}</span>
+                  <h3 className="text-base font-bold text-slate-900 leading-snug">{title}</h3>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
