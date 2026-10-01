@@ -79,7 +79,12 @@ export default function PredictiveAnalytics({ uploadId, combined = false }) {
     </div>
   );
 
-  const conf = CONF[data.confidence] || CONF.low;
+  // Header confidence reflects how much history is available — but don't let it read
+  // "High" when the forecast on display is only indicative (R² < 0.3). Cap it so the
+  // badge can't contradict the forecast's own "Indicative" reliability.
+  const cvfReliable = data?.call_volume_forecast?.is_reliable;
+  const effConfidence = (cvfReliable === false && data.confidence === 'high') ? 'medium' : data.confidence;
+  const conf = CONF[effConfidence] || CONF.low;
   const ctx = data.context || {};
 
   return (
@@ -94,7 +99,8 @@ export default function PredictiveAnalytics({ uploadId, combined = false }) {
             {ctx.model_used ? ` · model: ${ctx.model_used}` : ''}
           </p>
         </div>
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${conf.cls}`}>{conf.label}</span>
+        <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${conf.cls}`}
+          title="Reflects how much history is available. Each forecast's statistical reliability is shown separately below.">{conf.label}</span>
       </div>
 
       {data.warnings?.length > 0 && (

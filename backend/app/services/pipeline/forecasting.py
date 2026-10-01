@@ -62,7 +62,8 @@ logger = logging.getLogger(__name__)
 
 _MIN_TRAIN_DAYS = 120   # need at least this many days before the 90-day test set
 _TEST_DAYS      = 90
-_HORIZON_DAYS   = 365  # iterative forecast window (aggregated to monthly)
+_HORIZON_DAYS   = 400  # iterative forecast window; >365 so 12 FULL months remain
+                       # after dropping the partial leading month (aggregated to monthly)
 _Z80            = 1.282
 
 
@@ -244,6 +245,14 @@ def _daily_to_monthly(daily_vals: np.ndarray, start_date: pd.Timestamp) -> Dict[
     dates  = pd.date_range(start=start_date + pd.Timedelta(days=1), periods=len(daily_vals), freq="D")
     series = pd.Series(daily_vals, index=dates)
     monthly_sum = series.resample("ME").sum()
+    # Keep only COMPLETE calendar months. The forecast starts the day after the last
+    # data day, so its first bucket is a partial month (often a single day) — which
+    # would otherwise surface as a tiny "next month" value and a dip to ~0 on the
+    # chart. Any trailing partial month is dropped for the same reason.
+    days_covered = series.resample("ME").size()
+    full_mask = days_covered.values >= monthly_sum.index.days_in_month.values
+    if full_mask.any():
+        monthly_sum = monthly_sum[full_mask]
     monthly_sum.index = monthly_sum.index.to_period("M").astype(str)
     return monthly_sum.to_dict()
 
