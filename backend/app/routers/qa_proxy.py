@@ -31,9 +31,12 @@ _METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 _STRIP = {"set-cookie", "transfer-encoding", "connection", "keep-alive",
           "content-encoding", "content-length"}
 # Least privilege: only the QA screens' own API surface is reachable through the
-# portal. Everything else on EMS QA (admin console, billing, raw auth) is blocked.
+# portal. Every agency-scoped route (/api/agencies/{id}/...) backs a QA screen and
+# is independently guarded by EMS QA's role checks + Postgres RLS. The platform
+# operator surface (admin console, billing) and raw auth (login/logout/sso) are
+# blocked — identity is established server-side by the bridge, never via the proxy.
 _ALLOWED_EXACT = {"auth/me", "auth/me/agencies"}
-_ALLOWED_PREFIXES = ("platform/ems-qa/",)
+_ALLOWED_PREFIXES = ("agencies/",)
 
 
 def _allowed(path: str) -> bool:
