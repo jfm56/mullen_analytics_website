@@ -11,6 +11,7 @@ from .routers import data as data_router
 from .routers import settings as settings_router
 from .routers import datasets as datasets_router
 from .routers import sso
+from .routers import qa_proxy
 from .routers import plans as plans_router
 from .routers import analytics_ingest, analytics_admin, leads_admin, outreach as outreach_router, revenue_checker
 from .routers import emscharts_ingest
@@ -76,6 +77,7 @@ app.include_router(settings_router.router, prefix="/api")
 app.include_router(datasets_router.router, prefix="/api")
 app.include_router(errors.router, prefix="/api")
 app.include_router(sso.router, prefix="/api")
+app.include_router(qa_proxy.router, prefix="/api")          # portal -> EMS QA same-origin proxy
 app.include_router(plans_router.router, prefix="/api")
 app.include_router(analytics_ingest.router, prefix="/api")   # public visitor-analytics ingest
 app.include_router(analytics_admin.router, prefix="/api")    # admin visitor-analytics dashboard
