@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..models.data_upload import DataUpload
 from ..models.user import Profile, User
-from .plans import features_for_plan, resolve_features
+from .plans import MODULE_LABELS, features_for_plan, resolve_features
 
 _LABELS = {
     "data_explorer": "the Data Explorer",
@@ -44,6 +44,19 @@ def require_feature(db: Session, user: User, feature: str) -> None:
         raise HTTPException(
             status_code=403,
             detail=f"Your plan doesn't include {_LABELS.get(feature, feature)}. Upgrade your plan to use it.",
+        )
+
+
+def require_module(db: Session, user: User, module: str) -> None:
+    """Raise 403 unless the client's membership enables the product `module`
+    (analytics/predictive/geographic/qa). Admins always pass. This is the
+    backend half of the per-client module access the admin sets."""
+    if is_admin(db, user):
+        return
+    if not user_features(db, user).get("modules", {}).get(module):
+        raise HTTPException(
+            status_code=403,
+            detail=f"{MODULE_LABELS.get(module, module)} isn't included in your membership.",
         )
 
 

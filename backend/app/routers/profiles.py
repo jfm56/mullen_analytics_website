@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
@@ -37,6 +37,8 @@ class ProfileUpdate(BaseModel):
     ems_qa_enabled: Optional[bool] = None
     ems_agency_slug: Optional[str] = None
     ems_role: Optional[str] = None
+    # Per-client product-module overrides (analytics/predictive/geographic).
+    module_overrides: Optional[Dict[str, bool]] = None
 
 
 class ProfileResponse(BaseModel):
@@ -70,6 +72,9 @@ class ProfileResponse(BaseModel):
     ems_qa_enabled: bool = False
     ems_agency_slug: Optional[str] = None
     ems_role: Optional[str] = None
+    # Raw per-client overrides + the EFFECTIVE module access (tier + overrides).
+    module_overrides: Optional[Dict[str, bool]] = None
+    modules: Optional[Dict[str, bool]] = None
 
     class Config:
         from_attributes = True

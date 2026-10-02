@@ -55,7 +55,7 @@ from ..services.ems_filter_service import (
 )
 from ..services.ems_daterange_service import combinable_groups, daterange_compare
 from ..models.user import Profile, User
-from ..services.plan_access import require_feature, enforce_dataset_limit
+from ..services.plan_access import require_feature, require_module, enforce_dataset_limit
 from ..models.project import Project
 from .auth import get_current_user
 
@@ -597,6 +597,7 @@ async def get_upload_predictive(
     db: Session = Depends(get_db),
 ):
     """Predictive analytics — call-volume forecast, demand patterns, and staffing."""
+    require_module(db, current_user, "predictive")
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -616,6 +617,7 @@ async def get_upload_geographic(
     db: Session = Depends(get_db),
 ):
     """Geographic analytics — call volume by township with map coordinates + trend."""
+    require_module(db, current_user, "geographic")
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -635,6 +637,7 @@ async def get_upload_staging(
     db: Session = Depends(get_db),
 ):
     """Recommended ambulance staging locations for the given (or current) conditions."""
+    require_module(db, current_user, "geographic")
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -674,6 +677,7 @@ async def get_upload_mva_hotspots(
     db: Session = Depends(get_db),
 ):
     """Motor-vehicle-collision hotspots — by township, hour, weekday, and weather."""
+    require_module(db, current_user, "geographic")
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -696,6 +700,7 @@ async def get_upload_weather_traffic_forecast(
     db: Session = Depends(get_db),
 ):
     """Weather- & traffic-aware EMS call forecast, by day and by area."""
+    require_module(db, current_user, "geographic")
     horizon = max(1, min(31, horizon))
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
@@ -717,6 +722,7 @@ async def get_upload_ift_outlook(
     db: Session = Depends(get_db),
 ):
     """Interfacility-transport outlook — patterns, day-of-week forecast, and a schedule recommendation."""
+    require_module(db, current_user, "predictive")
     horizon = max(1, min(31, horizon))
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
@@ -783,6 +789,7 @@ async def get_upload_turnover(
     """Staffing turnover/attrition outlook — an operational risk proxy from the
     dispatch data, or the trained SBEMS termination forecast when HR separation
     history is available."""
+    require_module(db, current_user, "predictive")
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -804,6 +811,7 @@ async def get_upload_emergency_transport(
 ):
     """Emergency-transport outlook — emergency call volume, transport split,
     day/hour patterns, scene areas, and a near-term demand forecast."""
+    require_module(db, current_user, "predictive")
     horizon = max(1, min(31, horizon))
     upload = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
     if not upload:
@@ -1231,6 +1239,7 @@ async def get_combinable_groups(
 ):
     """Group the caller's cleaned uploads by identical column structure, so only
     compatible ("like") files get pooled for date-range comparison."""
+    require_module(db, current_user, "analytics")
     client_id = _effective_client_id(request, current_user, db)
     if not client_id:
         return {"groups": []}
@@ -1246,6 +1255,7 @@ async def post_date_range_compare(
 ):
     """Pool the selected (like) files and return full dashboard metrics for each
     user-defined FROM/TO window, for side-by-side comparison."""
+    require_module(db, current_user, "analytics")
     if not body.upload_ids:
         raise HTTPException(status_code=400, detail="Select at least one file to compare.")
     if not body.windows:
@@ -1376,6 +1386,7 @@ async def get_combined_predictive(
     db: Session = Depends(get_db),
 ):
     """Predictive analytics (forecast + patterns + staffing) over the pooled data."""
+    require_module(db, current_user, "predictive")
     client_id = _effective_client_id(request, current_user, db)
     if not client_id:
         return {"available": False, "reason": "No client selected."}
@@ -1423,6 +1434,7 @@ async def get_combined_emergency_transport(
     db: Session = Depends(get_db),
 ):
     """Emergency-transport outlook over the pooled data."""
+    require_module(db, current_user, "predictive")
     df = _combined_working_df(request, current_user, db)
     if df is None:
         return {"available": False, "reason": "No combined data available."}
@@ -1437,6 +1449,7 @@ async def get_combined_geographic(
     db: Session = Depends(get_db),
 ):
     """Geographic dashboard over the pooled data."""
+    require_module(db, current_user, "geographic")
     df = _combined_working_df(request, current_user, db)
     if df is None:
         return {"available": False, "reason": "No combined data available."}
@@ -1455,6 +1468,7 @@ async def get_combined_staging(
     db: Session = Depends(get_db),
 ):
     """Recommended ambulance staging locations over the pooled data."""
+    require_module(db, current_user, "geographic")
     df = _combined_working_df(request, current_user, db)
     if df is None:
         return {"available": False, "reason": "No combined data available."}
@@ -1470,6 +1484,7 @@ async def get_combined_mva(
     db: Session = Depends(get_db),
 ):
     """MVA hotspots over the pooled data."""
+    require_module(db, current_user, "geographic")
     df = _combined_working_df(request, current_user, db)
     if df is None:
         return {"available": False, "reason": "No combined data available."}

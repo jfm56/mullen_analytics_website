@@ -148,6 +148,8 @@ async def on_startup():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_confirmed_at TIMESTAMP",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_recovery_codes JSON DEFAULT '[]'",
             "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_passed BOOLEAN DEFAULT FALSE",
+            # Per-client product-module access overrides (analytics/predictive/geographic/qa).
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS module_overrides JSON",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:
@@ -184,6 +186,40 @@ async def on_startup():
                          getattr(result, "rowcount", "?"))
     except Exception as exc:  # noqa: BLE001
         log.error("Email-verification backfill failed: %s", exc)
+
+    # One-time grandfather: product modules (analytics/predictive/geographic) are
+    # a new gate. The dashboard previously showed every tab to every client, so
+    # grant the three dashboard modules to all EXISTING clients (module_overrides
+    # IS NULL) to avoid silently revoking access. QA stays driven by
+    # ems_qa_enabled. New clients (created after this runs) follow their tier's
+    # default bundle. Guarded by an app_settings marker so it runs exactly once.
+    try:
+        from sqlalchemy import text as _text
+        _marker = "module_overrides_grandfather_v1"
+        with engine.begin() as conn:
+            already_done = conn.execute(
+                _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
+            ).first()
+            if not already_done:
+                result = conn.execute(
+                    _text(
+                        "UPDATE profiles SET module_overrides = "
+                        "'{\"analytics\": true, \"predictive\": true, \"geographic\": true}'::json "
+                        "WHERE module_overrides IS NULL"
+                    )
+                )
+                conn.execute(
+                    _text(
+                        "INSERT INTO app_settings (key, value, category, value_type, description, "
+                        "created_at, updated_at) VALUES (:k, 'true', 'system', 'boolean', :d, "
+                        "NOW(), NOW()) ON CONFLICT (key) DO NOTHING"
+                    ),
+                    {"k": _marker, "d": "Existing clients granted dashboard modules when per-module access shipped"},
+                )
+                log.info("Module grandfather backfill: updated %s pre-existing profile(s)",
+                         getattr(result, "rowcount", "?"))
+    except Exception as exc:  # noqa: BLE001
+        log.error("Module grandfather backfill failed: %s", exc)
 
     # Nightly lead-discovery scheduler — ON-PREM instance ONLY (single replica).
     # Gated on scheduler_enabled + leads_enabled so it never runs on Railway or a

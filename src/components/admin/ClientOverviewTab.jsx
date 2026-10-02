@@ -24,12 +24,28 @@ export default function ClientOverviewTab({
     ems_qa_enabled: client?.ems_qa_enabled || false,
     ems_agency_slug: client?.ems_agency_slug || '',
     ems_role: client?.ems_role || 'qa_reviewer',
+    // Dashboard modules — start from the client's EFFECTIVE access (tier + overrides).
+    modules: {
+      analytics: client?.modules?.analytics ?? false,
+      predictive: client?.modules?.predictive ?? false,
+      geographic: client?.modules?.geographic ?? false,
+    },
   });
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await users.update(client.id, formData);
+      const { modules, ...rest } = formData;
+      // Each dashboard-module checkbox becomes an explicit per-client override.
+      const payload = {
+        ...rest,
+        module_overrides: {
+          analytics: !!modules.analytics,
+          predictive: !!modules.predictive,
+          geographic: !!modules.geographic,
+        },
+      };
+      await users.update(client.id, payload);
       setEditing(false);
       onClientUpdate?.();
     } catch (e) {
@@ -38,6 +54,12 @@ export default function ClientOverviewTab({
       setSaving(false);
     }
   };
+
+  const MODULE_FIELDS = [
+    { key: 'analytics', label: 'Analytics dashboard' },
+    { key: 'predictive', label: 'Predictive analytics' },
+    { key: 'geographic', label: 'Geographic predictions' },
+  ];
 
   // Calculate stats
   const activeProjects = projects.filter(p => p.status === 'active').length;
@@ -141,6 +163,22 @@ export default function ClientOverviewTab({
                   : 'Off'}
               </p>
             </div>
+            <div className="col-span-full">
+              <p className="text-gray-500 mb-1">Module access</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  ['analytics', 'Analytics'], ['predictive', 'Predictive'],
+                  ['geographic', 'Geographic'], ['qa', 'QA'],
+                ].map(([k, lbl]) => {
+                  const on = client?.modules?.[k];
+                  return (
+                    <span key={k} className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${on ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-400 border-gray-200'}`}>
+                      {on ? '✓' : '○'} {lbl}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
             {client.notes && (
               <div className="col-span-full">
                 <p className="text-gray-500 mb-1">Notes</p>
@@ -200,6 +238,24 @@ export default function ClientOverviewTab({
                 rows={3}
                 className="w-full border rounded px-2 py-1.5"
               />
+            </div>
+            <div className="col-span-full border-t pt-3 mt-1">
+              <p className="text-gray-700 font-medium mb-2">Module access</p>
+              <p className="text-[11px] text-gray-500 mb-2">
+                Controls which dashboard modules this client can open. Overrides their plan tier&apos;s default bundle.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                {MODULE_FIELDS.map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!formData.modules[key]}
+                      onChange={(e) => setFormData({ ...formData, modules: { ...formData.modules, [key]: e.target.checked } })}
+                    />
+                    <span className="text-gray-700">{label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             <div className="col-span-full border-t pt-3 mt-1">
               <label className="flex items-center gap-2 mb-2">

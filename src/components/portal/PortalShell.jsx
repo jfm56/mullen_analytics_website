@@ -96,6 +96,11 @@ export default function PortalShell({ children }) {
   // enforces with a 403). Show everything until entitlements load to avoid flicker.
   const GATED_NAV = { '/portal/data-explorer': 'data_explorer', '/portal/datasets': 'compare_years' };
   const navAllowed = ({ href }) => {
+    // The dashboard needs at least one dashboard module (analytics/predictive/
+    // geographic). Show until entitlements load to avoid flicker.
+    if (href === '/portal/dashboard') {
+      return !planFeatures || !!(planFeatures.analytics || planFeatures.predictive || planFeatures.geographic);
+    }
     const feat = GATED_NAV[href];
     return !feat || !planFeatures || planFeatures[feat];
   };

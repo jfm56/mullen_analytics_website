@@ -78,6 +78,12 @@ class Profile(Base):
     ems_qa_enabled = Column(Boolean, default=False)
     ems_agency_slug = Column(String(255), nullable=True)
     ems_role = Column(String(50), nullable=True)
+
+    # Per-client product-module overrides: {"analytics": bool, "predictive": bool,
+    # "geographic": bool, "qa": bool}. NULL = follow the plan tier's default
+    # bundle. See services/plans.py enabled_modules(). The admin edits these to
+    # control exactly what each client can access.
+    module_overrides = Column(JSON, nullable=True)
     
     # Metadata
     tags = Column(JSON, default=list)
@@ -100,6 +106,14 @@ class Profile(Base):
     
     # Relationships
     user = relationship("User", back_populates="profile")
+
+    @property
+    def modules(self) -> dict:
+        """Effective product-module access (analytics/predictive/geographic/qa),
+        combining the plan tier's default bundle with per-client overrides. Lazy
+        import avoids any import-time cycle (services.plans reads attrs only)."""
+        from ..services.plans import enabled_modules
+        return enabled_modules(self)
 
 
 class Session(Base):

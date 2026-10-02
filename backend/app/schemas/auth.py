@@ -69,6 +69,9 @@ class ProfileResponse(BaseModel):
     ems_qa_enabled: bool = False
     ems_agency_slug: Optional[str] = None
     ems_role: Optional[str] = None
+    # Effective product-module access (analytics/predictive/geographic/qa) — tier
+    # defaults combined with per-client overrides. Drives nav + dashboard-tab gating.
+    modules: Optional[dict] = None
 
     class Config:
         from_attributes = True
