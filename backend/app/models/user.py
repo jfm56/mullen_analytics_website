@@ -18,7 +18,17 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_sign_in_at = Column(DateTime, nullable=True)
-    
+
+    # TOTP multi-factor auth. The portal is the single auth authority, so MFA is
+    # enforced here (preserving the EMS QA guarantee for QA-entitled members).
+    # totp_secret is the base32 shared secret; it is only meaningful once
+    # totp_enabled is True (enrollment confirmed by a valid code). Recovery codes
+    # are stored as sha256 hashes (one-time use; removed as they are consumed).
+    totp_secret = Column(String(64), nullable=True)
+    totp_enabled = Column(Boolean, default=False, nullable=False)
+    totp_confirmed_at = Column(DateTime, nullable=True)
+    totp_recovery_codes = Column(JSON, default=list)
+
     # Relationships
     profile = relationship("Profile", back_populates="user", uselist=False)
     sessions = relationship("Session", back_populates="user")
@@ -68,6 +78,12 @@ class Profile(Base):
     ems_qa_enabled = Column(Boolean, default=False)
     ems_agency_slug = Column(String(255), nullable=True)
     ems_role = Column(String(50), nullable=True)
+
+    # Per-client product-module overrides: {"analytics": bool, "predictive": bool,
+    # "geographic": bool, "qa": bool}. NULL = follow the plan tier's default
+    # bundle. See services/plans.py enabled_modules(). The admin edits these to
+    # control exactly what each client can access.
+    module_overrides = Column(JSON, nullable=True)
     
     # Metadata
     tags = Column(JSON, default=list)
@@ -91,6 +107,14 @@ class Profile(Base):
     # Relationships
     user = relationship("User", back_populates="profile")
 
+    @property
+    def modules(self) -> dict:
+        """Effective product-module access (analytics/predictive/geographic/qa),
+        combining the plan tier's default bundle with per-client overrides. Lazy
+        import avoids any import-time cycle (services.plans reads attrs only)."""
+        from ..services.plans import enabled_modules
+        return enabled_modules(self)
+
 
 class Session(Base):
     """User sessions for HTTP-only cookie auth"""
@@ -103,7 +127,10 @@ class Session(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
-    
+    # MFA satisfied for THIS session: True when the user has no TOTP, or has
+    # passed a TOTP/recovery challenge. Gates MFA-protected surfaces (e.g. QA).
+    mfa_passed = Column(Boolean, default=False, nullable=False)
+
     # Relationships
     user = relationship("User", back_populates="sessions")
 

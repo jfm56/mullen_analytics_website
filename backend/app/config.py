@@ -95,6 +95,11 @@ class Settings(BaseSettings):
     sso_audience: str = "mullen-ems-qa"
     sso_token_ttl_seconds: int = 60
     ems_qa_sso_url: str = "https://app.mullenanalytics.com/api/auth/sso"
+    # EMS QA backend base URL for SERVER-SIDE proxying of QA screens rendered inside
+    # the portal (/api/qa/* → EMS QA /api/*). The portal exchanges an SSO ticket for
+    # an EMS QA session server-side and never exposes it to the browser. Blank =
+    # the in-portal QA proxy is disabled (falls back to the launch-handoff only).
+    ems_qa_api_base: str = ""  # e.g. http://localhost:8000 (dev) | https://app.mullenanalytics.com (prod)
 
     # ── On-prem features: first-party visitor analytics + lead discovery ──
     # These run on the on-prem FastAPI instance (own hardware, local Postgres),

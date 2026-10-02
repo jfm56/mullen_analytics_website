@@ -87,3 +87,8 @@ websockets==16.0
 # Lead discovery (Phase 3) — imported lazily; only needed to run the nightly crawler.
 apscheduler==3.10.4
 ddgs>=6.0
+
+# Portal TOTP MFA — pyotp verifies the 6-digit codes; segno renders the
+# enrollment QR as an SVG server-side (pure-python, no Pillow/lxml).
+pyotp==2.9.0
+segno==1.6.1

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { auth } from '@/lib/api';
+import MfaChallenge from '@/components/mfa/MfaChallenge';
 
 // Brand background — explicit colors so the page reads correctly regardless of
 // the visitor's OS light/dark preference (the theme CSS variables flip in dark
@@ -18,6 +19,16 @@ export default function PortalLoginPage() {
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState('');
+  const [mfaStep, setMfaStep] = useState(false);
+
+  const redirectByRole = async () => {
+    const session = await auth.getSession();
+    if (session.profile?.role === 'admin' && !session.impersonating) {
+      router.push('/admin');
+    } else {
+      router.push('/portal');
+    }
+  };
 
   // Check if already logged in
   useEffect(() => {
@@ -51,13 +62,13 @@ export default function PortalLoginPage() {
       const result = await auth.login(email, password);
 
       if (result.success) {
-        // Get session to check role
-        const session = await auth.getSession();
-        if (session.profile?.role === 'admin' && !session.impersonating) {
-          router.push('/admin');
-        } else {
-          router.push('/portal');
+        if (result.mfa_required) {
+          // Password OK; session is pending until a TOTP code is verified.
+          setMfaStep(true);
+          setLoading(false);
+          return;
         }
+        await redirectByRole();
       } else {
         setError(result.message || 'Login failed');
       }
@@ -73,6 +84,32 @@ export default function PortalLoginPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={PAGE_BG}>
         <div className="text-sm animate-pulse" style={{ color: '#94A3B8' }}>Checking session…</div>
+      </div>
+    );
+  }
+
+  // Step 2: two-factor verification (for accounts with TOTP enabled).
+  if (mfaStep) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12" style={PAGE_BG}>
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-7">
+            <Image src="/navbar-logo.png" alt="Mullen Analytics" width={48} height={48} priority className="object-contain" style={{ width: 'auto', height: 44 }} />
+            <span className="mt-3 font-bold text-lg" style={{ color: '#F1F5F9', letterSpacing: '-0.01em' }}>Mullen Analytics</span>
+            <span className="mt-1 text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0EA5E9' }}>Client Portal</span>
+          </div>
+          <div className="rounded-2xl p-7" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 24px 60px rgba(0,0,0,0.45)' }}>
+            <MfaChallenge compact onVerified={redirectByRole} />
+            <button
+              type="button"
+              onClick={() => { setMfaStep(false); setPassword(''); }}
+              className="mt-4 text-xs hover:underline"
+              style={{ color: '#64748B' }}
+            >
+              ← Back to sign in
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

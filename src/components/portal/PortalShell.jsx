@@ -6,7 +6,8 @@ import Image from 'next/image';
 import {
   Home, Upload, BarChart3, Search, FileText,
   MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
-  Activity, ExternalLink, MailWarning, Siren,
+  ExternalLink, MailWarning, Siren, ShieldCheck,
+  LineChart, ClipboardCheck, Download, Flag, PencilLine, SlidersHorizontal,
 } from 'lucide-react';
 import { auth, emsQa } from '@/lib/api';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
@@ -24,6 +25,18 @@ const NAV = [
   { label: 'Invoices',      href: '/portal/invoices',       Icon: Receipt },
   { label: 'Datasets',      href: '/portal/datasets',       Icon: Database },
   { label: 'Settings',      href: '/portal/settings',       Icon: Settings },
+  { label: 'Security',      href: '/portal/security',       Icon: ShieldCheck },
+];
+
+// EMS QA screens, rendered in-portal (same-origin /api/qa/* proxy). Shown only
+// when the member's profile has ems_qa_enabled; backend enforces membership+role.
+const QA_NAV = [
+  { label: 'QA Dashboard',   href: '/portal/qa/dashboard',   Icon: ClipboardCheck },
+  { label: 'Analytics',      href: '/portal/qa/analytics',   Icon: LineChart },
+  { label: 'Imports',        href: '/portal/qa/imports',     Icon: Download },
+  { label: 'Findings',       href: '/portal/qa/findings',    Icon: Flag },
+  { label: 'My Corrections', href: '/portal/qa/corrections', Icon: PencilLine },
+  { label: 'QA Settings',    href: '/portal/qa/settings',    Icon: SlidersHorizontal },
 ];
 
 const BYPASS = ['/portal/login', '/portal/reset-password', '/portal/verify-email'];
@@ -83,6 +96,11 @@ export default function PortalShell({ children }) {
   // enforces with a 403). Show everything until entitlements load to avoid flicker.
   const GATED_NAV = { '/portal/data-explorer': 'data_explorer', '/portal/datasets': 'compare_years' };
   const navAllowed = ({ href }) => {
+    // The dashboard needs at least one dashboard module (analytics/predictive/
+    // geographic). Show until entitlements load to avoid flicker.
+    if (href === '/portal/dashboard') {
+      return !planFeatures || !!(planFeatures.analytics || planFeatures.predictive || planFeatures.geographic);
+    }
     const feat = GATED_NAV[href];
     return !feat || !planFeatures || planFeatures[feat];
   };
@@ -112,15 +130,39 @@ export default function PortalShell({ children }) {
         );
       })}
       {profile?.ems_qa_enabled && (
-        <button
-          type="button"
-          onClick={() => { onNavigate?.(); emsQa.open().catch(() => {}); }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
-        >
-          <Activity size={18} className="flex-shrink-0" />
-          <span>QA Platform</span>
-          <ExternalLink size={14} className="ml-auto text-gray-400" />
-        </button>
+        <>
+          <p className="px-4 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            EMS QA
+          </p>
+          {QA_NAV.map(({ label, href, Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={onNavigate}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 ${
+                  active
+                    ? 'bg-blue-50 text-blue-700 font-semibold'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <Icon size={18} className="flex-shrink-0" />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => { onNavigate?.(); emsQa.open().catch(() => {}); }}
+            className="w-full flex items-center gap-3 px-4 py-1.5 text-xs rounded-lg transition-colors text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+            title="Open the standalone EMS QA application in a new tab"
+          >
+            <ExternalLink size={14} className="flex-shrink-0" />
+            <span>Open full QA app</span>
+          </button>
+        </>
       )}
     </>
   );

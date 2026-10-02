@@ -14,13 +14,17 @@ from ..schemas.auth import (
     RegisterRequest, RegisterResponse,
     EmailVerificationConfirm, EmailVerificationResponse,
     ResendVerificationResponse,
+    MfaEnrollResponse, MfaVerifyRequest, MfaActivateResponse,
+    MfaVerifyResponse, MfaStatusResponse, MfaDisableRequest,
 )
 from ..services.auth import (
     authenticate_user, create_session, validate_session,
     delete_session, get_user_profile, create_user_with_profile,
     create_password_reset_token, use_password_reset_token,
     create_email_verification_token, use_email_verification_token,
+    get_session_row, mark_session_mfa_passed, verify_password,
 )
+from ..services import mfa as mfa_service
 from ..services.email import send_password_reset_email, send_verification_email
 from ..services.signup_guard import check_rate_limit, is_disposable_email
 from ..services.audit import log_action
@@ -78,9 +82,12 @@ async def login(
             pass
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # Create session
+    # If the user has TOTP enabled, the session is created PENDING (mfa_passed=
+    # False). The cookie is set so the follow-up /auth/mfa/verify call is bound to
+    # this session, but MFA-gated surfaces stay closed until a code is verified.
+    mfa_required = bool(user.totp_enabled)
     session, raw_token = create_session(
-        db, str(user.id), ip_address, user_agent
+        db, str(user.id), ip_address, user_agent, mfa_passed=not mfa_required
     )
 
     # Update last login on profile
@@ -99,8 +106,12 @@ async def login(
 
     return LoginResponse(
         success=True,
-        message="Login successful",
-        user=UserResponse(id=user.id, email=user.email, email_confirmed=user.email_confirmed),
+        message="MFA verification required" if mfa_required else "Login successful",
+        user=UserResponse(
+            id=user.id, email=user.email,
+            email_confirmed=user.email_confirmed, totp_enabled=user.totp_enabled,
+        ),
+        mfa_required=mfa_required,
     )
 
 
@@ -242,15 +253,22 @@ async def get_session(
         return FullSessionResponse(authenticated=False)
     
     user = validate_session(db, token)
-    
+
     if not user:
         return FullSessionResponse(authenticated=False)
-    
+
     profile = get_user_profile(db, str(user.id))
-    
+
+    # MFA state for this session (based on the real signed-in user, even while
+    # impersonating). mfa_passed defaults True for users without TOTP.
+    session_row = get_session_row(db, token)
+    mfa_enabled = bool(user.totp_enabled)
+    mfa_passed = bool(session_row.mfa_passed) if session_row else True
+    mfa_required = mfa_enabled and not mfa_passed
+
     # Check for impersonation cookie (admin viewing as client)
     impersonation_client_id = request.cookies.get("ma_impersonate")
-    
+
     if impersonation_client_id and profile and profile.role == "admin":
         # Admin is impersonating a client - return client's profile
         client_profile = get_user_profile(db, impersonation_client_id)
@@ -261,12 +279,17 @@ async def get_session(
                 profile=ProfileResponse.model_validate(client_profile),
                 impersonating=True,
                 admin_user=UserResponse(id=user.id, email=user.email),
+                mfa_enabled=mfa_enabled, mfa_passed=mfa_passed, mfa_required=mfa_required,
             )
-    
+
     return FullSessionResponse(
         authenticated=True,
-        user=UserResponse(id=user.id, email=user.email, email_confirmed=user.email_confirmed),
+        user=UserResponse(
+            id=user.id, email=user.email,
+            email_confirmed=user.email_confirmed, totp_enabled=user.totp_enabled,
+        ),
         profile=ProfileResponse.model_validate(profile) if profile else None,
+        mfa_enabled=mfa_enabled, mfa_passed=mfa_passed, mfa_required=mfa_required,
     )
 
 
@@ -503,3 +526,138 @@ async def resend_verification(
         success=True,
         message=f"We've sent a new verification link to {email_to}.",
     )
+
+
+# ---------------------------------------------------------------------------
+# Multi-factor auth (TOTP). The portal is the single auth authority; enabling
+# MFA here preserves the EMS QA MFA guarantee for QA-entitled members.
+# ---------------------------------------------------------------------------
+
+@router.post("/mfa/enroll", response_model=MfaEnrollResponse)
+async def mfa_enroll(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Begin TOTP enrollment: generate a secret (not yet active) + QR to scan.
+    Enrollment is finalized by /auth/mfa/activate with a valid code."""
+    if current_user.totp_enabled:
+        raise HTTPException(status_code=400, detail="MFA is already enabled. Disable it first to re-enroll.")
+    secret = mfa_service.generate_secret()
+    current_user.totp_secret = secret
+    db.commit()
+    uri = mfa_service.provisioning_uri(secret, current_user.email)
+    return MfaEnrollResponse(secret=secret, provisioning_uri=uri, qr_svg=mfa_service.qr_svg_data_uri(uri))
+
+
+@router.post("/mfa/activate", response_model=MfaActivateResponse)
+async def mfa_activate(
+    data: MfaVerifyRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Finalize enrollment: verify the first code, enable MFA, and return
+    one-time recovery codes (shown exactly once)."""
+    if current_user.totp_enabled:
+        raise HTTPException(status_code=400, detail="MFA is already enabled.")
+    if not current_user.totp_secret:
+        raise HTTPException(status_code=400, detail="Start enrollment first (no pending secret).")
+    if not mfa_service.verify_totp(current_user.totp_secret, data.code):
+        raise HTTPException(status_code=400, detail="That code didn't match. Check your authenticator and try again.")
+
+    recovery = mfa_service.generate_recovery_codes()
+    current_user.totp_enabled = True
+    current_user.totp_confirmed_at = datetime.utcnow()
+    current_user.totp_recovery_codes = mfa_service.hash_recovery_codes(recovery)
+    db.commit()
+
+    # The act of enrolling proves possession; mark this session MFA-satisfied.
+    token = get_session_token(request)
+    if token:
+        mark_session_mfa_passed(db, token)
+    try:
+        log_action(db, action="mfa_enabled", user_id=str(current_user.id))
+    except Exception:
+        pass
+    return MfaActivateResponse(success=True, recovery_codes=recovery)
+
+
+@router.post("/mfa/verify", response_model=MfaVerifyResponse)
+async def mfa_verify(
+    data: MfaVerifyRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Satisfy the MFA challenge for the current session (login step 2).
+    Accepts a 6-digit TOTP code or a one-time recovery code."""
+    if not current_user.totp_enabled or not current_user.totp_secret:
+        raise HTTPException(status_code=400, detail="MFA is not enabled for this account.")
+
+    ok = mfa_service.verify_totp(current_user.totp_secret, data.code)
+    if not ok:
+        # Fall back to a one-time recovery code; consume it on match.
+        h = mfa_service.hash_recovery_code(data.code)
+        remaining = list(current_user.totp_recovery_codes or [])
+        if h in remaining:
+            remaining.remove(h)
+            current_user.totp_recovery_codes = remaining  # reassign: JSON isn't mutation-tracked
+            db.commit()
+            ok = True
+
+    if not ok:
+        raise HTTPException(status_code=400, detail="Invalid code.")
+
+    token = get_session_token(request)
+    if not token or not mark_session_mfa_passed(db, token):
+        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
+    return MfaVerifyResponse(success=True, message="MFA verified")
+
+
+@router.get("/mfa/status", response_model=MfaStatusResponse)
+async def mfa_status(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    token = get_session_token(request)
+    session_row = get_session_row(db, token) if token else None
+    passed = bool(session_row.mfa_passed) if session_row else False
+    return MfaStatusResponse(
+        enabled=bool(current_user.totp_enabled),
+        passed=passed,
+        recovery_codes_remaining=len(current_user.totp_recovery_codes or []),
+    )
+
+
+@router.post("/mfa/disable", response_model=MfaVerifyResponse)
+async def mfa_disable(
+    data: MfaDisableRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Turn off MFA. Requires the account password AND a current code (or recovery
+    code) so a walk-up attacker on an open session can't remove it."""
+    if not current_user.totp_enabled:
+        raise HTTPException(status_code=400, detail="MFA is not enabled.")
+    if not verify_password(data.password, current_user.password_hash):
+        raise HTTPException(status_code=403, detail="Incorrect password.")
+
+    ok = mfa_service.verify_totp(current_user.totp_secret or "", data.code)
+    if not ok:
+        h = mfa_service.hash_recovery_code(data.code)
+        if h in (current_user.totp_recovery_codes or []):
+            ok = True
+    if not ok:
+        raise HTTPException(status_code=400, detail="Invalid code.")
+
+    current_user.totp_enabled = False
+    current_user.totp_secret = None
+    current_user.totp_confirmed_at = None
+    current_user.totp_recovery_codes = []
+    db.commit()
+    try:
+        log_action(db, action="mfa_disabled", user_id=str(current_user.id))
+    except Exception:
+        pass
+    return MfaVerifyResponse(success=True, message="MFA disabled")

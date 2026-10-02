@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { dataUploads, dashboardFilter } from '@/lib/api';
+import { dataUploads, dashboardFilter, auth } from '@/lib/api';
 import EMSDashboard from '@/components/EMSDashboard';
 import AiInsights from '@/components/AiInsights';
 import PredictiveAnalytics from '@/components/PredictiveAnalytics';
@@ -24,6 +24,17 @@ import {
 import CHART from '@/lib/chartTheme';
 
 const SLOT_COLORS = CHART.series;
+
+// Dashboard tab → product module. The admin controls which modules each client
+// has; tabs the membership doesn't include are hidden. Overview + Compare Dates =
+// analytics; Predictions + Scheduling = predictive; Geographic = geographic.
+const TAB_MODULE = {
+  overview: 'analytics', dateranges: 'analytics',
+  predictions: 'predictive', scheduling: 'predictive',
+  geographic: 'geographic',
+};
+// Show everything until entitlements load (avoid flicker); then gate by module.
+const tabAllowed = (id, modules) => !modules || !!modules[TAB_MODULE[id]];
 
 async function apiFetch(path, opts) {
   const res = await fetch(`/api/proxy${path}`, { credentials: 'include', ...opts });
@@ -343,6 +354,7 @@ export default function PortalDashboardPage() {
   const [error, setError]         = useState('');
   const [dashTab, setDashTab]     = useState('overview');
   const [overlapsOpen, setOverlapsOpen] = useState(false);
+  const [modules, setModules]     = useState(null);   // effective product-module access
 
   // Compare mode
   const [compareMode, setCompareMode]   = useState(false);
@@ -367,6 +379,19 @@ export default function PortalDashboardPage() {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  // Effective module access (set by the admin per client) gates the tabs below.
+  useEffect(() => {
+    auth.getSession().then(s => setModules(s?.profile?.modules || null)).catch(() => {});
+  }, []);
+
+  // If the active tab isn't in the client's membership, fall back to the first
+  // allowed tab (so an off-module tab never renders / calls a 403 endpoint).
+  useEffect(() => {
+    if (!modules) return;
+    const allowed = ['overview', 'predictions', 'scheduling', 'geographic', 'dateranges'].filter(id => tabAllowed(id, modules));
+    if (allowed.length && !allowed.includes(dashTab)) setDashTab(allowed[0]);
+  }, [modules, dashTab]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -601,9 +626,9 @@ export default function PortalDashboardPage() {
                 { id: 'predictions', label: 'Predictions', icon: <TrendingUp size={15} /> },
                 { id: 'scheduling',  label: 'Scheduling',  icon: <CalendarClock size={15} /> },
                 { id: 'geographic',  label: 'Geographic',  icon: <MapPin size={15} /> },
-              ]}
+              ].filter(t => tabAllowed(t.id, modules))}
             />
-            {(dashTab === 'overview' || !['predictions', 'scheduling', 'geographic'].includes(dashTab)) && (
+            {dashTab === 'overview' && tabAllowed('overview', modules) && (
               <div className="space-y-5">
                 <AiInsights combined filters={appliedFilters} />
                 <div className="bg-white border rounded-xl shadow-sm p-6">
@@ -615,14 +640,14 @@ export default function PortalDashboardPage() {
                 </div>
               </div>
             )}
-            {dashTab === 'predictions' && <PredictiveAnalytics combined />}
-            {dashTab === 'scheduling' && (
+            {dashTab === 'predictions' && tabAllowed('predictions', modules) && <PredictiveAnalytics combined />}
+            {dashTab === 'scheduling' && tabAllowed('scheduling', modules) && (
               <div className="space-y-5">
                 <IftOutlook combined />
                 <EmergencyTransportOutlook combined />
               </div>
             )}
-            {dashTab === 'geographic' && (
+            {dashTab === 'geographic' && tabAllowed('geographic', modules) && (
               <div className="space-y-5">
                 <StagingRecommender combined />
                 <GeographicHeatMap combined />
@@ -642,10 +667,10 @@ export default function PortalDashboardPage() {
             { id: 'scheduling',  label: 'Scheduling',  icon: <CalendarClock size={15} /> },
             { id: 'geographic',  label: 'Geographic',  icon: <MapPin size={15} /> },
             { id: 'dateranges',  label: 'Compare Dates', icon: <CalendarRange size={15} /> },
-          ]}
+          ].filter(t => tabAllowed(t.id, modules))}
         />
 
-        {dashTab === 'overview' && (
+        {dashTab === 'overview' && tabAllowed('overview', modules) && (
           <div className="space-y-5">
           <AiInsights uploadId={selectedId} filters={appliedFilters} />
           <div className="bg-white border rounded-xl shadow-sm p-6">
@@ -669,30 +694,30 @@ export default function PortalDashboardPage() {
           </div>
         )}
 
-        {dashTab === 'predictions' && (
+        {dashTab === 'predictions' && tabAllowed('predictions', modules) && (
           <div className="space-y-5">
             <PredictiveAnalytics uploadId={selectedId} />
             <TurnoverRisk uploadId={selectedId} />
-            <WeatherTrafficForecast uploadId={selectedId} />
           </div>
         )}
 
-        {dashTab === 'scheduling' && (
+        {dashTab === 'scheduling' && tabAllowed('scheduling', modules) && (
           <div className="space-y-5">
             <IftOutlook uploadId={selectedId} />
             <EmergencyTransportOutlook uploadId={selectedId} />
           </div>
         )}
 
-        {dashTab === 'geographic' && (
+        {dashTab === 'geographic' && tabAllowed('geographic', modules) && (
           <div className="space-y-5">
             <StagingRecommender uploadId={selectedId} />
             <GeographicHeatMap uploadId={selectedId} />
             <MvaHotspots uploadId={selectedId} />
+            <WeatherTrafficForecast uploadId={selectedId} />
           </div>
         )}
 
-        {dashTab === 'dateranges' && (
+        {dashTab === 'dateranges' && tabAllowed('dateranges', modules) && (
           <div className="space-y-5">
             <DateRangeCompare />
           </div>

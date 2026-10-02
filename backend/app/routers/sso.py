@@ -28,6 +28,28 @@ class LaunchResponse(BaseModel):
     token: str
 
 
+def mint_sso_token(profile: Profile, fallback_email: str, settings) -> str:
+    """Build + sign a one-time Ed25519 SSO ticket for an EMS-QA-entitled member.
+
+    Single source of truth for the handoff claims, shared by the browser launch
+    endpoint and the server-side QA proxy (services/ems_qa_bridge.py). Caller must
+    have already confirmed sso_private_key is set and the profile is entitled.
+    """
+    now = datetime.now(timezone.utc)
+    claims = {
+        "iss": settings.sso_issuer,
+        "aud": settings.sso_audience,
+        "sub": profile.email or fallback_email,
+        "agency": profile.ems_agency_slug,
+        "name": profile.full_name,
+        "role": profile.ems_role or "qa_reviewer",
+        "iat": now,
+        "exp": now + timedelta(seconds=settings.sso_token_ttl_seconds),
+        "jti": uuid4().hex,
+    }
+    return jwt.encode(claims, settings.sso_private_key, algorithm="EdDSA")
+
+
 @router.post("/launch-ems-qa", response_model=LaunchResponse)
 async def launch_ems_qa(
     current_user: User = Depends(get_current_user),
@@ -42,17 +64,5 @@ async def launch_ems_qa(
     if not profile or not profile.ems_qa_enabled or not profile.ems_agency_slug:
         raise HTTPException(status_code=403, detail="EMS QA is not enabled for this account")
 
-    now = datetime.now(timezone.utc)
-    claims = {
-        "iss": settings.sso_issuer,
-        "aud": settings.sso_audience,
-        "sub": profile.email or current_user.email,
-        "agency": profile.ems_agency_slug,
-        "name": profile.full_name,
-        "role": profile.ems_role or "qa_reviewer",
-        "iat": now,
-        "exp": now + timedelta(seconds=settings.sso_token_ttl_seconds),
-        "jti": uuid4().hex,
-    }
-    token = jwt.encode(claims, settings.sso_private_key, algorithm="EdDSA")
+    token = mint_sso_token(profile, current_user.email, settings)
     return LaunchResponse(sso_url=settings.ems_qa_sso_url, token=token)

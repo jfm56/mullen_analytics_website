@@ -13,6 +13,9 @@ class LoginResponse(BaseModel):
     success: bool
     message: str
     user: Optional["UserResponse"] = None
+    # True when the user has TOTP enabled: the session cookie is set but pending,
+    # and the client must POST /auth/mfa/verify with a code to complete login.
+    mfa_required: bool = False
 
 
 class LogoutResponse(BaseModel):
@@ -32,6 +35,7 @@ class UserResponse(BaseModel):
     # impersonation responses built from a profile) never show a false
     # "unverified" banner. The session/login endpoints set the real value.
     email_confirmed: bool = True
+    totp_enabled: bool = False
 
     class Config:
         from_attributes = True
@@ -65,6 +69,9 @@ class ProfileResponse(BaseModel):
     ems_qa_enabled: bool = False
     ems_agency_slug: Optional[str] = None
     ems_role: Optional[str] = None
+    # Effective product-module access (analytics/predictive/geographic/qa) — tier
+    # defaults combined with per-client overrides. Drives nav + dashboard-tab gating.
+    modules: Optional[dict] = None
 
     class Config:
         from_attributes = True
@@ -76,6 +83,45 @@ class FullSessionResponse(BaseModel):
     profile: Optional[ProfileResponse] = None
     impersonating: bool = False
     admin_user: Optional[UserResponse] = None
+    # MFA state for THIS session. mfa_enabled: user has TOTP configured.
+    # mfa_passed: this session has satisfied the challenge (or none was needed).
+    # mfa_required: a challenge is pending (enabled but not yet passed).
+    mfa_enabled: bool = False
+    mfa_passed: bool = True
+    mfa_required: bool = False
+
+
+# ---- MFA (TOTP) ----
+
+class MfaEnrollResponse(BaseModel):
+    secret: str
+    provisioning_uri: str
+    qr_svg: str  # data:image/svg+xml;base64,... for <img src>
+
+
+class MfaVerifyRequest(BaseModel):
+    code: str  # 6-digit TOTP, or a recovery code
+
+
+class MfaActivateResponse(BaseModel):
+    success: bool
+    recovery_codes: list[str]  # shown exactly once
+
+
+class MfaVerifyResponse(BaseModel):
+    success: bool
+    message: str = ""
+
+
+class MfaStatusResponse(BaseModel):
+    enabled: bool
+    passed: bool
+    recovery_codes_remaining: int = 0
+
+
+class MfaDisableRequest(BaseModel):
+    password: str
+    code: str  # current TOTP or recovery code
 
 
 class PasswordResetRequest(BaseModel):
