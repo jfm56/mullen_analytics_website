@@ -142,6 +142,12 @@ async def on_startup():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE",
             "ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(50)",
             "ALTER TABLE leads ADD COLUMN IF NOT EXISTS date_note VARCHAR(200)",
+            # Portal TOTP MFA (single auth authority; preserves EMS QA's MFA guarantee).
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(64)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_confirmed_at TIMESTAMP",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_recovery_codes JSON DEFAULT '[]'",
+            "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_passed BOOLEAN DEFAULT FALSE",
         ]
         with engine.begin() as conn:
             for _stmt in _schema_patches:

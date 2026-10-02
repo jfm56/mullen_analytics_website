@@ -130,6 +130,28 @@ export const auth = {
       method: 'POST',
     });
   },
+
+  // ---- TOTP multi-factor auth ----
+  /** Begin enrollment: returns { secret, provisioning_uri, qr_svg }. */
+  async mfaEnroll() {
+    return apiFetch('/api/auth/mfa/enroll', { method: 'POST' });
+  },
+  /** Finalize enrollment with the first code: returns { success, recovery_codes }. */
+  async mfaActivate(code) {
+    return apiFetch('/api/auth/mfa/activate', { method: 'POST', body: JSON.stringify({ code }) });
+  },
+  /** Satisfy the login challenge for the current session (TOTP or recovery code). */
+  async mfaVerify(code) {
+    return apiFetch('/api/auth/mfa/verify', { method: 'POST', body: JSON.stringify({ code }) });
+  },
+  /** { enabled, passed, recovery_codes_remaining }. */
+  async mfaStatus() {
+    return apiFetch('/api/auth/mfa/status');
+  },
+  /** Disable MFA (requires password + a current code/recovery code). */
+  async mfaDisable(password, code) {
+    return apiFetch('/api/auth/mfa/disable', { method: 'POST', body: JSON.stringify({ password, code }) });
+  },
 };
 
 /**

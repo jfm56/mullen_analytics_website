@@ -21,7 +21,8 @@ from ..config import get_settings
 from ..database import get_db
 from ..models.user import Profile, User
 from ..services import ems_qa_bridge
-from .auth import get_current_user
+from ..services.auth import get_session_row
+from .auth import get_current_user, get_session_token
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/qa", tags=["qa-proxy"])
@@ -60,7 +61,17 @@ async def qa_proxy(
     profile = db.query(Profile).filter(Profile.id == current_user.id).first()
     if not profile or not profile.ems_qa_enabled or not profile.ems_agency_slug:
         raise HTTPException(status_code=403, detail="EMS QA is not enabled for this account")
-    # Phase 3 (portal MFA): require the member's MFA to be satisfied here before proxying.
+
+    # MFA is mandatory for QA (preserves the EMS QA guarantee). The member must
+    # have TOTP enrolled AND this session must have passed the challenge. The
+    # portal UI gates on /auth/session first, so this is defense-in-depth; the
+    # detail codes let the client route to enrollment vs. verification.
+    if not current_user.totp_enabled:
+        raise HTTPException(status_code=403, detail="mfa_enrollment_required")
+    token = get_session_token(request)
+    session_row = get_session_row(db, token) if token else None
+    if not session_row or not session_row.mfa_passed:
+        raise HTTPException(status_code=403, detail="mfa_verification_required")
 
     body = await request.body()
     target = settings.ems_qa_api_base.rstrip("/") + "/api/" + path.lstrip("/")

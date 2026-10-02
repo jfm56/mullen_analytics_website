@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   Home, Upload, BarChart3, Search, FileText,
   MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
-  ExternalLink, MailWarning, Siren,
+  ExternalLink, MailWarning, Siren, ShieldCheck,
   LineChart, ClipboardCheck, Download, Flag, PencilLine, SlidersHorizontal,
 } from 'lucide-react';
 import { auth, emsQa } from '@/lib/api';
@@ -25,6 +25,7 @@ const NAV = [
   { label: 'Invoices',      href: '/portal/invoices',       Icon: Receipt },
   { label: 'Datasets',      href: '/portal/datasets',       Icon: Database },
   { label: 'Settings',      href: '/portal/settings',       Icon: Settings },
+  { label: 'Security',      href: '/portal/security',       Icon: ShieldCheck },
 ];
 
 // EMS QA screens, rendered in-portal (same-origin /api/qa/* proxy). Shown only

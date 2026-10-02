@@ -35,7 +35,14 @@ async function handle(res) {
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || body.message || `Request failed (${res.status})`);
+    const detail = body.detail || body.message || `Request failed (${res.status})`;
+    if (detail === 'mfa_enrollment_required') {
+      throw new Error('Two-factor authentication is required for EMS QA. Please set it up to continue.');
+    }
+    if (detail === 'mfa_verification_required') {
+      throw new Error('Please verify two-factor authentication to continue.');
+    }
+    throw new Error(detail);
   }
   if (res.status === 204) return undefined;
   return res.json();

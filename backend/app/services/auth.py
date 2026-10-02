@@ -43,41 +43,67 @@ def create_session(
     user_id: str,
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
+    mfa_passed: bool = True,
 ) -> tuple[UserSession, str]:
-    """Create a new session for a user. Returns (session, raw_token)."""
+    """Create a new session for a user. Returns (session, raw_token).
+
+    mfa_passed defaults True (users without TOTP are fully authenticated on
+    login). The login route passes False when the user has TOTP enabled, so the
+    session is pending until a code is verified via /auth/mfa/verify.
+    """
     raw_token = generate_session_token()
     token_hash = hash_token(raw_token)
-    
+
     expires_at = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
-    
+
     session = UserSession(
         user_id=user_id,
         token_hash=token_hash,
         expires_at=expires_at,
         ip_address=ip_address,
         user_agent=user_agent,
+        mfa_passed=mfa_passed,
     )
-    
+
     db.add(session)
     db.commit()
     db.refresh(session)
-    
+
     return session, raw_token
 
 
 def validate_session(db: Session, token: str) -> Optional[User]:
     """Validate a session token and return the user if valid."""
     token_hash = hash_token(token)
-    
+
     session = db.query(UserSession).filter(
         UserSession.token_hash == token_hash,
         UserSession.expires_at > datetime.utcnow()
     ).first()
-    
+
     if not session:
         return None
-    
+
     return db.query(User).filter(User.id == session.user_id).first()
+
+
+def get_session_row(db: Session, token: str) -> Optional[UserSession]:
+    """Return the live (unexpired) session row for a token, or None."""
+    token_hash = hash_token(token)
+    return db.query(UserSession).filter(
+        UserSession.token_hash == token_hash,
+        UserSession.expires_at > datetime.utcnow(),
+    ).first()
+
+
+def mark_session_mfa_passed(db: Session, token: str) -> bool:
+    """Flip the current session's mfa_passed to True after a verified challenge."""
+    session = get_session_row(db, token)
+    if not session:
+        return False
+    session.mfa_passed = True
+    db.commit()
+    return True
 
 
 def delete_session(db: Session, token: str) -> bool:
