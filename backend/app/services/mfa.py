@@ -6,7 +6,6 @@ once at enrollment and stored only as sha256 hashes, consumed one-time.
 """
 from __future__ import annotations
 
-import base64
 import hashlib
 import secrets
 
@@ -28,11 +27,13 @@ def provisioning_uri(secret: str, account_email: str) -> str:
 
 
 def qr_svg_data_uri(uri: str) -> str:
-    """Render the provisioning URI as an inline SVG data URI for <img src=…>."""
-    qr = segno.make(uri, error="m")
-    svg = qr.svg_inline(scale=5)
-    b64 = base64.b64encode(svg.encode("utf-8")).decode("ascii")
-    return f"data:image/svg+xml;base64,{b64}"
+    """Render the provisioning URI as an SVG data URI for <img src=…>.
+
+    Uses segno's svg_data_uri, which emits a standalone SVG WITH the xmlns
+    namespace. (svg_inline omits xmlns — fine when inlined into HTML, but it does
+    not render as a standalone image in an <img> tag.)
+    """
+    return segno.make(uri, error="m").svg_data_uri(scale=5)
 
 
 def verify_totp(secret: str, code: str) -> bool:

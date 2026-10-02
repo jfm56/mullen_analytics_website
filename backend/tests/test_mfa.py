@@ -48,7 +48,11 @@ def test_enroll_requires_correct_code_and_returns_recovery(client, db):
     _make_and_login(client, db, "mfa-enroll@example.com")
     data = client.post("/api/auth/mfa/enroll").json()
     assert data["secret"]
-    assert data["qr_svg"].startswith("data:image/svg+xml;base64,")
+    # The QR must be a standalone SVG data URI (xmlns present) so it renders in
+    # an <img src>. (svg_inline omits xmlns and shows as a broken image.)
+    assert data["qr_svg"].startswith("data:image/svg+xml")
+    from urllib.parse import unquote
+    assert "xmlns" in unquote(data["qr_svg"][:400])
     assert data["provisioning_uri"].startswith("otpauth://totp/")
 
     bad = client.post("/api/auth/mfa/activate", json={"code": "000000"})
