@@ -67,7 +67,7 @@ def _route(origin: Tuple[float, float], dest: Tuple[float, float], key: str, dep
             "X-Goog-FieldMask": "routes.duration,routes.staticDuration,routes.distanceMeters",
         },
     )
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with urllib.request.urlopen(req, timeout=15) as resp:  # hardcoded https Google Routes URL, no user-controlled scheme  # nosec B310
         data = json.loads(resp.read().decode("utf-8"))
     routes = data.get("routes") or []
     if not routes:

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .database import engine, Base
+from .database import engine, admin_engine, Base
 from .routers import auth, users, messages, profiles, invoices, uploads, tasks, feedback, errors
 from .routers import projects, documents, impersonation, reports, dashboard_refresh, quickbooks
 from .routers import agencies, agency_files, pipeline, admin, incidents, report_builder, payments, clients
@@ -17,6 +17,8 @@ from .routers import analytics_ingest, analytics_admin, leads_admin, outreach as
 from .routers import emscharts_ingest
 from .routers import tools as tools_router
 from .routers import dispatch as dispatch_router
+from .routers import platform as platform_router  # unified-platform Cognito-authed API (/api/v1/*)
+from .routers import emscharts as emscharts_router  # EMSCharts ingestion API (/api/v1/.../emscharts/*)
 from .models import tool_usage as _tool_usage_models  # noqa: F401 – register with Base
 from .models import data_upload as _data_upload_models  # noqa: F401 – register with Base
 from .models import error_log as _error_log_models  # noqa: F401 – register with Base
@@ -78,6 +80,8 @@ app.include_router(datasets_router.router, prefix="/api")
 app.include_router(errors.router, prefix="/api")
 app.include_router(sso.router, prefix="/api")
 app.include_router(qa_proxy.router, prefix="/api")          # portal -> EMS QA same-origin proxy
+app.include_router(platform_router.router, prefix="/api")   # unified-platform Cognito-authed API (/api/v1/*)
+app.include_router(emscharts_router.router, prefix="/api")  # EMSCharts ingestion (/api/v1/.../emscharts/*)
 app.include_router(plans_router.router, prefix="/api")
 app.include_router(analytics_ingest.router, prefix="/api")   # public visitor-analytics ingest
 app.include_router(analytics_admin.router, prefix="/api")    # admin visitor-analytics dashboard
@@ -107,7 +111,7 @@ async def on_startup():
     log.info("DATABASE_URL env var: %s", masked)
     log.info("ENVIRONMENT: %s | STORAGE_BACKEND: %s", settings.environment, settings.storage_backend)
     try:
-        Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=admin_engine)
         log.info("DB create_all succeeded")
     except Exception as exc:  # noqa: BLE001
         log.error("DB create_all failed: %s", exc)
@@ -150,13 +154,50 @@ async def on_startup():
             "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_passed BOOLEAN DEFAULT FALSE",
             # Per-client product-module access overrides (analytics/predictive/geographic/qa).
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS module_overrides JSON",
+            # Unified AWS platform: Cognito identity link + organization / agency-admin model.
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS cognito_sub VARCHAR(255)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_cognito_sub ON users(cognito_sub)",
+            "ALTER TABLE agencies ADD COLUMN IF NOT EXISTS org_id UUID",
+            "CREATE INDEX IF NOT EXISTS ix_agencies_org_id ON agencies(org_id)",
+            "ALTER TABLE agency_memberships ADD COLUMN IF NOT EXISTS can_review BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE agency_memberships ADD COLUMN IF NOT EXISTS can_receive_reviews BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE agency_memberships ADD COLUMN IF NOT EXISTS is_agency_admin BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE agency_memberships ADD COLUMN IF NOT EXISTS provider_id VARCHAR(100)",
+            # Unified tenancy: EMS analytics data is AGENCY-owned (authoritative),
+            # not user/client-owned. client_id is retained for audit/compat only.
+            # agency_id goes on the two roots; child tables inherit via data_upload_id.
+            "ALTER TABLE ems_dataset_groups ADD COLUMN IF NOT EXISTS agency_id UUID",
+            "CREATE INDEX IF NOT EXISTS ix_ems_dataset_groups_agency_id ON ems_dataset_groups(agency_id)",
+            "ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS agency_id UUID",
+            "CREATE INDEX IF NOT EXISTS ix_data_uploads_agency_id ON data_uploads(agency_id)",
+            # Backfill agency ownership from the client's SINGLE agency membership
+            # (scalar subquery guarded by COUNT=1 so multi-membership users are left
+            # for manual mapping; only fills rows still missing an agency).
+            "UPDATE ems_dataset_groups g SET agency_id = (SELECT am.agency_id FROM agency_memberships am WHERE am.user_id = g.client_id) "
+            "WHERE g.agency_id IS NULL AND (SELECT COUNT(*) FROM agency_memberships am WHERE am.user_id = g.client_id) = 1",
+            "UPDATE data_uploads u SET agency_id = (SELECT am.agency_id FROM agency_memberships am WHERE am.user_id = u.client_id) "
+            "WHERE u.agency_id IS NULL AND (SELECT COUNT(*) FROM agency_memberships am WHERE am.user_id = u.client_id) = 1",
+            # EMSCharts incident/CAD grouping (first-arriving-unit analysis, Analytics v2).
+            "ALTER TABLE ems_incidents ADD COLUMN IF NOT EXISTS incident_number VARCHAR(120)",
+            "CREATE INDEX IF NOT EXISTS ix_ems_incidents_incident_number ON ems_incidents(incident_number)",
         ]
-        with engine.begin() as conn:
+        with admin_engine.begin() as conn:
             for _stmt in _schema_patches:
                 conn.execute(_text(_stmt))
         log.info("DB schema self-heal patches applied")
     except Exception as exc:  # noqa: BLE001
         log.error("DB schema self-heal failed: %s", exc)
+
+    # Provision the low-privilege runtime role + RLS policies (owner connection).
+    # Only in unified/cognito mode with a configured app_user password — local and
+    # legacy session mode keep the single-identity behavior (no RLS provisioning).
+    if settings.app_db_password and settings.auth_mode == "cognito":
+        try:
+            from .security_rls import apply_rls
+            apply_rls(admin_engine, app_role_password=settings.app_db_password)
+            log.info("RLS provisioned (app_user role + agency-isolation policies)")
+        except Exception as exc:  # noqa: BLE001
+            log.error("RLS provisioning failed: %s", exc)
 
     # One-time backfill: every user predating email verification has
     # email_confirmed=False but was never asked to verify. Mark them confirmed
@@ -166,7 +207,7 @@ async def on_startup():
     try:
         from sqlalchemy import text as _text
         _marker = "email_verification_backfill_v1"
-        with engine.begin() as conn:
+        with admin_engine.begin() as conn:
             already_done = conn.execute(
                 _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
             ).first()
@@ -196,7 +237,7 @@ async def on_startup():
     try:
         from sqlalchemy import text as _text
         _marker = "module_overrides_grandfather_v1"
-        with engine.begin() as conn:
+        with admin_engine.begin() as conn:
             already_done = conn.execute(
                 _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
             ).first()

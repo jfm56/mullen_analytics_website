@@ -11,6 +11,9 @@ class Agency(Base):
     __tablename__ = "agencies"
 
     id                = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Owning organization (unified-platform tenancy). NULL until backfilled in the
+    # Phase 1 migration; then every agency belongs to exactly one organization.
+    org_id            = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     agency_name       = Column(String(255), nullable=False)
     slug              = Column(String(100), unique=True, nullable=False, index=True)
     subscription_tier = Column(String(50), default="essential")
@@ -27,6 +30,7 @@ class Agency(Base):
     created_at        = Column(DateTime, default=datetime.utcnow)
     updated_at        = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    organization  = relationship("Organization", back_populates="agencies")
     memberships   = relationship("AgencyMembership", back_populates="agency", cascade="all, delete-orphan")
     files         = relationship("AgencyFile",        back_populates="agency", cascade="all, delete-orphan")
     audit_logs    = relationship("AuditLog",          back_populates="agency", cascade="all, delete-orphan")
@@ -39,7 +43,13 @@ class AgencyMembership(Base):
     id         = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agency_id  = Column(UUID(as_uuid=True), ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id    = Column(UUID(as_uuid=True), ForeignKey("users.id",    ondelete="CASCADE"), nullable=False, index=True)
-    role       = Column(String(50), default="member")
+    role       = Column(String(50), default="member")  # legacy; superseded by the capability flags below
+
+    # Unified-platform capability set — Jim's "review / receive reviews / both" model.
+    can_review          = Column(Boolean, default=False, nullable=False)  # QA reviewer: sees queue, decides
+    can_receive_reviews = Column(Boolean, default=False, nullable=False)  # crew/provider: sees ONLY own charts' feedback
+    is_agency_admin     = Column(Boolean, default=False, nullable=False)  # invite/manage people + assign capabilities
+    provider_id         = Column(String(100), nullable=True)              # links a 'receive' member to their crew/provider id
     created_at = Column(DateTime, default=datetime.utcnow)
 
     agency = relationship("Agency", back_populates="memberships")
