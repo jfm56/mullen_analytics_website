@@ -52,7 +52,8 @@ def _reset_rls_context(dbapi_connection, connection_record):
         cur = dbapi_connection.cursor()
         cur.execute(
             "SELECT set_config('app.current_user','',false), "
-            "set_config('app.current_agency','',false)"
+            "set_config('app.current_agency','',false), "
+            "set_config('app.platform_admin','',false)"
         )
         cur.close()
         # Must not leave an open transaction on the pooled connection, or the next

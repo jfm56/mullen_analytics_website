@@ -17,6 +17,10 @@ class Agency(Base):
     agency_name       = Column(String(255), nullable=False)
     slug              = Column(String(100), unique=True, nullable=False, index=True)
     subscription_tier = Column(String(50), default="essential")
+    # Data classification for platform monitoring: synthetic | trial | production.
+    # Synthetic/trial records are EXCLUDED from production client metrics. Defaults
+    # to production so a real agency is never mis-counted; the demo agency is synthetic.
+    data_classification = Column(String(20), nullable=False, default="production", index=True)
     status            = Column(String(50), default="active")
     storage_path      = Column(Text, nullable=True)
     contact_email     = Column(String(255), nullable=True)

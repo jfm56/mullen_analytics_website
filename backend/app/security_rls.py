@@ -22,6 +22,12 @@ _APP_ROLE = "app_user"
 # so NULLIF('' ) -> NULL and the comparison yields no rows).
 _CUR_AGENCY = "NULLIF(current_setting('app.current_agency', true), '')::uuid"
 _CUR_USER = "NULLIF(current_setting('app.current_user', true), '')::uuid"
+# Platform-admin escape, set ONLY by set_platform_context() AFTER a SUPER_ADMIN check.
+# This is a deliberate, authenticated platform-administration path — NOT a broad RLS
+# bypass: RLS stays ENABLED, the runtime role remains the non-superuser app_user, and
+# normal requests never set this GUC (and the pool checkin resets it), so tenant
+# isolation for normal users/agency-admins/providers is completely unchanged.
+_PLATFORM = "NULLIF(current_setting('app.platform_admin', true), '') = 'true'"
 
 # The ONLY tables RLS policies are ever provisioned for. `policy()` asserts its
 # `table` argument against this set, so a stray or mistyped name can never reach
@@ -83,7 +89,10 @@ def apply_rls(engine: Engine, app_role_password: str = "app_user_change_me") -> 
             conn.execute(text(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY"))
             conn.execute(text(f"ALTER TABLE {table} NO FORCE ROW LEVEL SECURITY"))
             conn.execute(text(f"DROP POLICY IF EXISTS agency_isolation ON {table}"))
-            conn.execute(text(f"CREATE POLICY agency_isolation ON {table} USING ({using})"))
+            # Append the authenticated platform-admin clause (OR _PLATFORM) so a
+            # verified SUPER_ADMIN with set_platform_context() can read across agencies
+            # without disabling RLS. Normal requests never set app.platform_admin.
+            conn.execute(text(f"CREATE POLICY agency_isolation ON {table} USING (({using}) OR {_PLATFORM})"))
 
         # Your own memberships (any agency, for the switcher) OR the current agency's.
         policy("agency_memberships", f"user_id = {_CUR_USER} OR agency_id = {_CUR_AGENCY}")
@@ -140,7 +149,7 @@ def apply_rls_qa(engine: Engine) -> None:
             conn.execute(text(f"ALTER TABLE {_t} ENABLE ROW LEVEL SECURITY"))   # fixed constant table  # nosec B608
             conn.execute(text(f"ALTER TABLE {_t} NO FORCE ROW LEVEL SECURITY"))  # fixed constant table  # nosec B608
             conn.execute(text(f"DROP POLICY IF EXISTS agency_isolation ON {_t}"))  # fixed constant table  # nosec B608
-            conn.execute(text(f"CREATE POLICY agency_isolation ON {_t} USING (agency_id = {_CUR_AGENCY})"))  # fixed constants only  # nosec B608
+            conn.execute(text(f"CREATE POLICY agency_isolation ON {_t} USING (agency_id = {_CUR_AGENCY} OR {_PLATFORM})"))  # fixed constants only  # nosec B608
 
 
 def set_user_context(db: DBSession, user_id) -> None:
@@ -152,8 +161,21 @@ def set_user_context(db: DBSession, user_id) -> None:
 
 
 def set_agency_context(db: DBSession, agency_id) -> None:
-    """Scope the transaction to one agency — call ONLY after verifying membership."""
+    """Scope the transaction to one agency — call ONLY after verifying membership
+    (or SUPER_ADMIN View-As of that agency)."""
     db.execute(
         text("SELECT set_config('app.current_agency', :a, true)"),
         {"a": str(agency_id)},
     )
+
+
+def set_platform_context(db: DBSession) -> None:
+    """Grant platform-wide (cross-agency) visibility for THIS transaction. Call ONLY
+    after verifying the caller is a SUPER_ADMIN and they explicitly requested platform
+    scope. Pair with set_user_context() so the actor identity is still recorded."""
+    db.execute(text("SELECT set_config('app.platform_admin', 'true', true)"))
+
+
+def clear_platform_context(db: DBSession) -> None:
+    """Drop platform-wide visibility (e.g. when a SUPER_ADMIN selects one agency)."""
+    db.execute(text("SELECT set_config('app.platform_admin', '', true)"))

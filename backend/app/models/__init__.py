@@ -10,6 +10,7 @@ from .project import Project
 from .impersonation import ImpersonationLog
 from .agency import Agency, AgencyMembership, AgencyFile, AuditLog, PipelineRun
 from .organization import Organization, ModuleEntitlement
+from .platform_audit import PlatformAuditEvent  # noqa: F401 – register with Base
 from .app_settings import AppSetting
 from .data_upload import EMSDatasetGroup  # noqa: F401 – register with Base
 from .emscharts import EMSChartsConnection, SyncRun, EMSIncident, EMSAnalyticsSnapshot  # noqa: F401 – register with Base

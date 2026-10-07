@@ -30,7 +30,10 @@ class AuthContext:
 
     @property
     def is_platform_admin(self) -> bool:
-        return "platform_admin" in self.groups
+        # Authoritative: the platform_role record. The Cognito group is also honored
+        # (staging) but the DB role is the source of truth for SUPER_ADMIN.
+        return (getattr(self.user, "platform_role", None) == "super_admin"
+                or "platform_admin" in self.groups)
 
 
 def _bearer(request: Request) -> str:

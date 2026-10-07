@@ -50,9 +50,14 @@ async def qa_access(agency_id: UUID, request: Request, db: DBSession = Depends(g
         if not (can_review or is_admin):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Requires QA reviewer or agency admin")
         return QaCtx(db, agency_id, ctx.user.id, can_review, is_admin)
-    # local / session mode: an authenticated operator (admin) acts over the synthetic agency
+    # local / session mode: only a platform SUPER_ADMIN may operate QA here (View-As the
+    # agency). Regular session users are not authorized — no email checks, the real
+    # platform_role record decides. Mutations are audited with the real actor in qa_audit_events.
     from .auth import get_current_user
+    from ..services.platform_admin.authz import is_super_admin
     user = await get_current_user(request, db)
+    if not is_super_admin(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Platform super-admin only")
     set_user_context(db, user.id)
     set_agency_context(db, agency_id)
     return QaCtx(db, agency_id, user.id, True, True)
@@ -112,11 +117,15 @@ async def demo_seed(request: Request, db: DBSession = Depends(get_db)):
     if get_settings().auth_mode == "cognito":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "demo seed is local-dev only")
     from .auth import get_current_user
+    from ..services.platform_admin.authz import is_super_admin
     from ..models.agency import Agency
     user = await get_current_user(request, db)
+    if not is_super_admin(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Platform super-admin only")
     agency = db.query(Agency).filter(Agency.slug == "emscs-qa-demo").first()
     if agency is None:
-        agency = Agency(agency_name="EMSCS QA Demo (synthetic)", slug="emscs-qa-demo")
+        agency = Agency(agency_name="EMSCS QA Demo (synthetic)", slug="emscs-qa-demo",
+                        data_classification="synthetic")
         db.add(agency)
         db.flush()
     set_user_context(db, user.id)
