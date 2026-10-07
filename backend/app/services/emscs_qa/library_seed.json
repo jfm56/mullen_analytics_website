@@ -617,5 +617,196 @@
    "indicator": "Wound care instructions provided and documented for the puncture site?",
    "compliant_answer": "Y"
   }
- ]
+ ],
+ "references": [
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "1.0 Routine Patient Care (pp. 10 to 13)",
+   "used_for": "ALS intercept triggers, pediatric definition and weight based tools, lights and sirens use, transport decision"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.4A Asthma/COPD/Reactive Airway Disease Adult (pp. 35 to 37)",
+   "used_for": "Albuterol dose and repeat dosing, CPAP for worsening distress, ALS intercept"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.17P Pain Management Pediatric (p. 81)",
+   "used_for": "Pain scales by age, non pharmacologic pain control, documentation of each pain score"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "3.2A Cardiac Arrest Adult (pp. 119 to 121)",
+   "used_for": "BLS resuscitation sequence, ventilation rate, mechanical CPR, ALS intercept"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "3.4A Post Resuscitative Care Adult (p. 127)",
+   "used_for": "Post ROSC ventilation rate, SpO2 target, continuous BP monitoring"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "4.4 Musculoskeletal Injuries Adult & Pediatric (p. 142)",
+   "used_for": "Splinting, distal CMS before and after immobilization, cold pack, elevation"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "8.6 Pediatric Transportation (p. 233)",
+   "used_for": "Child restraint use based on age and weight"
+  },
+  {
+   "source": "EMSCS Medical Oversight CQI Process (August 2025)",
+   "section": "CQI Indicators 1 to 84; Documentation Standards Pages 1 to 9",
+   "used_for": "Indicator scoring, QA flag format, required activity log wording (Assess, Secure, Transfer)"
+  },
+  {
+   "source": "N.J.A.C. 8:40-3.6",
+   "section": "Patient care report content",
+   "used_for": "Required PCR elements, signatures, times"
+  },
+  {
+   "source": "NEMSIS v3.5",
+   "section": "eArrest and eAirway data elements",
+   "used_for": "Cardiac arrest outcome and airway documentation accuracy"
+  },
+  {
+   "source": "45 CFR 164.520(c)(2)",
+   "section": "HIPAA Notice of Privacy Practices",
+   "used_for": "NPP provision for direct treatment providers, emergency exception"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "4.5 Spinal Motion Restriction (pp. 144 to 145)",
+   "used_for": "Advanced spinal assessment, reduced sensitivity at age 65 and older"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "4.8 Traumatic Brain Injury (p. 150)",
+   "used_for": "Serial GCS and pupils every 5 minutes, glucose, trauma triage"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "6.5 Restraints (pp. 197 to 198)",
+   "used_for": "Restraint indications, positioning, circulation checks, documentation, police accompaniment"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "6.7 Tourniquet & Hemostatic Agent (p. 201)",
+   "used_for": "Escalation from direct pressure to hemostatic gauze"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "3.0 Acute Coronary Syndrome Adult (pp. 114 to 115)",
+   "used_for": "Oxygen threshold, aspirin dosing and exclusions, ALS intercept, cath capable destination"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.8A Diabetic Emergencies (Hypoglycemia) Adult (p. 50)",
+   "used_for": "Glucometer (if approved), oral glucose 1 to 2 tubes, sulfonylurea risk"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Poisoning/Substance Abuse/Overdose Adult",
+   "used_for": "Intoxicated patient assessment, mimics of intoxication"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.22 Smoke Inhalation, CO guidance (pp. 108 to 110)",
+   "used_for": "Suspected CO poisoning should be transported; SpO2 unreliable"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Abuse and Maltreatment (pp. 218 to 220)",
+   "used_for": "Direct report to State Central Registry; APS reporting for vulnerable adults"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Consent and Refusal for Minors (p. 225)",
+   "used_for": "Who may refuse for a minor; medical command for minor refusals"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Poisoning/Substance Abuse/Overdose Pediatric (pp. 90 to 91)",
+   "used_for": "Poison Control contact; medical command for ingested poisons"
+  },
+  {
+   "source": "N.J.S.A. 9:6-8.10",
+   "section": "Child abuse reporting",
+   "used_for": "Mandatory reporting by any person with reasonable cause"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.23 Stroke Adult & Pediatric (pp. 111 to 112)",
+   "used_for": "BE FAST, RACE, last known well, glucose, stroke alert"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.2 Allergic Reaction/Anaphylaxis Adult (pp. 24 to 26)",
+   "used_for": "Anaphylaxis criteria and screening"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.7A Diabetic Emergencies (Hyperglycemia) Adult (p. 48)",
+   "used_for": "Glucose and DKA signs"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.4P Bronchospasm/Asthma Pediatric (p. 39)",
+   "used_for": "Pediatric asthma oxygen, albuterol and ALS intercept"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "OB/Childbirth (pp. 71 to 73)",
+   "used_for": "Imminent delivery assessment, preeclampsia signs, positioning"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "8.4 POLST and Advance Directives (pp. 226 to 228)",
+   "used_for": "Living wills and health care proxies; medical command contact"
+  }
+ ],
+ "lists": {
+  "Result": [
+   "Y",
+   "N",
+   "NA"
+  ],
+  "Rating": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Severity": [
+   "Critical",
+   "Major",
+   "Minor",
+   "Commendation"
+  ],
+  "Domain": [
+   "HPI & Narrative",
+   "Assessment",
+   "Protocol Adherence",
+   "Vitals & Reassessment",
+   "Documentation Integrity",
+   "Safety, Securement & Transfer",
+   "Operational Decisions",
+   "Administrative & Billing"
+  ],
+  "Feedback Status": [
+   "Pending",
+   "Sent to Crew",
+   "Acknowledged",
+   "Education Assigned",
+   "Closed"
+  ],
+  "Tier": [
+   "Exemplary",
+   "Meets Standard",
+   "Needs Improvement",
+   "Focused Review"
+  ]
+ }
 }
