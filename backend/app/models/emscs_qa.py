@@ -152,6 +152,9 @@ class QaReviewSession(Base):
     reviewer_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     review_notes = Column(Text, nullable=True)
+    # The 8 quality-domain ratings (0-5) are the REVIEWER's judgment (not automated);
+    # entered during human review and used to compute the approved Quality Score.
+    domain_scores = Column(JSONB, nullable=True)   # {domain_slug_or_index: 0-5}
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -173,8 +176,8 @@ class QaIndicatorReview(Base):
                        nullable=False, index=True)
     session_id = Column(UUID(as_uuid=True), ForeignKey("qa_review_sessions.id", ondelete="CASCADE"),
                         nullable=False, index=True)
-    indicator_id = Column(UUID(as_uuid=True), ForeignKey("qa_indicators.id"), nullable=False, index=True)
-    indicator_number = Column(Integer, nullable=False)   # denormalized for export/regression convenience
+    indicator_id = Column(UUID(as_uuid=True), ForeignKey("qa_indicators.id"), nullable=True, index=True)
+    indicator_number = Column(Integer, nullable=False)   # stable key (library FK optional until seeded)
 
     applicable = Column(Boolean, nullable=False, default=True)  # from the applicability engine
     applicability_reason = Column(Text, nullable=True)
@@ -207,17 +210,39 @@ class QaFinding(Base):
     indicator_number = Column(Integer, nullable=True)
 
     finding_type = Column(String(30), nullable=False, default="indicator_fail")
-    # indicator_fail | timeline_inconsistency | cross_field | other
-    severity = Column(String(20), nullable=True)      # from severity engine v1 (e.g. low|moderate|high|critical)
+    # indicator_fail | consistency_conflict | manual | other
     description = Column(Text, nullable=False)
     evidence = Column(JSONB, nullable=True)           # REQUIRED for negative automated findings (service-enforced)
+
+    # Severity: the engine's PROPOSAL is immutable; the human decision is stored
+    # separately and NEVER overwrites the proposal (Critical/Major/Minor/Commendation
+    # or HUMAN_REVIEW_REQUIRED). Which severity is "final" = human_severity if set,
+    # else the proposal once a human confirms it.
+    automated_severity = Column(String(30), nullable=True)
+    severity_requires_human = Column(Boolean, nullable=False, default=False)
+    severity_confidence = Column(String(10), nullable=True)   # high | low
+    severity_modifiers = Column(JSONB, nullable=True)
+    severity_rationale = Column(Text, nullable=True)
+    human_severity = Column(String(30), nullable=True)        # reviewer's final severity (null until set)
+    severity_override_reason = Column(Text, nullable=True)
+
+    # Critical findings require explicit human acknowledgment before a session approves.
+    acknowledged = Column(Boolean, nullable=False, default=False)
+    acknowledged_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    acknowledged_at = Column(DateTime, nullable=True)
 
     origin = Column(String(16), nullable=False, default="automated")  # automated | human
     status = Column(String(20), nullable=False, default="open")       # open | accepted | dismissed
     dismissed_reason = Column(Text, nullable=True)
+    reviewer_note = Column(Text, nullable=True)
     resolved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def final_severity(self) -> str:
+        """The authoritative severity = human decision if made, else the proposal."""
+        return self.human_severity or self.automated_severity
 
 
 class QaCrewFeedback(Base):
