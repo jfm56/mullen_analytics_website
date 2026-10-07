@@ -347,4 +347,7 @@ def get_review_detail(db, agency_id, session_id) -> dict:
                                           QaFinding.session_id == session_id).all()
     score = db.query(QaScore).filter(QaScore.agency_id == agency_id,
                                      QaScore.session_id == session_id).first()
-    return {"session": session, "indicator_reviews": irs, "findings": findings, "score": score}
+    chart = db.query(QaChart).filter(QaChart.agency_id == agency_id,
+                                     QaChart.id == session.chart_id).first()
+    return {"session": session, "chart": chart, "indicator_reviews": irs,
+            "findings": findings, "score": score}

@@ -73,6 +73,64 @@ def qa_library():
             "references": s.get("references", [])}
 
 
+# Synthetic demo charts (no PHI) for the local Review View demo / screenshots.
+_DEMO_CHARTS = [
+    {"external_ref": "DEMO-001", "transported": True, "age_years": 71,
+     "primary_impression": "Cardiac arrest, post ROSC", "chief_complaint": "Witnessed collapse after a fall",
+     "final_acuity": "Emergent (Yellow)", "disposition": "Transported",
+     "vitals": [{"time": "01:48", "sbp": 87, "dbp": 50, "bp_method": "auto", "spo2": None, "pain": 0, "gcs": 3}],
+     "securement_text": "all appropriate straps", "signatures": {"patient": True, "crew": True},
+     "receiving_staff_named": False, "assessment_documented": True,
+     "narrative_only_interventions": ["NPA attempt", "LUCAS application"],
+     "add_actions": [{"kind": "procedure", "name": "CPR"}, {"kind": "procedure", "name": "LUCAS"}],
+     "outcome": {"rosc": True, "condition": "Improved"},
+     "structured_fields": {"airway": {"charted": "i-gel", "narrative": "ALS intubation"},
+                           "compressions_at_destination": True, "pulse": "absent", "cap_refill_sec": 1}},
+    {"external_ref": "DEMO-002", "transported": True, "age_years": 9,
+     "primary_impression": "Isolated extremity injury", "chief_complaint": "Fall playing football",
+     "final_acuity": "Lower acuity (Green)", "disposition": "Transported", "transport_mode": "lights and sirens",
+     "vitals": [{"time": "19:30", "sbp": 110, "dbp": 70, "bp_method": "manual", "spo2": 99, "pain": 10},
+                {"time": "19:45", "sbp": 112, "dbp": 72, "bp_method": "auto", "spo2": None, "pain": None}],
+     "securement_straps": 4, "signatures": {"guardian": True, "receiving": True, "crew": True},
+     "receiving_staff_named": True, "assessment_documented": True, "consent_signed": False,
+     "add_actions": [{"kind": "procedure", "name": "Splint"}],
+     "structured_fields": {"weight_kg": 12.5, "location": {"charted": "General/Global", "narrative": "left wrist"}}},
+    {"external_ref": "DEMO-003", "transported": False, "age_years": 54,
+     "primary_impression": "Hypoglycemia, treated", "chief_complaint": "Altered mental status",
+     "disposition": "Patient Refused Care", "assessment_documented": True,
+     "vitals": [{"time": "08:10", "sbp": 138, "dbp": 86, "bp_method": "manual", "spo2": 98, "pain": 0}],
+     "add_actions": [{"kind": "procedure", "name": "Blood glucose (glucometer)"}],
+     "structured_fields": {}},
+]
+
+
+@router.post("/qa/demo/seed")
+async def demo_seed(request: Request, db: DBSession = Depends(get_db)):
+    """Local-dev only: seed a synthetic demo agency + reviews for the Review View.
+    Disabled in Cognito/staging mode. No PHI; synthetic charts only."""
+    _flag()
+    if get_settings().auth_mode == "cognito":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "demo seed is local-dev only")
+    from .auth import get_current_user
+    from ..models.agency import Agency
+    user = await get_current_user(request, db)
+    agency = db.query(Agency).filter(Agency.slug == "emscs-qa-demo").first()
+    if agency is None:
+        agency = Agency(agency_name="EMSCS QA Demo (synthetic)", slug="emscs-qa-demo")
+        db.add(agency)
+        db.flush()
+    set_user_context(db, user.id)
+    set_agency_context(db, agency.id)
+    existing = {s.chart_id for s in svc.list_sessions(db, agency.id)}
+    created = []
+    if not existing:
+        for cd in _DEMO_CHARTS:
+            s = svc.create_review(db, agency.id, QaChartData(**cd), actor_user_id=user.id)
+            created.append(str(s.id))
+    db.commit()
+    return {"agency_id": str(agency.id), "created_sessions": created}
+
+
 # ───────────────────────── request bodies ─────────────────────────
 class ReviewCreate(BaseModel):
     chart: dict
@@ -103,10 +161,13 @@ class DomainScores(BaseModel):
 
 def _detail_json(d):
     s = d["session"]
+    chart = d.get("chart")
     return {
         "session": {"id": str(s.id), "status": s.status, "scoring_version": s.scoring_version,
                     "domain_scores": s.domain_scores, "review_notes": s.review_notes,
                     "approved_at": s.approved_at.isoformat() if s.approved_at else None},
+        "chart": None if not chart else {"external_ref": chart.external_ref, "status": chart.status,
+                                         "chart_data": chart.chart_data},
         "indicator_reviews": [
             {"id": str(ir.id), "number": ir.indicator_number, "applicable": ir.applicable,
              "automated": ir.automated_result, "human": ir.human_result, "overridden": ir.overridden,

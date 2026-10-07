@@ -864,3 +864,35 @@ export default {
   columnMapping,
   fetch: apiFetch,
 };
+
+// ── EMSCS QA Review Engine v1 (feature-flagged; synthetic-only) ──
+const qaBase = (aid) => `/api/v1/agencies/${aid}/qa`;
+export const emscsQa = {
+  health: () => apiFetch('/api/v1/qa/health'),
+  library: () => apiFetch('/api/v1/qa/library'),
+  seedDemo: () => apiFetch('/api/v1/qa/demo/seed', { method: 'POST' }),
+  sessions: (aid) => apiFetch(`${qaBase(aid)}/sessions`),
+  detail: (aid, sid) => apiFetch(`${qaBase(aid)}/sessions/${sid}`),
+  createReview: (aid, chart) =>
+    apiFetch(`${qaBase(aid)}/reviews`, { method: 'POST', body: JSON.stringify({ chart }) }),
+  acceptIndicator: (aid, irid) =>
+    apiFetch(`${qaBase(aid)}/indicators/${irid}/accept`, { method: 'POST' }),
+  overrideIndicator: (aid, irid, verdict, reason) =>
+    apiFetch(`${qaBase(aid)}/indicators/${irid}/override`, { method: 'POST', body: JSON.stringify({ verdict, reason }) }),
+  indicatorNote: (aid, irid, note) =>
+    apiFetch(`${qaBase(aid)}/indicators/${irid}/note`, { method: 'POST', body: JSON.stringify({ note }) }),
+  setSeverity: (aid, fid, severity, reason) =>
+    apiFetch(`${qaBase(aid)}/findings/${fid}/severity`, { method: 'POST', body: JSON.stringify({ severity, reason }) }),
+  dismissFinding: (aid, fid, reason) =>
+    apiFetch(`${qaBase(aid)}/findings/${fid}/dismiss`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  acknowledgeFinding: (aid, fid) =>
+    apiFetch(`${qaBase(aid)}/findings/${fid}/acknowledge`, { method: 'POST' }),
+  manualFinding: (aid, sid, body) =>
+    apiFetch(`${qaBase(aid)}/sessions/${sid}/findings`, { method: 'POST', body: JSON.stringify(body) }),
+  domainScores: (aid, sid, scores) =>
+    apiFetch(`${qaBase(aid)}/sessions/${sid}/domain-scores`, { method: 'POST', body: JSON.stringify({ scores }) }),
+  approve: (aid, sid) =>
+    apiFetch(`${qaBase(aid)}/sessions/${sid}/approve`, { method: 'POST' }),
+  audit: (aid) => apiFetch(`${qaBase(aid)}/audit`),
+  exportUrl: (aid) => `/api/proxy/v1/agencies/${aid}/qa/export`,
+};
