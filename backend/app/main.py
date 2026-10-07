@@ -199,6 +199,22 @@ async def on_startup():
         except Exception as exc:  # noqa: BLE001
             log.error("RLS provisioning failed: %s", exc)
 
+    # EMSCS QA Review Engine v1 (feature-flagged, SYNTHETIC/no-PHI). When OFF
+    # (default everywhere except the approved dev/test env) the QA models are never
+    # registered, so no QA tables are created and the module is fully inert. When
+    # ON, register + create the QA tables (idempotent) and extend RLS to them.
+    if settings.emscs_qa_v1_enabled:
+        try:
+            from .models import emscs_qa as _emscs_qa_models  # noqa: F401 — register QA tables with Base
+            Base.metadata.create_all(bind=admin_engine)        # creates the new QA tables only
+            log.info("EMSCS QA v1 tables provisioned (feature flag ON)")
+            if settings.app_db_password and settings.auth_mode == "cognito":
+                from .security_rls import apply_rls_qa
+                apply_rls_qa(admin_engine)
+                log.info("EMSCS QA v1 RLS provisioned")
+        except Exception as exc:  # noqa: BLE001
+            log.error("EMSCS QA v1 provisioning failed: %s", exc)
+
     # One-time backfill: every user predating email verification has
     # email_confirmed=False but was never asked to verify. Mark them confirmed
     # so they aren't retroactively nagged or upload-blocked. Guarded by an

@@ -46,6 +46,14 @@ class Settings(BaseSettings):
     cognito_user_pool_id: str = ""        # e.g. us-east-2_KyaPhydEl
     cognito_client_id: str = ""           # app client id (ID-token audience)
 
+    # ── EMSCS QA Review Engine v1 (synthetic-only, feature-flagged) ──
+    # Clinical QA/CQI chart-review module (env EMSCS_QA_V1_ENABLED). OFF everywhere
+    # by default; only the approved dev/test (synthetic, no-PHI) environment sets it
+    # true. When false: QA routes do not mount, QA tables are not provisioned, and
+    # the module is inert. This flag NEVER enables live EMSCharts, PHI ingestion, or
+    # any client exposure — those remain separate, explicit approvals.
+    emscs_qa_v1_enabled: bool = False
+
     # Password Reset
     password_reset_expire_hours: int = 1
 

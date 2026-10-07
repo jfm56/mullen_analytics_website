@@ -114,6 +114,35 @@ def apply_rls(engine: Engine, app_role_password: str = "app_user_change_me") -> 
             policy(table, child_using)
 
 
+# EMSCS QA Review Engine v1 (flag-gated). Agency-owned QA tables carry agency_id
+# directly; the three config tables (domains/indicators/scoring) are shared
+# methodology, read-only to the runtime role. All identifiers below are fixed
+# internal constants from these frozensets, never user input.
+_QA_AGENCY_TABLES = frozenset({
+    "qa_charts", "qa_review_sessions", "qa_indicator_reviews", "qa_findings",
+    "qa_crew_feedback", "qa_scores", "qa_audit_events",
+})
+_QA_CONFIG_TABLES = frozenset({"qa_scoring_domains", "qa_indicators", "qa_scoring_configs"})
+
+
+def apply_rls_qa(engine: Engine) -> None:
+    """Extend RLS to the EMSCS QA tables. Called ONLY when emscs_qa_v1_enabled and
+    after the QA tables have been created (the tables do not exist when the flag is
+    off). Agency-owned tables get the same agency_isolation policy as the rest of
+    the platform; config tables are granted read-only to app_user."""
+    with engine.begin() as conn:
+        for _t in sorted(_QA_AGENCY_TABLES):
+            conn.execute(text(f"GRANT SELECT, INSERT, UPDATE, DELETE ON {_t} TO {_APP_ROLE}"))  # fixed constant table from _QA_AGENCY_TABLES  # nosec B608
+        for _t in sorted(_QA_CONFIG_TABLES):
+            conn.execute(text(f"GRANT SELECT ON {_t} TO {_APP_ROLE}"))  # fixed constant table from _QA_CONFIG_TABLES  # nosec B608
+        conn.execute(text(f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {_APP_ROLE}"))
+        for _t in sorted(_QA_AGENCY_TABLES):
+            conn.execute(text(f"ALTER TABLE {_t} ENABLE ROW LEVEL SECURITY"))   # fixed constant table  # nosec B608
+            conn.execute(text(f"ALTER TABLE {_t} NO FORCE ROW LEVEL SECURITY"))  # fixed constant table  # nosec B608
+            conn.execute(text(f"DROP POLICY IF EXISTS agency_isolation ON {_t}"))  # fixed constant table  # nosec B608
+            conn.execute(text(f"CREATE POLICY agency_isolation ON {_t} USING (agency_id = {_CUR_AGENCY})"))  # fixed constants only  # nosec B608
+
+
 def set_user_context(db: DBSession, user_id) -> None:
     """Set the caller's identity for this transaction (every request)."""
     db.execute(
