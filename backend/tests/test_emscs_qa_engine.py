@@ -1,6 +1,6 @@
 """Deterministic EMSCS QA engine tests — applicability, CQI #1-12, consistency,
 severity. Synthetic charts only (no PHI, no DB, no feature flag)."""
-from app.services.emscs_qa import applicability, indicators, consistency, severity
+from app.services.emscs_qa import applicability, indicators, consistency, severity, review
 from app.services.emscs_qa.chart_data import QaChartData, Vitals, AddAction
 
 
@@ -155,3 +155,24 @@ def test_severity_conflict_flags_credibility_and_requires_human():
     p = severity.propose_severity(chart(age_years=40), {"kind": "consistency_conflict", "indicator_number": 11})
     assert p.require_human
     assert any(m["modifier"] == "documentation_credibility" for m in p.modifiers)
+
+
+# ───────── review orchestration ─────────
+def test_build_automated_review():
+    c = chart(primary_impression="Cardiac arrest, post ROSC", transported=True,
+              narrative_only_interventions=["NPA attempt"],
+              signatures={"patient": True, "crew": True},
+              vitals=[Vitals(sbp=80, spo2=88, bp_method="manual")],
+              age_years=70)
+    rev = review.build_automated_review(c)
+    assert "Cardiac Arrest" in rev.activations and "General" in rev.activations
+    # specialty indicators applicable but routed to human (no auto specialty judgment)
+    specialty = [r for r in rev.indicator_results if r.number >= 28 and r.number <= 32]
+    assert specialty and all(r.verdict == indicators.HUMAN for r in specialty)
+    # findings exist with severity proposals, and at least one requires human severity
+    assert rev.findings and all("severity_proposed" in f for f in rev.findings)
+    assert rev.counts["findings"] == len(rev.findings)
+    # #8 free-typed intervention produced a finding
+    assert any(f["indicator_number"] == 8 for f in rev.findings)
+    # serializable
+    assert rev.to_dict()["external_ref"] == "SYNTH-1"
