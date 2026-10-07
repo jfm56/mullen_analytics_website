@@ -51,7 +51,7 @@ so `--strict` still blocks on anything else:
 |---|---|---|
 | PYSEC-2025-183 | PyJWT 2.15.1 | **No upstream fix exists** in the advisory DB; pinned to the latest release. |
 | PYSEC-2026-1845 | pytest 7.4.4 | **Dev/test-only** dependency, not reachable from the application runtime. Fix (9.0.3) requires a pytest-asyncio major upgrade — tracked separately. |
-| PYSEC-2026-161, 2280, 2281, 248, 249 | starlette 0.48.0 | Fixed only in the **starlette 1.x** line, which requires a FastAPI ≥0.119 + **pydantic 2.9+** upgrade (a cascade that changes env parsing). Tracked as a separate, reviewed framework upgrade before production. Not PHI-exposing; the EMSCS trial is synthetic/no-PHI and staging sits behind CloudFront/ALB. |
+| PYSEC-2026-1942, 161, 2280, 2281, 248, 249 | starlette 0.48.0 | Fixed only in **starlette 0.49.1 / 1.x**, which requires a FastAPI ≥0.119 + **pydantic 2.9+** upgrade (a cascade that changes env parsing — the newer FastAPI that permits starlette 0.49.1 drops support for pydantic 2.6.0). Tracked as a separate, reviewed framework upgrade before production. Low-severity DoS class; not PHI-exposing; the EMSCS trial is synthetic/no-PHI and staging sits behind CloudFront/ALB. |
 
 ## 4. Follow-up tracked for production (NOT part of the trial gate)
 A dedicated, reviewed **FastAPI 0.142 + Starlette 1.x + pydantic 2.9+** upgrade of
