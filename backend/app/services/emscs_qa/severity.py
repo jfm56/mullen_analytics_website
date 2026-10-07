@@ -45,6 +45,7 @@ class SeverityProposal:
     confidence: str                    # "high" | "low"
     modifiers: list = field(default_factory=list)   # [{"modifier","evidence"}]
     rationale: str = ""
+    high_priority: bool = False        # True routes to a high-priority human review path (e.g. abuse)
 
 
 def _abnormal_vitals(c: QaChartData):
@@ -136,6 +137,29 @@ def propose_severity(chart: QaChartData, finding: dict) -> SeverityProposal:
 
     mods = _evaluate_modifiers(chart, finding)
     names = {m["modifier"] for m in mods}
+    sf = chart.structured_fields or {}
+
+    # Possible abuse / mandatory reporting -> high-priority human review (never auto-scored).
+    if getattr(chart, "possible_abuse", None) or sf.get("possible_abuse") or finding.get("possible_abuse"):
+        mods.append({"modifier": Modifier.LEGAL_SAFETY.value, "evidence": "possible abuse — mandatory reporting"})
+        return SeverityProposal(HUMAN_REVIEW_REQUIRED, require_human=True, confidence="low", modifiers=mods,
+                                high_priority=True,
+                                rationale="Possible abuse / mandatory-reporting concern — high-priority human review.")
+
+    # Refusal findings: context-driven (clinical-safety gap vs documentation gap).
+    sig_mech = bool(getattr(chart, "significant_mechanism", None)) or bool(finding.get("significant_mechanism"))
+    vuln = Modifier.PATIENT_VULNERABILITY.value in names
+    abnormal = Modifier.ABNORMAL_FINDINGS.value in names
+    if finding.get("category") == "Refusal":
+        if finding.get("clinical_safety_gap"):
+            if vuln and (sig_mech or abnormal):
+                return SeverityProposal(CRITICAL, require_human=True, confidence="low", modifiers=mods,
+                                        rationale="High-risk refusal: vulnerable patient with significant "
+                                                  "mechanism / abnormal findings and a missing clinical-safety element.")
+            return SeverityProposal(MAJOR, require_human=True, confidence="low", modifiers=mods,
+                                    rationale="Clinical-safety element missing on a refusal (vitals/capacity/sobriety).")
+        return SeverityProposal(MINOR, require_human=False, confidence="high", modifiers=mods,
+                                rationale="Refusal documentation gap (signature/check-box/follow-up).")
 
     # No clinical modifiers at all -> documentation-only gap -> confident Minor.
     clinical = names - set()  # all listed modifiers are clinically relevant

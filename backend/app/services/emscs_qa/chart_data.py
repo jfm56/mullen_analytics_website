@@ -33,7 +33,24 @@ class AddAction(BaseModel):
     dose: Optional[str] = None
     dose_unit: Optional[str] = None
     response_documented: Optional[bool] = None
-    time: Optional[str] = None
+    reassessed_after: Optional[bool] = None   # clinical reassessment documented after this action
+    indication: Optional[str] = None          # indication documented prior to the med
+    time: Optional[str] = None                # "HH:MM"
+
+
+class Refusal(BaseModel):
+    """Structured refusal/AMA documentation (synthetic)."""
+    matrix_complete: Optional[bool] = None        # #75 refusal matrix completed in full + signed
+    checkboxes_complete: Optional[bool] = None    # #76 each box marked, no line through the section
+    signed_patient: Optional[bool] = None
+    signed_witness: Optional[bool] = None
+    capacity_documented: Optional[bool] = None    # #77 decision-making capacity (A&Ox4)
+    aox: Optional[int] = None                     # alert & oriented x? (0-4)
+    risks_explained: Optional[bool] = None
+    care_transport_explained: Optional[bool] = None
+    return_precautions: Optional[bool] = None     # #79 follow-up / return precautions
+    influence_documented: Optional[Any] = None    # #80 not under the influence of drugs/alcohol
+    guardian_involved: Optional[bool] = None
 
 
 class QaChartData(BaseModel):
@@ -59,6 +76,16 @@ class QaChartData(BaseModel):
     hpi_narrative: Optional[str] = None
     hpi_elements: dict = Field(default_factory=dict)   # {"onset":True,"mechanism":True,...}
     assessment_documented: Optional[bool] = None       # primary/secondary/rapid present
+    history: Optional[str] = None                      # PMH (COPD/asthma, etc.)
+
+    # refusal / AMA (specialty #75-80) + high-risk context modifiers
+    refusal: Optional[Refusal] = None
+    altered_mental_status: Optional[bool] = None
+    possible_ingestion: Optional[bool] = None
+    possible_abuse: Optional[bool] = None
+    co_exposure: Optional[bool] = None
+    head_injury: Optional[bool] = None
+    significant_mechanism: Optional[bool] = None
 
     # vitals + reassessment
     vitals: list[Vitals] = Field(default_factory=list)

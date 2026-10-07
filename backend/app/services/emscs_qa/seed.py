@@ -39,3 +39,17 @@ def general_numbers() -> list:
 
 def indicator_by_number() -> dict:
     return {ind["number"]: ind for ind in indicators()}
+
+
+@functools.lru_cache(maxsize=1)
+def load_protocol_rules() -> dict:
+    with open(_SEED_PATH.parent / "protocol_rules.json", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def protocol(number) -> dict:
+    return load_protocol_rules().get("protocols", {}).get(str(number), {})
+
+
+def ruleset_version() -> str:
+    return load_protocol_rules().get("ruleset_version", "unset")

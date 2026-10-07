@@ -83,8 +83,13 @@ def qa_monitor(ctx: PlatformCtx = Depends(platform_ctx),
 
 @router.get("/qa/validation")
 def qa_validation(ctx: PlatformCtx = Depends(platform_ctx),
-                  agency_id: UUID | None = Query(None), classification: str | None = Query(None)):
-    data = aggregates.qa_validation(ctx.db, agency_id=agency_id, classification=classification)
+                  agency_id: UUID | None = Query(None), classification: str | None = Query(None),
+                  category: str | None = Query(None), indicator: int | None = Query(None),
+                  reviewer: str | None = Query(None), severity: str | None = Query(None),
+                  decision: str | None = Query(None)):
+    data = aggregates.qa_validation(ctx.db, agency_id=agency_id, classification=classification,
+                                    category=category, indicator=indicator, reviewer=reviewer,
+                                    severity=severity, decision=decision)
     authz.platform_audit(ctx.db, ctx.user.id, "platform_qa_validation_viewed", scope="platform",
                          selected_agency=agency_id, ip=ctx.ip)
     ctx.db.commit()
