@@ -82,6 +82,9 @@ app.include_router(sso.router, prefix="/api")
 app.include_router(qa_proxy.router, prefix="/api")          # portal -> EMS QA same-origin proxy
 app.include_router(platform_router.router, prefix="/api")   # unified-platform Cognito-authed API (/api/v1/*)
 app.include_router(emscharts_router.router, prefix="/api")  # EMSCharts ingestion (/api/v1/.../emscharts/*)
+if get_settings().emscs_qa_v1_enabled:                      # EMSCS QA v1 — mounted only when the flag is on
+    from .routers import emscs_qa as emscs_qa_router        # noqa: E402 (import also registers QA models)
+    app.include_router(emscs_qa_router.router, prefix="/api")  # /api/v1/.../qa/*
 app.include_router(plans_router.router, prefix="/api")
 app.include_router(analytics_ingest.router, prefix="/api")   # public visitor-analytics ingest
 app.include_router(analytics_admin.router, prefix="/api")    # admin visitor-analytics dashboard
