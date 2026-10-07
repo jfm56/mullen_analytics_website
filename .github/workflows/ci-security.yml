@@ -48,7 +48,25 @@ jobs:
           pip install pip-audit bandit pytest
 
       - name: Dependency vulnerability scan (pip-audit)
-        run: pip-audit -r requirements.txt --strict
+        # --strict: fail on ANY vulnerability or un-auditable dependency.
+        # The --ignore-vuln entries below are the ONLY accepted residuals; each is
+        # either no-fix-available or a dev/test-only or framework-blocked advisory,
+        # documented in docs/dependency-remediation.md. Everything with a safe fix
+        # has been upgraded; three unused CVE-bearing packages were removed.
+        run: |
+          pip-audit -r requirements.txt --strict \
+            --ignore-vuln PYSEC-2025-183 \
+            --ignore-vuln PYSEC-2026-1845 \
+            --ignore-vuln PYSEC-2026-161 \
+            --ignore-vuln PYSEC-2026-2280 \
+            --ignore-vuln PYSEC-2026-2281 \
+            --ignore-vuln PYSEC-2026-248 \
+            --ignore-vuln PYSEC-2026-249
+          # Residuals (reviewed 2026-10-07):
+          #   PYSEC-2025-183  pyjwt 2.15.1  — no upstream fix available (pinned to latest)
+          #   PYSEC-2026-1845 pytest 7.4.4  — dev/test-only, not in runtime; fix needs pytest-asyncio major
+          #   PYSEC-2026-161/2280/2281/248/249  starlette 0.48.0 — fixed only in starlette 1.x,
+          #     which requires a FastAPI+pydantic major upgrade (tracked separately for prod review)
 
       - name: SAST (bandit, fail on Medium+)
         run: bandit -r app/ -ll
