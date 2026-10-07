@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ClipboardList, ShieldCheck, Download, RefreshCw, FlaskConical, ChevronRight } from 'lucide-react';
 import { emscsQa } from '@/lib/api';
 
@@ -31,19 +32,21 @@ export default function QaDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const agencyParam = useSearchParams().get('agency');
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const health = await emscsQa.health();
       if (!health.enabled) { setError('EMSCS QA module is not enabled in this environment.'); return; }
-      const seeded = await emscsQa.seedDemo();         // local-dev: ensure a synthetic demo agency + reviews
-      setAgencyId(seeded.agency_id);
-      const data = await emscsQa.sessions(seeded.agency_id);
+      // Platform View-As passes ?agency=; otherwise (local dev) seed the synthetic demo agency.
+      const aid = agencyParam || (await emscsQa.seedDemo()).agency_id;
+      setAgencyId(aid);
+      const data = await emscsQa.sessions(aid);
       setSessions(data.sessions || []);
     } catch (e) {
       setError(e.message || 'Failed to load QA dashboard');
     } finally { setLoading(false); }
-  }, []);
+  }, [agencyParam]);
 
   useEffect(() => { load(); }, [load]);
 

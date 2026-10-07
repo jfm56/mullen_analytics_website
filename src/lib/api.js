@@ -896,3 +896,20 @@ export const emscsQa = {
   audit: (aid) => apiFetch(`${qaBase(aid)}/audit`),
   exportUrl: (aid) => `/api/proxy/v1/agencies/${aid}/qa/export`,
 };
+
+// ── Platform SUPER_ADMIN ──
+const _qs = (p = {}) => {
+  const e = Object.entries(p).filter(([, v]) => v !== undefined && v !== null && v !== '');
+  return e.length ? '?' + e.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&') : '';
+};
+export const platformAdmin = {
+  me: () => apiFetch('/api/v1/platform/me'),
+  overview: () => apiFetch('/api/v1/platform/overview'),
+  agencies: () => apiFetch('/api/v1/platform/agencies'),
+  qaMonitor: (p = {}) => apiFetch('/api/v1/platform/qa/monitor' + _qs(p)),
+  qaValidation: (p = {}) => apiFetch('/api/v1/platform/qa/validation' + _qs(p)),
+  features: () => apiFetch('/api/v1/platform/features'),
+  health: () => apiFetch('/api/v1/platform/health'),
+  audit: () => apiFetch('/api/v1/platform/audit'),
+  viewAs: (agency_id) => apiFetch('/api/v1/platform/view-as', { method: 'POST', body: JSON.stringify({ agency_id }) }),
+};
