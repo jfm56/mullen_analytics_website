@@ -64,24 +64,53 @@ def test_trauma_37_human_when_spo2_undocumented():
     assert _spec(_cat(_trauma()), 37).verdict == specialty.HUMAN
 
 
-# ───────── #38 spinal motion restriction (applicability-first) ─────────
-def test_trauma_38_na_when_not_indicated():
+# ───────── #38 SMR per NJ §6.0 Spinal Assessment (mechanism ≠ mandatory SMR) ─────────
+def test_trauma_38_na_when_no_mechanism():
     c = QaChartData(external_ref="TR2", transported=True, primary_impression="Minor finger laceration",
-                    chief_complaint="laceration")       # trauma applicable, but no spinal indication
+                    chief_complaint="laceration")       # trauma applicable, but no spinal-injury mechanism
     assert _spec(specialty.evaluate_category("Trauma", c), 38).verdict == specialty.NA
 
 
-def test_trauma_38_pass_when_applied():
+def test_trauma_38_mechanism_alone_routes_human():
+    # NEGATIVE-for-auto-SMR: significant mechanism alone, no documented spinal assessment → HUMAN (not FAIL)
+    assert _spec(_cat(_trauma()), 38).verdict == specialty.HUMAN
+
+
+def test_trauma_38_positive_assessment_applied_met():                  # positive
+    c = _trauma(neuro_deficit=True, add_actions=[AddAction(kind="procedure", name="C-collar + backboard")])
+    assert _spec(_cat(c), 38).verdict == specialty.PASS
+
+
+def test_trauma_38_positive_assessment_not_applied_not_met():          # negative
+    c = _trauma(midline_spinal_tenderness=True)
+    assert _spec(_cat(c), 38).verdict == specialty.FAIL
+
+
+def test_trauma_38_documented_negative_assessment_na():                # negative assessment → not required
+    c = _trauma(spinal_assessment_documented=True)
+    assert _spec(_cat(c), 38).verdict == specialty.NA
+
+
+def test_trauma_38_isolated_penetrating_na():
+    c = QaChartData(external_ref="GSW", transported=True, primary_impression="Isolated gunshot wound to leg",
+                    chief_complaint="gsw", penetrating_trauma=True)
+    assert _spec(specialty.evaluate_category("Trauma", c), 38).verdict == specialty.NA
+
+
+def test_trauma_38_applied_met():
     c = _trauma(add_actions=[AddAction(kind="procedure", name="C-collar + backboard")])
     assert _spec(_cat(c), 38).verdict == specialty.PASS
 
 
-def test_trauma_38_fail_when_indicated_not_applied():
-    assert _spec(_cat(_trauma()), 38).verdict == specialty.FAIL    # significant mechanism, no SMR documented
+# ───────── #37 oxygen NJ thresholds (COPD + 92-93% gray zone → human) ─────────
+def test_trauma_37_copd_routes_human():
+    c = _trauma(history="COPD", vitals=[Vitals(time="09:00", spo2=90)])
+    assert _spec(_cat(c), 37).verdict == specialty.HUMAN
 
 
-def test_trauma_38_human_when_smr_cleared():
-    assert _spec(_cat(_trauma(structured_fields={"spinal_cleared": True})), 38).verdict == specialty.HUMAN
+def test_trauma_37_gray_zone_93_routes_human():
+    c = _trauma(vitals=[Vitals(time="09:00", spo2=93)])        # <94 (NJ) but >=92 (CQI) → ambiguous
+    assert _spec(_cat(c), 37).verdict == specialty.HUMAN
 
 
 # ───────── orchestration ─────────

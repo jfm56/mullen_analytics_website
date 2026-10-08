@@ -125,6 +125,13 @@ class QaChartData(BaseModel):
     asa_not_given_reason: Optional[str] = None    # #27 reason aspirin was withheld (allergy, GI bleed, already taken…)
     ntg_not_given_reason: Optional[str] = None    # #27 reason nitroglycerin was withheld (hypotension, PDE5 inhibitor, RV MI…)
     asa_ntg_not_given_reason: Optional[str] = None  # legacy combined reason (applies to both when set)
+    pde5_inhibitor_recent: Optional[bool] = None  # #27 NTG contraindication (sildenafil/vardenafil <24h, tadalafil <48h)
+    # Spinal assessment (#38, NJ §6.0). Mechanism mandates a documented assessment, NOT automatic SMR.
+    spinal_assessment_documented: Optional[bool] = None   # the ePCR documents a spinal assessment was performed
+    penetrating_trauma: Optional[bool] = None             # isolated penetrating trauma → SMR not required (§4.5)
+    neuro_deficit: Optional[bool] = None                  # abnormal neuro function in extremities → SMR indicated
+    midline_spinal_tenderness: Optional[bool] = None      # midline tenderness on palpation → SMR indicated
+    distracting_injury: Optional[bool] = None             # distracting injury (unreliable exam) → SMR indicated
 
     # outcome / arrest (for consistency + category triggers)
     outcome: dict = Field(default_factory=dict)        # {"rosc":bool,"condition":str,...}

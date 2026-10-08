@@ -135,6 +135,47 @@ def test_cardiac_27_legacy_combined_reason_covers_both():
     assert _spec(_cat(c), 27).verdict == specialty.PASS
 
 
+# ───────── NJ-protocol regression cases (Directive A verification) ─────────
+def test_cardiac_24_copd_routes_human():
+    # NJ: COPD baseline goal >90% (patient-specific) → clinical determination, not auto-pass/fail
+    c = _cardiac(history="COPD, HTN", vitals=[Vitals(time="10:00", spo2=90)])
+    assert _spec(_cat(c), 24).verdict == specialty.HUMAN
+
+
+def test_cardiac_24_gray_zone_93_routes_human():
+    # SpO2 93%: NJ indicates O2 (<94%) but the CQI threshold is <92% → ambiguous → HUMAN
+    assert _spec(_cat(_cardiac(vitals=[Vitals(time="10:00", spo2=93)])), 24).verdict == specialty.HUMAN
+
+
+def test_cardiac_24_oxygen_when_not_indicated_routes_human():
+    # O2 given but SpO2 >=94% throughout → avoid-routine-hyperoxia appropriateness → HUMAN
+    c = _cardiac(vitals=[Vitals(time="10:00", spo2=98)], add_actions=[AddAction(kind="procedure", name="Oxygen NRB")])
+    assert _spec(_cat(c), 24).verdict == specialty.HUMAN
+
+
+def test_cardiac_27_ntg_given_with_hypotension_is_apparent_deviation():
+    # NTG administered with SBP < 100 → apparent protocol deviation → clinical review (not auto-pass)
+    c = _cardiac(add_actions=[AddAction(kind="medication", name="Aspirin"),
+                              AddAction(kind="medication", name="Nitroglycerin")],
+                 vitals=[Vitals(time="10:00", sbp=86, spo2=97)])
+    r = _spec(_cat(c), 27)
+    assert r.verdict == specialty.HUMAN and any((e or {}).get("field") == "deviation" for e in r.evidence)
+
+
+def test_cardiac_27_ntg_given_with_pde5_is_apparent_deviation():
+    c = _cardiac(add_actions=[AddAction(kind="medication", name="Aspirin"),
+                              AddAction(kind="medication", name="Nitroglycerin")],
+                 pde5_inhibitor_recent=True, vitals=[Vitals(time="10:00", sbp=140, spo2=97)])
+    assert _spec(_cat(c), 27).verdict == specialty.HUMAN
+
+
+def test_cardiac_27_evidence_cites_nj_protocol():
+    r = _spec(_cat(_cardiac(add_actions=[AddAction(kind="medication", name="Aspirin"),
+                                         AddAction(kind="medication", name="Nitroglycerin")],
+                            vitals=[Vitals(time="10:00", sbp=140, spo2=97)])), 27)
+    assert any("NJ EMS CPG" in str((e or {}).get("value", "")) for e in r.evidence)
+
+
 # ───────── orchestration + cross-category ─────────
 def test_cardiac_is_implemented_and_evaluated_with_applicability_reason():
     assert specialty.is_implemented("Cardiac/STEMI")
