@@ -44,8 +44,10 @@ class Refusal(BaseModel):
     checkboxes_complete: Optional[bool] = None    # #76 each box marked, no line through the section
     signed_patient: Optional[bool] = None
     signed_witness: Optional[bool] = None
-    capacity_documented: Optional[bool] = None    # #77 decision-making capacity (A&Ox4)
-    aox: Optional[int] = None                     # alert & oriented x? (0-4)
+    capacity_documented: Optional[bool] = None    # #77 EXPLICIT decision-making-capacity assessment
+    #   (understands evaluation/treatment/transport + risks of refusal, appreciates how risks apply,
+    #   reasons about choices, communicates a consistent choice). A&Ox is NOT this — it only supports it.
+    aox: Optional[int] = None                     # alert & oriented x? (0-4) — orientation only (supporting)
     risks_explained: Optional[bool] = None
     care_transport_explained: Optional[bool] = None
     return_precautions: Optional[bool] = None     # #79 follow-up / return precautions
@@ -82,6 +84,7 @@ class QaChartData(BaseModel):
     refusal: Optional[Refusal] = None
     altered_mental_status: Optional[bool] = None
     possible_ingestion: Optional[bool] = None
+    intoxication_suspected: Optional[bool] = None   # alcohol/drug intoxication concern (capacity)
     possible_abuse: Optional[bool] = None
     co_exposure: Optional[bool] = None
     head_injury: Optional[bool] = None
@@ -114,6 +117,11 @@ class QaChartData(BaseModel):
     als_on_scene: Optional[bool] = None
     als_requested: Optional[bool] = None
     als_cancelled: Optional[bool] = None
+
+    # Cardiac/STEMI (#16-27). Pain/HPI documentation elements live in hpi_elements with keys:
+    #   onset, prior_interventions, pain_type, pain_duration, pain_quality, pain_radiation,
+    #   pain_palpation, gastric_distress. This field documents WHY ASA/NTG was withheld (#27).
+    asa_ntg_not_given_reason: Optional[str] = None
 
     # outcome / arrest (for consistency + category triggers)
     outcome: dict = Field(default_factory=dict)        # {"rosc":bool,"condition":str,...}

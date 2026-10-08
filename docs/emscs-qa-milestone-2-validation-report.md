@@ -1,8 +1,10 @@
 # EMSCS QA — Milestone 2 (Specialty CQI) Validation Report
 
-Ruleset version: `emscs-cqi-2025-08` · Implemented categories: Refusal, Medication, Albuterol (indicators #63-80).
+Ruleset version: `emscs-cqi-2025-08` · Implemented categories: Refusal, Medication, Albuterol, Cardiac/STEMI (indicators #63-80).
 
-> Scope note: this release automates **Refusal #75-80, Medication #63-68, Albuterol #69-74** only. All other specialty categories remain human-review stubs. The engine proposes; a human approves. No AI computes a score.
+> Scope note: this release automates **Cardiac/STEMI #16-27, Refusal #75-80, Medication #63-68, Albuterol #69-74**. All other specialty categories remain human-review stubs. The engine proposes; a human approves. No AI computes a score.
+
+> **Corrections applied (2026-10-08):** (1) **#77 capacity** — A&Ox/orientation is supporting evidence only and can never AUTO-MET; AUTO MET requires explicit capacity-specific documentation; AMS / intoxication / possible ingestion / insufficient documentation route to HUMAN REVIEW REQUIRED; incapacity is never auto-inferred. (2) **#71 albuterol** — applicability is established before Met/Not-Met: no evidence → N/A; evidence albuterol was given/indicated but the Add Action is missing → Not Met; a structured Add Action → normal #69-74 evaluation.
 
 ## A. Acceptance on synthetic cases (known ground truth)
 
@@ -32,6 +34,18 @@ Source: de-identified fixture of the WNY September 2026 chart review (n=60 chart
 
 | # | Category | Auto | Scored (n) | Met | Not Met | NA | Protocol (versioned) |
 |---|---|---|---|---|---|---|---|
+| 16 | Cardiac/STEMI | auto | 12 | 12 | 0 | 0 | Symptom onset documentation v1 |
+| 17 | Cardiac/STEMI | auto | 12 | 7 | 5 | 0 | Prior interventions documentation v1 |
+| 18 | Cardiac/STEMI | auto | 12 | 9 | 3 | 0 | Pain type assessment v1 |
+| 19 | Cardiac/STEMI | auto | 12 | 11 | 1 | 0 | Pain duration documentation v1 |
+| 20 | Cardiac/STEMI | auto | 12 | 9 | 3 | 0 | Pain quality documentation v1 |
+| 21 | Cardiac/STEMI | auto | 12 | 12 | 0 | 0 | Pain radiation documentation v1 |
+| 22 | Cardiac/STEMI | auto | 12 | 0 | 12 | 0 | Palpation effect on pain v1 |
+| 23 | Cardiac/STEMI | auto | 12 | 11 | 1 | 0 | Gastric distress documentation v1 |
+| 24 | Cardiac/STEMI | auto | 12 | 2 | 0 | 10 | Oxygen therapy by perfusion v1 |
+| 25 | Cardiac/STEMI | auto | 12 | 7 | 5 | 0 | Chest pain treatment per protocol v1 |
+| 26 | Cardiac/STEMI | auto | 12 | 0 | 7 | 5 | Pain-management reassessment v1 |
+| 27 | Cardiac/STEMI | auto | 12 | 10 | 2 | 0 | Aspirin/Nitroglycerin administration v1 |
 | 63 | Medication | auto | 12 | 12 | 0 | 0 | Medication documentation v1 |
 | 64 | Medication | auto | 12 | 12 | 0 | 0 | Medication indication v1 |
 | 65 | Medication | auto | 12 | 12 | 0 | 0 | Medication detail v1 |

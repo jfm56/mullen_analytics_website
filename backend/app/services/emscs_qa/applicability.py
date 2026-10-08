@@ -89,10 +89,17 @@ def _t_medication(c: QaChartData) -> Optional[str]:
 
 
 def _t_albuterol(c: QaChartData) -> Optional[str]:
+    # Structured Add Action is the clean signal.
     for m in c.medications():
         if _kw(m.name, "albuterol", "salbutamol"):
             return f"medication '{m.name}'"
-    return None
+    # Applicability can ALSO be established by narrative/text evidence that albuterol was
+    # administered/indicated even when the structured Add Action is missing (#71 then Not Met,
+    # not simply N/A). Check the narrative/history/impression + narrative-only interventions.
+    text = " ".join([c.hpi_narrative or "", c.history or "", c.primary_impression or "",
+                     c.chief_complaint or "", " ".join(c.narrative_only_interventions or [])])
+    hw = _kw(text, "albuterol", "salbutamol")
+    return f"documentation references '{hw}' without an Add Action" if hw else None
 
 
 def _t_refusal(c: QaChartData) -> Optional[str]:

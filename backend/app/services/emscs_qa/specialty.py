@@ -14,7 +14,7 @@ from .chart_data import QaChartData, AddAction
 from .indicators import IndicatorResult, Classification, PASS, FAIL, NA, HUMAN, _ev
 from . import seed
 
-IMPLEMENTED_CATEGORIES = ("Refusal", "Medication", "Albuterol")
+IMPLEMENTED_CATEGORIES = ("Refusal", "Medication", "Albuterol", "Cardiac/STEMI")
 
 
 def _min(t) -> Optional[int]:
@@ -79,18 +79,42 @@ def r_76(c):
 
 
 def r_77(c):
+    """Decision-making capacity. A&Ox4/orientation is SUPPORTING evidence only and can NEVER
+    by itself produce an AUTO MET. AUTO MET requires EXPLICIT capacity-specific documentation
+    (understands evaluation/risks, appreciates how risks apply, reasons about choices,
+    communicates a consistent choice). Any capacity concern (AMS, intoxication, possible
+    ingestion) routes to human review. Incapacity is never auto-inferred — the engine surfaces
+    the concern + evidence and the reviewer makes the clinical determination."""
     rf = c.refusal
-    # capacity is a clinical judgment; ambiguous context routes to human review
-    if c.altered_mental_status or c.possible_ingestion:
+    # Capacity concerns → clinical determination, never auto-decided.
+    concerns = []
+    if c.altered_mental_status:
+        concerns.append("altered mental status")
+    if getattr(c, "intoxication_suspected", None):
+        concerns.append("suspected intoxication")
+    if c.possible_ingestion:
+        concerns.append("possible ingestion")
+    aox = rf.aox if rf else None
+    if concerns:
         return _R(77, Classification.CLINICAL_CONTEXT, HUMAN,
-                  "Capacity is in question (AMS / possible ingestion) — HUMAN REVIEW REQUIRED.",
-                  [_ev("altered_mental_status", c.altered_mental_status), _ev("possible_ingestion", c.possible_ingestion)])
-    if rf is None or rf.capacity_documented is None:
-        return _R(77, Classification.CLINICAL_CONTEXT, HUMAN, "Decision-making capacity not documented in structured form.", [])
-    if rf.capacity_documented and (rf.aox is None or rf.aox == 4):
-        return _R(77, Classification.DETERMINISTIC_RULE, PASS, "Capacity documented (A&O x4).", [_ev("aox", rf.aox)])
-    return _R(77, Classification.DETERMINISTIC_RULE, FAIL, "Decision-making capacity not adequately documented.",
-              [_ev("capacity_documented", rf.capacity_documented), _ev("aox", rf.aox)])
+                  "Capacity concern present (" + ", ".join(concerns) + ") — decision-making capacity "
+                  "is a clinical determination; HUMAN REVIEW REQUIRED.",
+                  [_ev("capacity_concerns", concerns), _ev("aox", aox)])
+    if rf is None:
+        return _R(77, Classification.CLINICAL_CONTEXT, HUMAN,
+                  "No refusal/capacity documentation — HUMAN REVIEW REQUIRED.", [])
+    if rf.capacity_documented:
+        # Explicit capacity assessment documented; orientation (A&Ox) is supporting evidence.
+        note = f" (A&Ox{aox} supporting)" if aox is not None else ""
+        return _R(77, Classification.DETERMINISTIC_RULE, PASS,
+                  f"Explicit decision-making-capacity assessment documented{note}.",
+                  [_ev("capacity_documented", True), _ev("aox", aox)])
+    # Orientation alone (or nothing) — A&Ox cannot by itself establish capacity → reviewer decides.
+    return _R(77, Classification.CLINICAL_CONTEXT, HUMAN,
+              "Orientation may be documented but no EXPLICIT decision-making-capacity assessment is "
+              "present (understands risks / appreciates situation / reasons / communicates choice); "
+              "A&Ox alone is insufficient — HUMAN REVIEW REQUIRED. Incapacity is not inferred automatically.",
+              [_ev("aox", aox), _ev("capacity_documented", rf.capacity_documented)])
 
 
 def r_78(c):
@@ -212,10 +236,27 @@ def a_70(c):
             _R(70, Classification.TIMELINE_RULE, FAIL, "No pre-therapy RR + SpO2 before albuterol.", [_ev("pre_sets", 0)]))
 
 
+def _albuterol_text_evidence(c) -> bool:
+    """Narrative/text evidence that albuterol was administered/indicated, independent of a
+    structured Add Action (used to distinguish 'not applicable' from 'applicable but undocumented')."""
+    text = " ".join([c.hpi_narrative or "", c.history or "", c.primary_impression or "",
+                     c.chief_complaint or "", " ".join(c.narrative_only_interventions or [])]).lower()
+    return "albuterol" in text or "salbutamol" in text
+
+
 def a_71(c):
-    return (_R(71, Classification.DETERMINISTIC_RULE, PASS, "Albuterol documented via Add Action.", [_ev("albuterol_actions", len(_albuterol(c)))])
-            if _albuterol(c) else
-            _R(71, Classification.DETERMINISTIC_RULE, FAIL, "Albuterol not documented via Add Action.", [_ev("albuterol_actions", 0)]))
+    """Applicability is established BEFORE Met/Not-Met: a structured Add Action → Met; evidence
+    albuterol was given/indicated but the Add Action is missing → Not Met (with evidence);
+    no evidence albuterol applies → N/A (not a documentation failure)."""
+    if _albuterol(c):
+        return _R(71, Classification.DETERMINISTIC_RULE, PASS, "Albuterol documented via Add Action.",
+                  [_ev("albuterol_actions", len(_albuterol(c)))])
+    if _albuterol_text_evidence(c):
+        return _R(71, Classification.DETERMINISTIC_RULE, FAIL,
+                  "Albuterol referenced in documentation but not recorded via a structured Add Action.",
+                  [_ev("albuterol_text_evidence", True), _ev("albuterol_actions", 0)])
+    return _R(71, Classification.DETERMINISTIC_RULE, NA, "No evidence albuterol applies to this chart.",
+              [_ev("albuterol_actions", 0)])
 
 
 def a_72(c):
@@ -248,10 +289,102 @@ def a_74(c):
     return _R(74, Classification.DETERMINISTIC_RULE, FAIL, "Patient respiratory status post albuterol not documented.", [_ev("response_documented", False)])
 
 
+# ───────────────────────── Cardiac/STEMI #16-27 ─────────────────────────
+# Pain/HPI documentation elements (#16-23): present/absent from hpi_elements.
+_CARDIAC_DOC = {
+    16: ("onset", "symptom onset time"),
+    17: ("prior_interventions", "prior interventions before EMS"),
+    18: ("pain_type", "pain type"),
+    19: ("pain_duration", "pain duration"),
+    20: ("pain_quality", "pain quality"),
+    21: ("pain_radiation", "pain radiation"),
+    22: ("pain_palpation", "whether palpation changes the pain"),
+    23: ("gastric_distress", "gastric distress"),
+}
+
+
+def _cardiac_doc(num, c):
+    key, label = _CARDIAC_DOC[num]
+    present = bool((c.hpi_elements or {}).get(key))
+    if present:
+        return _R(num, Classification.DETERMINISTIC_RULE, PASS, f"Documentation of {label} present.", [_ev(key, True)])
+    return _R(num, Classification.DETERMINISTIC_RULE, FAIL, f"Documentation of {label} not present.", [_ev(key, present)])
+
+
+def _has_action(c, *names):
+    return [a for a in c.add_actions if any(n in (a.name or "").lower() for n in names)]
+
+
+def c_24(c):
+    """Oxygen therapy as indicated by perfusion (SpO2 < 92%). N/A when not indicated."""
+    low = [v for v in c.vitals if v.spo2 is not None and v.spo2 < 92]
+    o2 = _has_action(c, "oxygen", "nasal cannula", "non-rebreather", "nrb", "bvm", "cpap")
+    if not low:
+        return _R(24, Classification.PROTOCOL_RULE, NA, "Oxygen not indicated (no documented SpO2 < 92%).", [_ev("spo2_below_92", False)])
+    if o2:
+        return _R(24, Classification.PROTOCOL_RULE, PASS, "Oxygen administered for documented SpO2 < 92%.",
+                  [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen", True)])
+    return _R(24, Classification.PROTOCOL_RULE, FAIL, "SpO2 < 92% documented but no oxygen therapy recorded.",
+              [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen", False)])
+
+
+def c_25(c):
+    """Treated per protocol — clinical appropriateness is a human determination."""
+    return _R(25, Classification.CLINICAL_CONTEXT, HUMAN,
+              "Chest-pain treatment appropriateness vs protocol needs clinical confirmation.",
+              [_ev("interventions", [a.name for a in c.add_actions]), _ev("protocols_applied", c.protocols_applied)])
+
+
+def _analgesics(c):
+    return _has_action(c, "nitro", "ntg", "fentanyl", "morphine", "aspirin", "asa", "analges", "pain")
+
+
+def c_26(c):
+    """Pain management continued/reassessed at regular intervals (timeline). N/A if none given."""
+    meds = _analgesics(c)
+    if not meds:
+        return _R(26, Classification.TIMELINE_RULE, NA, "No pain-management intervention given.", [])
+    times = sorted(t for t in (_min(a.time) for a in meds) if t is not None)
+    repeat = len(meds) >= 2
+    reassessed = any(_min(v.time) is not None and times and _min(v.time) > times[0] and v.pain is not None
+                     for v in c.vitals)
+    if repeat or reassessed:
+        return _R(26, Classification.TIMELINE_RULE, PASS, "Pain management reassessed/continued at intervals.",
+                  [_ev("interventions", len(meds)), _ev("reassessed", reassessed)])
+    if not times:
+        return _R(26, Classification.TIMELINE_RULE, HUMAN,
+                  "Pain-management given but times not documented — cannot confirm interval reassessment.", [])
+    return _R(26, Classification.TIMELINE_RULE, FAIL,
+              "Pain management given without documented reassessment/continuation at intervals.",
+              [_ev("interventions", len(meds)), _ev("reassessed", False)])
+
+
+def c_27(c):
+    """Aspirin/Nitroglycerin given, OR a documented reason it was withheld."""
+    given = _has_action(c, "aspirin", "asa", "nitro", "ntg", "nitroglycerin")
+    reason = getattr(c, "asa_ntg_not_given_reason", None)
+    if given:
+        return _R(27, Classification.PROTOCOL_RULE, PASS, "Aspirin/Nitroglycerin administration documented.",
+                  [_ev("asa_ntg", [a.name for a in given])])
+    if reason:
+        return _R(27, Classification.PROTOCOL_RULE, PASS, "ASA/NTG not given; reason documented.",
+                  [_ev("reason_not_given", reason)])
+    return _R(27, Classification.PROTOCOL_RULE, FAIL,
+              "No ASA/NTG administration and no documented reason for withholding.",
+              [_ev("asa_ntg", []), _ev("reason_not_given", None)])
+
+
 EVALUATORS = {
     "Refusal": {75: r_75, 76: r_76, 77: r_77, 78: r_78, 79: r_79, 80: r_80},
     "Medication": {63: m_63, 64: m_64, 65: m_65, 66: m_66, 67: m_67, 68: m_68},
     "Albuterol": {69: a_69, 70: a_70, 71: a_71, 72: a_72, 73: a_73, 74: a_74},
+    "Cardiac/STEMI": {
+        16: lambda c: _cardiac_doc(16, c), 17: lambda c: _cardiac_doc(17, c),
+        18: lambda c: _cardiac_doc(18, c), 19: lambda c: _cardiac_doc(19, c),
+        20: lambda c: _cardiac_doc(20, c), 21: lambda c: _cardiac_doc(21, c),
+        22: lambda c: _cardiac_doc(22, c), 23: lambda c: _cardiac_doc(23, c),
+        24: c_24, 25: c_25, 26: c_26, 27: c_27,
+    },
 }
 
 

@@ -101,6 +101,24 @@ def case_ambiguous():
     )
 
 
+def case_cardiac():
+    """Cardiac/STEMI demo (not in the 6-case R1 validation set): chest pain, near-complete pain
+    documentation (gastric distress missing), ASA + NTG + oxygen for hypoxia, reassessed."""
+    med = dict(performed_by="Medic 3", indication="chest pain", response_documented=True, reassessed_after=True)
+    return QaChartData(
+        external_ref="SYN-07-CARDIAC", transported=True, age_years=58,
+        primary_impression="Chest pain, possible ACS", chief_complaint="chest pressure",
+        hpi_narrative="58 y/o substernal chest pressure radiating to the left arm; ASA and NTG given.",
+        hpi_elements={"onset": True, "prior_interventions": True, "pain_type": True, "pain_duration": True,
+                      "pain_quality": True, "pain_radiation": True, "pain_palpation": True},  # gastric_distress missing
+        vitals=[Vitals(time="08:00", sbp=150, dbp=90, rr=18, spo2=90, hr=88, pain=8, bp_method="manual"),
+                Vitals(time="08:12", sbp=140, dbp=85, rr=16, spo2=96, hr=82, pain=3, bp_method="auto")],
+        add_actions=[AddAction(kind="medication", name="Aspirin", route="PO", dose="324", dose_unit="mg", time="08:03", **med),
+                     AddAction(kind="medication", name="Nitroglycerin", route="SL", dose="0.4", dose_unit="mg", time="08:05", **med),
+                     AddAction(kind="procedure", name="Oxygen 4L NC", time="08:02")],
+        als_on_scene=True, signatures={"patient": True, "receiving": True, "crew": True}, securement_straps=3)
+
+
 # (key, label, builder, one-line expectation for the local-review report)
 CASES = [
     ("clean", "Clean compliant", case_clean, "Refusal #75-80 all Met; no findings."),

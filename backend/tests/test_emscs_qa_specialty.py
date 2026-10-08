@@ -2,7 +2,7 @@
 Albuterol #69-74). Synthetic charts only. Human-override/RLS/Super-Admin-visibility/
 synthetic-isolation are category-agnostic and covered by the existing suites; 60/60
 scoring parity is unchanged (test_emscs_qa_parity.py)."""
-from app.services.emscs_qa import specialty, review
+from app.services.emscs_qa import specialty, review, applicability
 from app.services.emscs_qa.chart_data import QaChartData, Vitals, AddAction, Refusal
 
 
@@ -183,3 +183,78 @@ def test_cross_category_activation_albuterol_and_medication():
     nums = {r.number for r in rev.indicator_results}
     assert 71 in nums and 63 in nums                              # both specialty sets evaluated
     assert _spec(rev.indicator_results, 71).verdict != specialty.HUMAN
+
+
+# ───────────────────── #77 capacity correction (orientation ≠ capacity) ─────────────────────
+def test_77_aox4_alone_is_not_capacity_routes_human():
+    c = _refusal_clean(); c.refusal.capacity_documented = False   # A&Ox4 present, no explicit capacity doc
+    assert c.refusal.aox == 4
+    assert _spec(specialty.evaluate_category("Refusal", c), 77).verdict == specialty.HUMAN
+
+
+def test_77_explicit_capacity_documentation_passes():
+    r = _spec(specialty.evaluate_category("Refusal", _refusal_clean()), 77)   # capacity_documented=True
+    assert r.verdict == specialty.PASS
+
+
+def test_77_ams_routes_human():
+    c = _refusal_clean(); c.altered_mental_status = True
+    assert _spec(specialty.evaluate_category("Refusal", c), 77).verdict == specialty.HUMAN
+
+
+def test_77_intoxication_routes_human():
+    c = _refusal_clean(); c.intoxication_suspected = True
+    assert _spec(specialty.evaluate_category("Refusal", c), 77).verdict == specialty.HUMAN
+
+
+def test_77_ingestion_routes_human():
+    c = _refusal_clean(); c.possible_ingestion = True
+    assert _spec(specialty.evaluate_category("Refusal", c), 77).verdict == specialty.HUMAN
+
+
+def test_77_never_auto_infers_incapacity():
+    # Insufficient documentation or a concern → HUMAN, never an automatic FAIL (incapacity).
+    for mutate in (lambda c: setattr(c.refusal, "capacity_documented", False),
+                   lambda c: setattr(c, "altered_mental_status", True),
+                   lambda c: setattr(c, "intoxication_suspected", True)):
+        c = _refusal_clean(); mutate(c)
+        assert _spec(specialty.evaluate_category("Refusal", c), 77).verdict != specialty.FAIL
+
+
+def test_77_reviewer_can_override_with_reason():
+    # #77 is AUTO PROPOSED as HUMAN_REVIEW_REQUIRED; the reviewer sets the result. Here we prove
+    # the proposal is human-review (not an auto decision); the DB override-with-reason path is
+    # covered by test_emscs_qa_review_service.py (override_indicator requires a reason).
+    c = _refusal_clean(); c.refusal.capacity_documented = False
+    r = _spec(specialty.evaluate_category("Refusal", c), 77)
+    assert r.verdict == specialty.HUMAN and r.rationale and r.evidence
+
+
+# ───────────────────── #71 albuterol applicability correction ─────────────────────
+def test_71_no_albuterol_evidence_is_not_applicable():
+    c = QaChartData(external_ref="NOALB", transported=True, primary_impression="Chest pain")
+    assert "Albuterol" not in applicability.evaluate_applicability(c).activations   # category N/A
+    assert _spec(specialty.evaluate_category("Albuterol", c), 71).verdict == specialty.NA
+
+
+def test_71_albuterol_in_narrative_without_add_action_is_not_met():
+    c = QaChartData(external_ref="ALBTEXT", transported=True, primary_impression="Respiratory distress",
+                    hpi_narrative="Albuterol administered by BLS prior to EMS arrival.")
+    assert "Albuterol" in applicability.evaluate_applicability(c).activations       # applicable via narrative
+    r = _spec(specialty.evaluate_category("Albuterol", c), 71)
+    assert r.verdict == specialty.FAIL and r.evidence
+
+
+def test_71_structured_add_action_evaluates_normally():
+    rs = specialty.evaluate_category("Albuterol", _alb([("09:05", True)]))
+    assert _spec(rs, 71).verdict == specialty.PASS
+    assert _spec(rs, 69).verdict == specialty.PASS            # #69-74 evaluate normally
+
+
+def test_71_multi_med_including_albuterol_activates_both_categories():
+    c = QaChartData(external_ref="MULTIMED", transported=True, history="asthma",
+                    add_actions=[AddAction(kind="medication", name="Aspirin"),
+                                 AddAction(kind="medication", name="Albuterol", route="neb",
+                                           dose="2.5", dose_unit="mg", performed_by="Medic")])
+    act = applicability.evaluate_applicability(c).activations
+    assert "Medication" in act and "Albuterol" in act

@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "emscs_wny_fixtures.json"
 OUT = ROOT / "docs" / "emscs-qa-milestone-2-validation-report.md"
 
-SPECIALTY_NUMS = list(range(63, 81))  # #63-80 (Medication, Albuterol, Refusal)
+SPECIALTY_NUMS = list(range(16, 28)) + list(range(63, 81))  # Cardiac/STEMI #16-27 + Med/Alb/Refusal #63-80
 
 # Designed ground truth for the six synthetic cases (verdict per specialty indicator +
 # expected finding severities). Agreement vs this = acceptance to specification.
@@ -136,9 +136,17 @@ def main():
     L.append(f"Ruleset version: `{ruleset}` · Implemented categories: "
              f"{', '.join(specialty.IMPLEMENTED_CATEGORIES)} (indicators #63-80).")
     L.append("")
-    L.append("> Scope note: this release automates **Refusal #75-80, Medication #63-68, "
-             "Albuterol #69-74** only. All other specialty categories remain human-review "
-             "stubs. The engine proposes; a human approves. No AI computes a score.")
+    L.append("> Scope note: this release automates **Cardiac/STEMI #16-27, Refusal #75-80, "
+             "Medication #63-68, Albuterol #69-74**. All other specialty categories remain "
+             "human-review stubs. The engine proposes; a human approves. No AI computes a score.")
+    L.append("")
+    L.append("> **Corrections applied (2026-10-08):** (1) **#77 capacity** — A&Ox/orientation is "
+             "supporting evidence only and can never AUTO-MET; AUTO MET requires explicit "
+             "capacity-specific documentation; AMS / intoxication / possible ingestion / "
+             "insufficient documentation route to HUMAN REVIEW REQUIRED; incapacity is never "
+             "auto-inferred. (2) **#71 albuterol** — applicability is established before "
+             "Met/Not-Met: no evidence → N/A; evidence albuterol was given/indicated but the "
+             "Add Action is missing → Not Met; a structured Add Action → normal #69-74 evaluation.")
     L.append("")
     L.append("## A. Acceptance on synthetic cases (known ground truth)")
     L.append("")
