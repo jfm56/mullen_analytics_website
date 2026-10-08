@@ -7,6 +7,12 @@ def test_health(client):
     assert res.json()["status"] == "healthy"
 
 
+def test_readiness(client):
+    res = client.get("/ready")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ready"
+
+
 def test_root(client):
     res = client.get("/")
     assert res.status_code == 200

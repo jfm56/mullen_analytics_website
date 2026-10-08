@@ -67,8 +67,8 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 ```powershell
 venv\Scripts\python create_admin.py
-# Creates: admin@mullenanalytics.com / ChangeMe123!
-# Change this password immediately after first login.
+# Prompts for a unique local administrator password.
+# Never use a documented/default credential in any environment.
 ```
 
 ### Start the backend

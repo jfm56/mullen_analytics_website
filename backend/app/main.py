@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from .config import get_settings
 from .database import engine, admin_engine, Base
@@ -25,6 +26,7 @@ from .models import error_log as _error_log_models  # noqa: F401 – register wi
 from .models import web_analytics as _web_analytics_models  # noqa: F401 – register with Base
 from .models import lead as _lead_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
+from .phi_guard import install_phi_guard
 
 settings = get_settings()
 
@@ -33,6 +35,8 @@ app = FastAPI(
     description="Backend API for Mullen Analytics Client Portal",
     version="1.0.0",
 )
+
+install_phi_guard(app, settings)
 
 # CORS middleware - allow Next.js frontend
 app.add_middleware(
@@ -325,6 +329,17 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.get("/ready")
+async def readiness_check():
+    """Traffic readiness: fail when the runtime database identity cannot query."""
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return {"status": "ready"}
+    except Exception:  # noqa: BLE001 - do not expose database details
+        return JSONResponse(status_code=503, content={"status": "not_ready"})
 
 
 @app.exception_handler(Exception)

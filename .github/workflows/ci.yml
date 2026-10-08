@@ -6,6 +6,29 @@ on:
     branches: [ main ]
 
 jobs:
+  terraform:
+    name: AWS Terraform Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/aws/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize without remote state
+        run: terraform init -backend=false
+
+      - name: Validate configuration
+        run: terraform validate
+
   backend:
     name: Backend Lint & Test
     runs-on: ubuntu-latest

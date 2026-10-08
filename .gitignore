@@ -70,3 +70,13 @@ backend/local_data/emscs_qa_raw/
 # backups & local dev server logs
 *.bak
 backend/_nextdev.log
+
+# Terraform runtime/state files (state contains sensitive generated values)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+backend.hcl
+!backend.hcl.example
+crash.log

@@ -1,0 +1,17 @@
+environment = "production"
+aws_region  = "us-east-1"
+alarm_email = "operations@example.com"
+
+# Foundation apply: leave services disabled until an immutable image is pushed.
+deploy_services = false
+start_services  = false
+container_image = ""
+certificate_arn = ""
+
+# Fill before the service apply.
+auth_mode            = "cognito"
+cognito_user_pool_id = "us-east-1_REPLACE"
+cognito_client_id    = "REPLACE"
+
+# PHI stays disabled through staging, migration, and synthetic verification.
+enable_phi_ingestion = false
