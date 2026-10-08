@@ -12,12 +12,12 @@ from app.services.auth import hash_password
 PW = "CIpassword1!"
 
 
-def _make_and_login(client, db, email, *, ems=False):
+def _make_and_login(client, db, email, *, ems=False, role="client"):
     user = User(email=email, password_hash=hash_password(PW), email_confirmed=True)
     db.add(user)
     db.flush()
     db.add(Profile(
-        id=user.id, email=email, role="client", full_name="MFA User",
+        id=user.id, email=email, role=role, full_name="MFA User",
         ems_qa_enabled=ems, ems_agency_slug="smoke-test-ems" if ems else None,
         ems_role="qa_reviewer" if ems else None,
     ))
@@ -35,13 +35,49 @@ def _enroll(client):
     return data["secret"], act.json()["recovery_codes"]
 
 
-def test_login_without_mfa_is_complete(client, db):
+def test_client_without_mfa_must_enroll_at_login(client, db):
     _, body = _make_and_login(client, db, "mfa-none@example.com")
     assert body["mfa_required"] is False
+    assert body["mfa_enrollment_required"] is True
     s = client.get("/api/auth/session").json()
     assert s["mfa_enabled"] is False
     assert s["mfa_passed"] is True
     assert s["mfa_required"] is False
+    assert s["mfa_enrollment_required"] is True
+
+
+def test_admin_without_mfa_does_not_enter_client_enrollment(client, db):
+    _, body = _make_and_login(client, db, "mfa-admin@example.com", role="admin")
+    assert body["mfa_required"] is False
+    assert body["mfa_enrollment_required"] is False
+
+    session = client.get("/api/auth/session").json()
+    assert session["mfa_enrollment_required"] is False
+
+
+def test_qa_client_enrolls_at_initial_login(client, db):
+    _, body = _make_and_login(client, db, "mfa-qa-first-login@example.com", ems=True)
+    assert body["mfa_required"] is False
+    assert body["mfa_enrollment_required"] is True
+
+    session = client.get("/api/auth/session").json()
+    assert session["authenticated"] is True
+    assert session["mfa_enabled"] is False
+    assert session["mfa_enrollment_required"] is True
+
+    _enroll(client)
+    completed = client.get("/api/auth/session").json()
+    assert completed["mfa_enabled"] is True
+    assert completed["mfa_passed"] is True
+    assert completed["mfa_enrollment_required"] is False
+
+    client.post("/api/auth/logout")
+    returning = client.post(
+        "/api/auth/login",
+        json={"email": "mfa-qa-first-login@example.com", "password": PW},
+    ).json()
+    assert returning["mfa_enrollment_required"] is False
+    assert returning["mfa_required"] is True
 
 
 def test_enroll_requires_correct_code_and_returns_recovery(client, db):

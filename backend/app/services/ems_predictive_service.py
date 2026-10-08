@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from .ems_analytics_service import detect_mapped_column
+from .ems_analytics_service import detect_mapped_column, _collapse_to_incidents
 from .ems_column_mapping_service import get_column_overrides
 from .pipeline.forecasting import _forecast_call_volume
 
@@ -277,9 +277,16 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
     re-training the forecast on every request."""
     use_cache = df is None
     if use_cache:
+        # A mapping edit changes the meaning of the data without re-cleaning it.
+        # Resolve before lookup and include it in the cache signature.
+        try:
+            overrides = get_column_overrides(upload, db) or {}
+        except Exception:  # noqa: BLE001
+            overrides = {}
         _ckey = (
             str(getattr(upload, "id", "")), _result_sig(upload), horizon,
             repr(sorted(settings.items())) if settings else "",
+            repr(sorted(overrides.items())),
         )
         _hit = _DASH_CACHE.get(_ckey)
         if _hit is not None:
@@ -287,15 +294,14 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
         df = _load_df(upload)
         if df is None or df.empty:
             return {"available": False, "reason": "No cleaned data available for this upload."}
-        try:
-            overrides = get_column_overrides(upload, db) or {}
-        except Exception:  # noqa: BLE001
-            overrides = {}
     else:
         if df.empty:
             return {"available": False, "reason": "No cleaned data available."}
         overrides = overrides or {}
 
+    # Demand and forecasting count incidents; duration/coverage remain unit-level.
+    unit_df = df
+    df = _collapse_to_incidents(df, overrides)
     dt_col, dt = _resolve_dt(df, overrides)
     if dt is None:
         return {"available": False, "reason": "No usable dispatch/received date column was detected in this upload."}
@@ -313,7 +319,7 @@ def get_predictive_dashboard(upload, db, horizon: int = 12, settings: Optional[D
         daily = daily.reindex(full, fill_value=0)
 
     weekday, hour, busiest_weekday, busiest_hour = _weekday_hour(df, dt)
-    cov_units, call_dur = _coverage_and_duration(df)
+    cov_units, call_dur = _coverage_and_duration(unit_df)
 
     # Response-time performance + IFT load feed the staffing recommendation.
     resp_p90 = None

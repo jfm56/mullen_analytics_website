@@ -91,7 +91,7 @@ src/components/ClientProjectStatusPreview.jsx
 src/hooks/useLastLoginTracking.js (can be removed - handled by FastAPI)
 src/hooks/useUnreadMessagesCount.js (can be removed - handled by FastAPI)
 src/lib/supabaseClient.js (DELETE when migration complete)
-src/lib/supabaseAdmin.js (DELETE when migration complete)
+src/lib/supabaseClient.js (DELETE when migration complete)
 ```
 
 ### API Routes Still Using Supabase
@@ -121,10 +121,9 @@ All files in `src/app/api/` still use Supabase and should be removed once FastAP
 
 ### Phase 4: Cleanup
 1. Delete `src/lib/supabaseClient.js`
-2. Delete `src/lib/supabaseAdmin.js`
-3. Delete all `src/app/api/` routes (replaced by FastAPI)
-4. Remove `@supabase/supabase-js` from package.json
-5. Remove Supabase env vars
+2. Delete all `src/app/api/` routes that are actually replaced by FastAPI
+3. Remove `@supabase/supabase-js` after the remaining imports are migrated
+4. Remove Supabase env vars
 
 ---
 

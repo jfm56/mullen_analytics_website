@@ -79,7 +79,10 @@ async def upload_file(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Storage folder error: {exc}") from exc
 
-    stored_name = f"{uuid.uuid4().hex[:8]}_{original_name}"
+    # Keep the original name for display, but never let client-controlled path
+    # components participate in the filesystem path.
+    safe_original_name = Path(original_name).name
+    stored_name = f"{uuid.uuid4().hex[:8]}_{safe_original_name}"
     upload_path  = get_raw_upload_path(str(agency.id), settings.data_storage_root, stored_name)
 
     try:

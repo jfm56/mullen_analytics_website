@@ -27,6 +27,21 @@ class Settings(BaseSettings):
         if isinstance(v, str) and v.startswith("postgres://"):
             return v.replace("postgres://", "postgresql://", 1)
         return v
+
+    @field_validator("job_backend")
+    @classmethod
+    def validate_job_backend(cls, v: str) -> str:
+        value = str(v).strip().lower()
+        if value not in {"background", "sqs"}:
+            raise ValueError("JOB_BACKEND must be 'background' or 'sqs'")
+        return value
+
+    @field_validator("job_visibility_timeout_seconds")
+    @classmethod
+    def validate_job_visibility_timeout(cls, v: int) -> int:
+        if int(v) < 1:
+            raise ValueError("JOB_VISIBILITY_TIMEOUT_SECONDS must be positive")
+        return int(v)
     
     # Auth
     secret_key: str = "change-this-in-production-use-openssl-rand-hex-32"
@@ -75,6 +90,12 @@ class Settings(BaseSettings):
     aws_secret_access_key: str = ""
     aws_s3_bucket: str = ""
     aws_region: str = "us-east-1"
+    # Durable processing jobs. "background" preserves local/Railway behavior;
+    # AWS sets "sqs" and runs backend.worker as a separate ECS service.
+    job_backend: str = "background"  # background | sqs
+    pipeline_queue_url: str = ""
+    sqs_endpoint_url: str = ""  # localstack/dev only; blank uses AWS
+    job_visibility_timeout_seconds: int = 900
     gcs_bucket: str = ""
     gcs_project_id: str = ""
     

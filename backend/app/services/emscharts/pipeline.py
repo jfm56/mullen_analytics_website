@@ -6,14 +6,16 @@ same data never duplicates. A failure marks the run failed and leaves previously
 ingested incidents intact (upserts are additive/idempotent; analytics are only
 recomputed on success by the caller). Runs agency-scoped (RLS) even as a job.
 """
+import csv
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from sqlalchemy.orm import Session as DBSession
+from sqlalchemy.exc import IntegrityError
 
 from ...models import EMSAnalyticsSnapshot, EMSIncident, SyncRun
 from ...security_rls import set_agency_context
-from .nemsis import parse_records, validate
+from .nemsis import parse_csv_records, parse_records, validate
 
 _INCIDENT_FIELDS = (
     "source_record_id", "response_number", "incident_number", "unit_id", "disposition", "call_type",
@@ -23,8 +25,13 @@ _INCIDENT_FIELDS = (
 )
 
 
+class SyncAlreadyRunning(RuntimeError):
+    """Raised when the agency-level active-sync invariant rejects a second run."""
+
+
 def run_sync(db: DBSession, agency_id, s3, bucket, raw_prefix,
-             since=None, trigger="manual", triggered_by=None, connection_id=None):
+             since=None, trigger="manual", triggered_by=None, connection_id=None,
+             raise_on_error=False):
     """Process RAW NEMSIS objects under raw_prefix for one agency. `since` (datetime)
     processes only objects modified after it (incremental). Returns the SyncRun."""
     set_agency_context(db, agency_id)  # agency-scoped even as a background job
@@ -32,13 +39,18 @@ def run_sync(db: DBSession, agency_id, s3, bucket, raw_prefix,
                   trigger=trigger, triggered_by=triggered_by, started_at=datetime.utcnow(),
                   final_status="running")
     db.add(run)
-    db.flush()
-    run_id = run.id  # capture BEFORE commit (RLS + expire_on_commit would hide it after)
-    db.commit()      # record the run durably so a later failure still leaves evidence
+    try:
+        db.flush()
+        run_id = run.id  # capture BEFORE commit (RLS + expire_on_commit would hide it after)
+        db.commit()      # record the run durably so a later failure still leaves evidence
+    except IntegrityError:
+        db.rollback()
+        raise SyncAlreadyRunning(f"A sync is already running for agency {agency_id}") from None
 
     c = dict(files_received=0, records_received=0, inserted=0, updated=0, unchanged=0,
              rejected=0, duplicates=0, validation_failures=0)
     seen = set()
+    existing_cache = {}
     status = "running"
     try:
         set_agency_context(db, agency_id)  # fresh transaction for the processing work
@@ -55,10 +67,18 @@ def run_sync(db: DBSession, agency_id, s3, bucket, raw_prefix,
                 c["files_received"] += 1
                 body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
                 try:
-                    records = parse_records(body)
-                except ET.ParseError:
+                    # Scheduled exports can be XML NEMSIS or a normalized CSV.
+                    # Select by payload signature; extension alone is not a
+                    # trustworthy content-type signal in an S3 raw prefix.
+                    records = (
+                        parse_records(body)
+                        if body.lstrip().startswith(b"<")
+                        else parse_csv_records(body)
+                    )
+                except (ET.ParseError, csv.Error, UnicodeDecodeError, ValueError):
                     c["validation_failures"] += 1  # whole file malformed
                     continue
+                valid_records = []
                 for rec in records:
                     c["records_received"] += 1
                     if rec.get("_error"):
@@ -72,16 +92,33 @@ def run_sync(db: DBSession, agency_id, s3, bucket, raw_prefix,
                         c["duplicates"] += 1  # duplicate within this run
                         continue
                     seen.add(rid)
-                    existing = (
+                    valid_records.append(rec)
+
+                # Avoid one database round-trip per record. The cache also
+                # makes repeated records across monthly resend files cheap.
+                missing_ids = {
+                    rec["source_record_id"] for rec in valid_records
+                    if rec["source_record_id"] not in existing_cache
+                }
+                if missing_ids:
+                    existing_rows = (
                         db.query(EMSIncident)
                         .filter(EMSIncident.agency_id == agency_id,
-                                EMSIncident.source_record_id == rid)
-                        .first()
+                                EMSIncident.source_record_id.in_(missing_ids))
+                        .all()
                     )
+                    existing_cache.update({r.source_record_id: r for r in existing_rows})
+                    existing_cache.update({rid: None for rid in missing_ids if rid not in existing_cache})
+
+                for rec in valid_records:
+                    rid = rec["source_record_id"]
+                    existing = existing_cache[rid]
                     vals = {k: rec.get(k) for k in _INCIDENT_FIELDS}
                     if existing is None:
-                        db.add(EMSIncident(agency_id=agency_id, source_object_key=key,
-                                           sync_run_id=run_id, **vals))
+                        existing = EMSIncident(agency_id=agency_id, source_object_key=key,
+                                               sync_run_id=run_id, **vals)
+                        db.add(existing)
+                        existing_cache[rid] = existing
                         c["inserted"] += 1
                     elif existing.content_hash != rec["content_hash"]:
                         for k, v in vals.items():
@@ -106,48 +143,9 @@ def run_sync(db: DBSession, agency_id, s3, bucket, raw_prefix,
         db.query(SyncRun).filter(SyncRun.id == run_id).update(
             {**c, "final_status": "failed", "error": str(exc)[:500], "ended_at": datetime.utcnow()})
         db.commit()
+        if raise_on_error:
+            raise
     return {"sync_run_id": str(run_id), "final_status": status, **c}
-
-
-def _mins(a, b):
-    if a and b:
-        return (a - b).total_seconds() / 60.0
-    return None
-
-
-def compute_metrics(db: DBSession, agency_id):
-    """Analytics layer: operational metrics over normalized incidents (agency-scoped).
-    Definitions per docs/emscharts-integration.md (NEMSIS-canonical)."""
-    set_agency_context(db, agency_id)
-    rows = db.query(EMSIncident).filter(EMSIncident.agency_id == agency_id).all()
-    turnout, travel, response = [], [], []
-    emergency = ift = other = 0
-    for r in rows:
-        t = _mins(r.enroute_at, r.unit_notified_at)
-        v = _mins(r.arrived_scene_at, r.enroute_at)
-        rsp = _mins(r.arrived_scene_at, r.unit_notified_at)
-        if t is not None and t >= 0:
-            turnout.append(t)
-        if v is not None and v >= 0:
-            travel.append(v)
-        if rsp is not None and rsp >= 0:
-            response.append(rsp)
-        emergency += r.call_type == "emergency"
-        ift += r.call_type == "ift"
-        other += r.call_type not in ("emergency", "ift")
-
-    def avg(xs):
-        return round(sum(xs) / len(xs), 2) if xs else None
-
-    return {
-        "agency_id": str(agency_id),
-        "call_volume": len(rows),
-        "emergency": emergency, "ift": ift, "other": other,
-        "turnout_min_avg": avg(turnout),
-        "travel_min_avg": avg(travel),
-        "response_min_avg": avg(response),
-        "n_with_response": len(response),
-    }
 
 
 def _valid_metrics(m) -> bool:

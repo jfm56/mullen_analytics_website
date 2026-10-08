@@ -151,7 +151,7 @@ async def on_startup():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE",
             "ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(50)",
             "ALTER TABLE leads ADD COLUMN IF NOT EXISTS date_note VARCHAR(200)",
-            # Portal TOTP MFA (single auth authority; preserves EMS QA's MFA guarantee).
+            # Portal TOTP MFA (required for clients; also protects EMS QA access).
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(64)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN DEFAULT FALSE",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_confirmed_at TIMESTAMP",

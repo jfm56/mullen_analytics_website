@@ -55,10 +55,10 @@ jobs:
 
       - name: Run migrations
         run: |
+          set -euo pipefail
           for f in backend/migrations/*.sql; do
             echo "Running $f"
-            PGPASSWORD=postgres psql -h localhost -U postgres -d test_mullen_analytics -f "$f" \
-              || echo "  WARNING: $f had errors (non-fatal — SQLAlchemy create_all handles missing tables)"
+            PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics -f "$f"
           done
 
       - name: Smoke-test app imports

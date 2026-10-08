@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from ..config import get_settings
 from ..database import get_db
@@ -25,6 +26,7 @@ from ..schemas.agency import PipelineRunResponse
 from ..services.audit import log_action
 from ..services.auth import get_user_profile
 from ..services.pipeline import runner
+from ..services.jobs import JobConfigurationError, JobEnqueueError, enqueue
 from .auth import get_current_user
 
 router   = APIRouter(prefix="/agencies", tags=["pipeline"])
@@ -87,7 +89,16 @@ async def trigger_pipeline(
         triggered_by=current_user.id,
     )
     db.add(run)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # The partial unique index is the race-safe guard; the preflight query
+        # above is only a fast UX check.
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="A pipeline run is already in progress for this agency.",
+        ) from None
     db.refresh(run)
 
     run_id = str(run.id)
@@ -102,18 +113,25 @@ async def trigger_pipeline(
         ip_address=request.client.host if request.client else None,
     )
 
-    background_tasks.add_task(
-        runner.execute,
-        db=db,
-        run_id=run_id,
-        agency_id=agency_id,
-        agency_name=agency.agency_name,
-        subscription_tier=agency.subscription_tier,
-        storage_root=settings.data_storage_root,
-        triggered_by=str(current_user.id),
-        column_map=(body.column_map if body else {}),
-        analytics_config=agency.analytics_config or {},
-    )
+    job_payload = {
+        "run_id": run_id,
+        "agency_id": agency_id,
+        "agency_name": agency.agency_name,
+        "subscription_tier": agency.subscription_tier,
+        "storage_root": settings.data_storage_root,
+        "triggered_by": str(current_user.id),
+        "column_map": body.column_map if body else {},
+        "analytics_config": agency.analytics_config or {},
+    }
+    try:
+        queued = enqueue("agency_pipeline", job_payload)
+        if not queued["queued"]:
+            background_tasks.add_task(runner.execute_background, **job_payload)
+    except (JobConfigurationError, JobEnqueueError) as exc:
+        run.status = "failed"
+        run.error_message = str(exc)
+        db.commit()
+        raise HTTPException(status_code=503, detail="Pipeline worker is not configured") from exc
 
     return run
 

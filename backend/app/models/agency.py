@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Text, BigInteger, ForeignKey, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Text, BigInteger, ForeignKey, JSON, Index, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -98,6 +98,14 @@ class AuditLog(Base):
 
 class PipelineRun(Base):
     __tablename__ = "pipeline_runs"
+    __table_args__ = (
+        Index(
+            "uq_pipeline_runs_active_agency",
+            "agency_id",
+            unique=True,
+            postgresql_where=text("status IN ('queued', 'running')"),
+        ),
+    )
 
     id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agency_id     = Column(UUID(as_uuid=True), ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)

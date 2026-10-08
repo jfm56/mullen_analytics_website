@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from ...models.agency import AgencyFile, PipelineRun
+from ...database import SessionLocal
 from ...services.audit import log_action
 from . import (
     data_quality, validator, call_volume, response_times,
@@ -89,6 +90,7 @@ def execute(
     triggered_by: Optional[str] = None,
     column_map: Optional[Dict[str, str]] = None,
     analytics_config: Optional[Dict[str, Any]] = None,
+    raise_on_error: bool = False,
 ) -> None:
     """
     Main pipeline entry point — intended to be called from a BackgroundTask.
@@ -259,6 +261,22 @@ def execute(
             resource_id=run_id,
             details={"error": str(exc)},
         )
+        if raise_on_error:
+            raise
+
+
+def execute_background(**kwargs) -> None:
+    """Run one pipeline with a worker-owned DB session.
+
+    FastAPI request-scoped sessions must not be passed into background work:
+    dependency cleanup can close them before the task completes. This wrapper is
+    also the entry point used by the SQS worker.
+    """
+    db = SessionLocal()
+    try:
+        execute(db=db, **kwargs)
+    finally:
+        db.close()
 
 
 def _mark_files_processed(db: Session, agency_id: str) -> None:

@@ -82,16 +82,20 @@ async def login(
             pass
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
+    profile = get_user_profile(db, str(user.id))
+
     # If the user has TOTP enabled, the session is created PENDING (mfa_passed=
     # False). The cookie is set so the follow-up /auth/mfa/verify call is bound to
     # this session, but MFA-gated surfaces stay closed until a code is verified.
     mfa_required = bool(user.totp_enabled)
+    mfa_enrollment_required = bool(
+        profile and profile.role == "client" and not user.totp_enabled
+    )
     session, raw_token = create_session(
         db, str(user.id), ip_address, user_agent, mfa_passed=not mfa_required
     )
 
     # Update last login on profile
-    profile = get_user_profile(db, str(user.id))
     if profile:
         profile.last_login = datetime.utcnow()
         db.commit()
@@ -106,12 +110,17 @@ async def login(
 
     return LoginResponse(
         success=True,
-        message="MFA verification required" if mfa_required else "Login successful",
+        message=(
+            "MFA verification required" if mfa_required
+            else "MFA enrollment required" if mfa_enrollment_required
+            else "Login successful"
+        ),
         user=UserResponse(
             id=user.id, email=user.email,
             email_confirmed=user.email_confirmed, totp_enabled=user.totp_enabled,
         ),
         mfa_required=mfa_required,
+        mfa_enrollment_required=mfa_enrollment_required,
     )
 
 
@@ -280,8 +289,14 @@ async def get_session(
                 impersonating=True,
                 admin_user=UserResponse(id=user.id, email=user.email),
                 mfa_enabled=mfa_enabled, mfa_passed=mfa_passed, mfa_required=mfa_required,
+                # The real signed-in user is an admin. Viewing a client through
+                # impersonation must not turn this into a client enrollment.
+                mfa_enrollment_required=False,
             )
 
+    mfa_enrollment_required = bool(
+        profile and profile.role == "client" and not mfa_enabled
+    )
     return FullSessionResponse(
         authenticated=True,
         user=UserResponse(
@@ -290,6 +305,7 @@ async def get_session(
         ),
         profile=ProfileResponse.model_validate(profile) if profile else None,
         mfa_enabled=mfa_enabled, mfa_passed=mfa_passed, mfa_required=mfa_required,
+        mfa_enrollment_required=mfa_enrollment_required,
     )
 
 

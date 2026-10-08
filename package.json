@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "audit:dead-code": "node scripts/audit/frontend-dead-code.mjs && python scripts/audit/backend-dead-code.py",
+    "audit:duplicates": "python scripts/audit/duplicate-blocks.py"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.87.1",

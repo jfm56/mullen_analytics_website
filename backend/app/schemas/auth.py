@@ -16,6 +16,9 @@ class LoginResponse(BaseModel):
     # True when the user has TOTP enabled: the session cookie is set but pending,
     # and the client must POST /auth/mfa/verify with a code to complete login.
     mfa_required: bool = False
+    # Client users must enroll before entering the portal. The password
+    # session exists only so the enrollment endpoints can bind to that user.
+    mfa_enrollment_required: bool = False
 
 
 class LogoutResponse(BaseModel):
@@ -89,6 +92,7 @@ class FullSessionResponse(BaseModel):
     mfa_enabled: bool = False
     mfa_passed: bool = True
     mfa_required: bool = False
+    mfa_enrollment_required: bool = False
 
 
 # ---- MFA (TOTP) ----

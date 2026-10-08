@@ -1,0 +1,43 @@
+{
+  "source_commit": "c8dc4d0822910e5100718c7dbd98b92c09b098e4",
+  "scope": "synthetic only; no live reconciliation",
+  "findings": [
+    {
+      "check": "first-arriving dispatch-to-scene median",
+      "expected": 8.5,
+      "actual": 8.5
+    },
+    {
+      "check": "headline interval",
+      "expected": "dispatch_to_arrival (requested baseline)",
+      "actual": "enroute_to_arrival",
+      "headline_minutes": 6.5
+    },
+    {
+      "check": "missing arrival unit response",
+      "expected": [],
+      "actual": []
+    },
+    {
+      "check": "blank IDs retained as separate records",
+      "expected": 3,
+      "actual": 3
+    },
+    {
+      "check": "local 3000-row metrics duration",
+      "seconds": 0.0683,
+      "production_measurement": false
+    },
+    {
+      "check": "forecast daily volume grain",
+      "expected_unique_incidents": 2,
+      "actual_count": 2
+    },
+    {
+      "check": "test features use previous actual test target",
+      "test_start": "2026-03-12",
+      "second_test_lag1": 71.0,
+      "first_test_actual": 71
+    }
+  ]
+}

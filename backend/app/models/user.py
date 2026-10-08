@@ -26,8 +26,8 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_sign_in_at = Column(DateTime, nullable=True)
 
-    # TOTP multi-factor auth. The portal is the single auth authority, so MFA is
-    # enforced here (preserving the EMS QA guarantee for QA-entitled members).
+    # TOTP multi-factor auth. Every client enrolls at the portal entrance; the
+    # same authority also preserves the stronger EMS QA access guarantee.
     # totp_secret is the base32 shared secret; it is only meaningful once
     # totp_enabled is True (enrollment confirmed by a valid code). Recovery codes
     # are stored as sha256 hashes (one-time use; removed as they are consumed).

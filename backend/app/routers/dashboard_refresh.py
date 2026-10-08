@@ -49,51 +49,6 @@ class RefreshQueueItem(BaseModel):
 # Background Task for Dashboard Refresh
 # ============================================================================
 
-async def process_dashboard_refresh(upload_id: UUID, db: Session):
-    """
-    Background task to process dashboard refresh.
-    This is a placeholder - implement your actual refresh logic here.
-    
-    Typical workflow:
-    1. Read the uploaded file from storage
-    2. Process/transform the data
-    3. Update the data source (database, data warehouse, etc.)
-    4. Trigger Tableau/dashboard refresh if needed
-    5. Update the upload status
-    """
-    upload = db.query(Upload).filter(Upload.id == upload_id).first()
-    if not upload:
-        return
-    
-    try:
-        # Mark as processing
-        upload.refresh_status = "processing"
-        upload.refresh_started_at = datetime.utcnow()
-        db.commit()
-        
-        # TODO: Implement actual refresh logic here
-        # For now, we'll simulate a successful refresh
-        
-        # Example steps:
-        # 1. Download file from storage_path
-        # 2. Parse and validate data
-        # 3. Load into data warehouse/database
-        # 4. Trigger Tableau extract refresh via REST API
-        
-        # Mark as completed
-        upload.refresh_status = "completed"
-        upload.refresh_completed_at = datetime.utcnow()
-        upload.status = "done"
-        upload.processed_at = datetime.utcnow()
-        db.commit()
-        
-    except Exception as e:
-        upload.refresh_status = "failed"
-        upload.refresh_error = str(e)
-        upload.refresh_completed_at = datetime.utcnow()
-        db.commit()
-
-
 # ============================================================================
 # Admin Endpoints
 # ============================================================================
@@ -114,14 +69,9 @@ async def trigger_refresh(
     if upload.refresh_status == "processing":
         raise HTTPException(status_code=400, detail="Refresh already in progress")
     
-    # Queue the refresh
-    upload.refresh_status = "pending"
-    db.commit()
-    
-    # Add to background tasks
-    background_tasks.add_task(process_dashboard_refresh, request.upload_id, db)
-    
-    return {"success": True, "message": "Dashboard refresh queued"}
+    # This legacy adapter does not perform a real refresh. Do not change upload
+    # state or promise success until a processing implementation is connected.
+    raise HTTPException(status_code=501, detail="Legacy dashboard refresh is not configured")
 
 
 @router.get("/queue", response_model=List[RefreshQueueItem])
@@ -179,14 +129,7 @@ async def retry_refresh(
     if upload.refresh_status not in ["failed", "none"]:
         raise HTTPException(status_code=400, detail="Can only retry failed or unprocessed uploads")
     
-    # Reset and queue
-    upload.refresh_status = "pending"
-    upload.refresh_error = None
-    db.commit()
-    
-    background_tasks.add_task(process_dashboard_refresh, upload_id, db)
-    
-    return {"success": True, "message": "Dashboard refresh retry queued"}
+    raise HTTPException(status_code=501, detail="Legacy dashboard refresh is not configured")
 
 
 # ============================================================================

@@ -1,6 +1,6 @@
 -- 012_add_mfa.sql
--- Portal TOTP multi-factor auth. The client portal is the single auth authority;
--- MFA is enforced here so the EMS QA MFA guarantee is preserved at the one login.
+-- Portal TOTP multi-factor auth. Every client enrolls at the portal entrance;
+-- the same auth authority also preserves the EMS QA MFA guarantee.
 -- These statements are idempotent and are also applied at startup by the
 -- self-heal block in app/main.py (Railway does not run these SQL files).
 
