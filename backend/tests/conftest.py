@@ -25,6 +25,10 @@ os.environ.setdefault(
 os.environ.setdefault("DATA_STORAGE_ROOT", r"D:\MullenAnalytics\TestStorage")
 os.environ.setdefault("SESSION_COOKIE_SECURE", "false")
 os.environ.setdefault("SECRET_KEY", "ci-test-secret-key-not-for-production")
+# The test suite uses generated fixtures only.  Enable guarded write routes in
+# this test process so authorization, isolation, upload, and analytics behavior
+# are exercised while the application/deployment default remains fail-closed.
+os.environ["PHI_INGESTION_ENABLED"] = "true"
 
 # ------------------------------------------------------------------
 # Attempt to load DB / app dependencies — degrade gracefully if absent
