@@ -1,0 +1,8072 @@
+{
+ "source": "EMSCS - WNY Chart Review September 2026 (de-identified)",
+ "rubric": {
+  "domains": [
+   "HPI & Narrative",
+   "Assessment",
+   "Protocol Adherence",
+   "Vitals & Reassessment",
+   "Documentation Integrity",
+   "Safety, Securement & Transfer",
+   "Operational Decisions",
+   "Administrative & Billing"
+  ],
+  "weights": [
+   15,
+   15,
+   20,
+   10,
+   15,
+   10,
+   10,
+   5
+  ],
+  "quality_weight": 0.7,
+  "compliance_weight": 0.3,
+  "tiers": [
+   [
+    "Exemplary",
+    90
+   ],
+   [
+    "Meets Standard",
+    80
+   ],
+   [
+    "Needs Improvement",
+    70
+   ],
+   [
+    "Focused Review",
+    null
+   ]
+  ]
+ },
+ "indicator_library": {
+  "1": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "2": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "3": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "4": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "5": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "6": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "7": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "8": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "9": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "10": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "11": {
+   "category": "General",
+   "compliant_answer": "N"
+  },
+  "12": {
+   "category": "General",
+   "compliant_answer": "Y"
+  },
+  "13": {
+   "category": "ALS Cancel",
+   "compliant_answer": "Y"
+  },
+  "14": {
+   "category": "ALS Cancel",
+   "compliant_answer": "Y"
+  },
+  "15": {
+   "category": "ALS Cancel",
+   "compliant_answer": "Y"
+  },
+  "16": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "17": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "18": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "19": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "20": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "21": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "22": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "23": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "24": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "25": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "26": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "27": {
+   "category": "Cardiac/STEMI",
+   "compliant_answer": "Y"
+  },
+  "28": {
+   "category": "Cardiac Arrest",
+   "compliant_answer": "Y"
+  },
+  "29": {
+   "category": "Cardiac Arrest",
+   "compliant_answer": "Y"
+  },
+  "30": {
+   "category": "Cardiac Arrest",
+   "compliant_answer": "Y"
+  },
+  "31": {
+   "category": "Cardiac Arrest",
+   "compliant_answer": "Y"
+  },
+  "32": {
+   "category": "Cardiac Arrest",
+   "compliant_answer": "Y"
+  },
+  "33": {
+   "category": "Trauma",
+   "compliant_answer": "Y"
+  },
+  "34": {
+   "category": "Trauma",
+   "compliant_answer": "Y"
+  },
+  "35": {
+   "category": "Trauma",
+   "compliant_answer": "Y"
+  },
+  "36": {
+   "category": "Trauma",
+   "compliant_answer": "Y"
+  },
+  "37": {
+   "category": "Trauma",
+   "compliant_answer": "Y"
+  },
+  "38": {
+   "category": "Trauma",
+   "compliant_answer": "Y"
+  },
+  "39": {
+   "category": "Stroke/CVA",
+   "compliant_answer": "Y"
+  },
+  "40": {
+   "category": "Stroke/CVA",
+   "compliant_answer": "Y"
+  },
+  "41": {
+   "category": "Stroke/CVA",
+   "compliant_answer": "Y"
+  },
+  "42": {
+   "category": "Stroke/CVA",
+   "compliant_answer": "Y"
+  },
+  "43": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "44": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "45": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "46": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "47": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "48": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "49": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "50": {
+   "category": "Burns",
+   "compliant_answer": "Y"
+  },
+  "51": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "52": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "53": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "54": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "55": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "56": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "57": {
+   "category": "OB/GYN",
+   "compliant_answer": "Y"
+  },
+  "58": {
+   "category": "CPAP",
+   "compliant_answer": "Y"
+  },
+  "59": {
+   "category": "CPAP",
+   "compliant_answer": "Y"
+  },
+  "60": {
+   "category": "CPAP",
+   "compliant_answer": "Y"
+  },
+  "61": {
+   "category": "CPAP",
+   "compliant_answer": "Y"
+  },
+  "62": {
+   "category": "CPAP",
+   "compliant_answer": "Y"
+  },
+  "63": {
+   "category": "Medication",
+   "compliant_answer": "Y"
+  },
+  "64": {
+   "category": "Medication",
+   "compliant_answer": "Y"
+  },
+  "65": {
+   "category": "Medication",
+   "compliant_answer": "Y"
+  },
+  "66": {
+   "category": "Medication",
+   "compliant_answer": "Y"
+  },
+  "67": {
+   "category": "Medication",
+   "compliant_answer": "Y"
+  },
+  "68": {
+   "category": "Medication",
+   "compliant_answer": "Y"
+  },
+  "69": {
+   "category": "Albuterol",
+   "compliant_answer": "Y"
+  },
+  "70": {
+   "category": "Albuterol",
+   "compliant_answer": "Y"
+  },
+  "71": {
+   "category": "Albuterol",
+   "compliant_answer": "Y"
+  },
+  "72": {
+   "category": "Albuterol",
+   "compliant_answer": "Y"
+  },
+  "73": {
+   "category": "Albuterol",
+   "compliant_answer": "Y"
+  },
+  "74": {
+   "category": "Albuterol",
+   "compliant_answer": "Y"
+  },
+  "75": {
+   "category": "Refusal",
+   "compliant_answer": "Y"
+  },
+  "76": {
+   "category": "Refusal",
+   "compliant_answer": "Y"
+  },
+  "77": {
+   "category": "Refusal",
+   "compliant_answer": "Y"
+  },
+  "78": {
+   "category": "Refusal",
+   "compliant_answer": "Y"
+  },
+  "79": {
+   "category": "Refusal",
+   "compliant_answer": "Y"
+  },
+  "80": {
+   "category": "Refusal",
+   "compliant_answer": "Y"
+  },
+  "81": {
+   "category": "Overdose",
+   "compliant_answer": "Y"
+  },
+  "82": {
+   "category": "Overdose",
+   "compliant_answer": "Y"
+  },
+  "83": {
+   "category": "Glucometer",
+   "compliant_answer": "Y"
+  },
+  "84": {
+   "category": "Glucometer",
+   "compliant_answer": "Y"
+  }
+ },
+ "charts": [
+  {
+   "review_id": "WNY001",
+   "provider": "P01",
+   "domain_scores": [
+    2.0,
+    3.0,
+    4.0,
+    2.0,
+    1.0,
+    3.0,
+    3.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 28,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 29,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 30,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 31,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 32,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor",
+    "Minor",
+    "Minor",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 53,
+    "indicator_compliance": 0.5333333333333333,
+    "composite": 53.099999999999994,
+    "tier": "Focused Review",
+    "major_critical": 5,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY002",
+   "provider": "P02",
+   "domain_scores": [
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    2.0,
+    3.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 66,
+    "indicator_compliance": 0.6666666666666666,
+    "composite": 66.19999999999999,
+    "tier": "Focused Review",
+    "major_critical": 4,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY003",
+   "provider": "P03",
+   "domain_scores": [
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 69,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 70,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 71,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 72,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 73,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 74,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 58,
+    "indicator_compliance": 0.7272727272727273,
+    "composite": 62.418181818181814,
+    "tier": "Focused Review",
+    "major_critical": 4,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY004",
+   "provider": "P04",
+   "domain_scores": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    1.0,
+    4.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 28,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 29,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 30,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 31,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 32,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 69,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 70,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 71,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 72,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 73,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 74,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Critical",
+    "Major",
+    "Major",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 41,
+    "indicator_compliance": 0.64,
+    "composite": 47.9,
+    "tier": "Focused Review",
+    "major_critical": 5,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY005",
+   "provider": "P05",
+   "domain_scores": [
+    3.0,
+    3.0,
+    3.0,
+    2.0,
+    3.0,
+    2.0,
+    3.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 56,
+    "indicator_compliance": 0.625,
+    "composite": 57.949999999999996,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY006",
+   "provider": "P06",
+   "domain_scores": [
+    4.0,
+    3.0,
+    4.0,
+    3.0,
+    3.0,
+    5.0,
+    4.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Minor",
+    "Minor",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 73,
+    "indicator_compliance": 0.8846153846153846,
+    "composite": 77.63846153846153,
+    "tier": "Needs Improvement",
+    "major_critical": 0,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY007",
+   "provider": "P07",
+   "domain_scores": [
+    4.0,
+    4.0,
+    3.0,
+    2.0,
+    1.0,
+    5.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 59,
+    "indicator_compliance": 0.8148148148148148,
+    "composite": 65.74444444444444,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY008",
+   "provider": "P08",
+   "domain_scores": [
+    3.0,
+    3.0,
+    4.0,
+    1.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 18,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 60,
+    "indicator_compliance": 0.6666666666666666,
+    "composite": 62,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY009",
+   "provider": "P09",
+   "domain_scores": [
+    5.0,
+    3.0,
+    3.0,
+    4.0,
+    3.0,
+    5.0,
+    4.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 74,
+    "indicator_compliance": 0.9230769230769231,
+    "composite": 79.49230769230769,
+    "tier": "Needs Improvement",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY010",
+   "provider": "P10",
+   "domain_scores": [
+    4.0,
+    2.0,
+    3.0,
+    4.0,
+    1.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 24,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 25,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 55,
+    "indicator_compliance": 0.75,
+    "composite": 61,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY011",
+   "provider": "P11",
+   "domain_scores": [
+    3.0,
+    3.0,
+    4.0,
+    3.0,
+    2.0,
+    4.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 67,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 62,
+    "indicator_compliance": 0.7586206896551724,
+    "composite": 66.15862068965517,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY012",
+   "provider": "P12",
+   "domain_scores": [
+    4.0,
+    2.0,
+    3.0,
+    3.0,
+    1.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 53,
+    "indicator_compliance": 0.72,
+    "composite": 58.69999999999999,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY013",
+   "provider": "P13",
+   "domain_scores": [
+    5.0,
+    3.0,
+    2.0,
+    1.0,
+    2.0,
+    5.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 67,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 57,
+    "indicator_compliance": 0.7142857142857143,
+    "composite": 61.32857142857142,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY014",
+   "provider": "P14",
+   "domain_scores": [
+    2.0,
+    1.0,
+    3.0,
+    1.0,
+    2.0,
+    4.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 43,
+    "indicator_compliance": 0.45454545454545453,
+    "composite": 43.736363636363635,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY015",
+   "provider": "P15",
+   "domain_scores": [
+    4.0,
+    2.0,
+    3.0,
+    2.0,
+    2.0,
+    5.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 58,
+    "indicator_compliance": 0.5625,
+    "composite": 57.474999999999994,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY016",
+   "provider": "P16",
+   "domain_scores": [
+    2.0,
+    3.0,
+    2.0,
+    3.0,
+    1.0,
+    3.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 44,
+    "indicator_compliance": 0.5,
+    "composite": 45.8,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY017",
+   "provider": "P17",
+   "domain_scores": [
+    2.0,
+    2.0,
+    3.0,
+    4.0,
+    2.0,
+    2.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 50,
+    "indicator_compliance": 0.5,
+    "composite": 50,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY018",
+   "provider": "P18",
+   "domain_scores": [
+    3.0,
+    3.0,
+    3.0,
+    2.0,
+    2.0,
+    3.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 53,
+    "indicator_compliance": 0.6363636363636364,
+    "composite": 56.19090909090909,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY019",
+   "provider": "P19",
+   "domain_scores": [
+    4.0,
+    2.0,
+    2.0,
+    3.0,
+    2.0,
+    4.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 14,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 53,
+    "indicator_compliance": 0.6923076923076923,
+    "composite": 57.86923076923076,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY020",
+   "provider": "P20",
+   "domain_scores": [
+    3.0,
+    3.0,
+    3.0,
+    4.0,
+    2.0,
+    4.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 14,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 58,
+    "indicator_compliance": 0.6923076923076923,
+    "composite": 61.36923076923076,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY021",
+   "provider": "P21",
+   "domain_scores": [
+    3.0,
+    2.0,
+    3.0,
+    4.0,
+    3.0,
+    5.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 14,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 61,
+    "indicator_compliance": 0.6842105263157895,
+    "composite": 63.226315789473674,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY022",
+   "provider": "P22",
+   "domain_scores": [
+    2.0,
+    2.0,
+    1.0,
+    3.0,
+    2.0,
+    3.0,
+    1.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 63,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 64,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 65,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 66,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 67,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 68,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 14,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 38,
+    "indicator_compliance": 0.6206896551724138,
+    "composite": 45.22068965517241,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY023",
+   "provider": "P23",
+   "domain_scores": [
+    4.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0,
+    4.0,
+    1.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 14,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 46,
+    "indicator_compliance": 0.5882352941176471,
+    "composite": 49.84705882352941,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY024",
+   "provider": "P24",
+   "domain_scores": [
+    2.0,
+    2.0,
+    3.0,
+    4.0,
+    1.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 14,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 49,
+    "indicator_compliance": 0.5833333333333334,
+    "composite": 51.8,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY025",
+   "provider": "P25",
+   "domain_scores": [
+    3.0,
+    1.0,
+    2.0,
+    2.0,
+    2.0,
+    3.0,
+    1.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 13,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 14,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Major",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 40,
+    "indicator_compliance": 0.5294117647058824,
+    "composite": 43.88235294117647,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY026",
+   "provider": "P26",
+   "domain_scores": [
+    4.0,
+    3.0,
+    3.0,
+    2.0,
+    2.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 57,
+    "indicator_compliance": 0.6363636363636364,
+    "composite": 58.990909090909085,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY027",
+   "provider": "P27",
+   "domain_scores": [
+    3.0,
+    2.0,
+    2.0,
+    4.0,
+    2.0,
+    3.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 49,
+    "indicator_compliance": 0.6875,
+    "composite": 54.925,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY028",
+   "provider": "P28",
+   "domain_scores": [
+    3.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0,
+    3.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 43,
+    "indicator_compliance": 0.36363636363636365,
+    "composite": 41.00909090909091,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY029",
+   "provider": "P29",
+   "domain_scores": [
+    2.0,
+    1.0,
+    2.0,
+    1.0,
+    1.0,
+    3.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 34,
+    "indicator_compliance": 0.375,
+    "composite": 35.05,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY031",
+   "provider": "P30",
+   "domain_scores": [
+    4.0,
+    3.0,
+    4.0,
+    4.0,
+    2.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 65,
+    "indicator_compliance": 0.75,
+    "composite": 68,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY032",
+   "provider": "P31",
+   "domain_scores": [
+    2.0,
+    2.0,
+    1.0,
+    3.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major"
+   ],
+   "expected": {
+    "quality_score": 38,
+    "indicator_compliance": 0.45454545454545453,
+    "composite": 40.236363636363635,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY033",
+   "provider": "P32",
+   "domain_scores": [
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    3.0,
+    4.0,
+    4.0,
+    4.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 77,
+    "indicator_compliance": 0.8,
+    "composite": 77.9,
+    "tier": "Needs Improvement",
+    "major_critical": 0,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY034",
+   "provider": "P33",
+   "domain_scores": [
+    2.0,
+    2.0,
+    1.0,
+    2.0,
+    2.0,
+    1.0,
+    1.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 33,
+    "indicator_compliance": 0.36363636363636365,
+    "composite": 34.00909090909091,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY035",
+   "provider": "P34",
+   "domain_scores": [
+    3.0,
+    2.0,
+    3.0,
+    2.0,
+    2.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 51,
+    "indicator_compliance": 0.5454545454545454,
+    "composite": 52.063636363636355,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY036",
+   "provider": "P35",
+   "domain_scores": [
+    2.0,
+    2.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    2.0,
+    1.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 26,
+    "indicator_compliance": 0.3125,
+    "composite": 27.575,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY037",
+   "provider": "P36",
+   "domain_scores": [
+    2.0,
+    2.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 78,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major"
+   ],
+   "expected": {
+    "quality_score": 29,
+    "indicator_compliance": 0.2727272727272727,
+    "composite": 28.481818181818177,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY038",
+   "provider": "P37",
+   "domain_scores": [
+    3.0,
+    3.0,
+    4.0,
+    4.0,
+    3.0,
+    4.0,
+    3.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 68,
+    "indicator_compliance": 0.8,
+    "composite": 71.6,
+    "tier": "Needs Improvement",
+    "major_critical": 0,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY039",
+   "provider": "P38",
+   "domain_scores": [
+    2.0,
+    2.0,
+    2.0,
+    4.0,
+    3.0,
+    2.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 49,
+    "indicator_compliance": 0.5333333333333333,
+    "composite": 50.3,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY040",
+   "provider": "P39",
+   "domain_scores": [
+    2.0,
+    3.0,
+    3.0,
+    1.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 39,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 40,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 41,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 42,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 45,
+    "indicator_compliance": 0.46153846153846156,
+    "composite": 45.34615384615384,
+    "tier": "Focused Review",
+    "major_critical": 3,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY041",
+   "provider": "P40",
+   "domain_scores": [
+    3.0,
+    3.0,
+    3.0,
+    4.0,
+    2.0,
+    5.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 62,
+    "indicator_compliance": 0.7,
+    "composite": 64.4,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY042",
+   "provider": "P41",
+   "domain_scores": [
+    4.0,
+    3.0,
+    3.0,
+    4.0,
+    2.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 51,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 52,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 53,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 54,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 55,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 56,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 57,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 61,
+    "indicator_compliance": 0.5882352941176471,
+    "composite": 60.34705882352941,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY043",
+   "provider": "P42",
+   "domain_scores": [
+    3.0,
+    2.0,
+    2.0,
+    4.0,
+    2.0,
+    3.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 7,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 75,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 76,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 77,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 78,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 79,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 80,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 50,
+    "indicator_compliance": 0.6363636363636364,
+    "composite": 54.09090909090909,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY044",
+   "provider": "P43",
+   "domain_scores": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical"
+   ],
+   "expected": {
+    "quality_score": 0,
+    "indicator_compliance": 0,
+    "composite": 0,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY045",
+   "provider": "P44",
+   "domain_scores": [
+    3.0,
+    4.0,
+    3.0,
+    4.0,
+    2.0,
+    5.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 65,
+    "indicator_compliance": 0.8,
+    "composite": 69.5,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY046",
+   "provider": "P45",
+   "domain_scores": [
+    4.0,
+    3.0,
+    3.0,
+    2.0,
+    3.0,
+    4.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 62,
+    "indicator_compliance": 0.625,
+    "composite": 62.15,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY047",
+   "provider": "P46",
+   "domain_scores": [
+    4.0,
+    3.0,
+    4.0,
+    2.0,
+    3.0,
+    3.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 26,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 27,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 64,
+    "indicator_compliance": 0.75,
+    "composite": 67.3,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY048",
+   "provider": "P47",
+   "domain_scores": [
+    4.0,
+    3.0,
+    3.0,
+    4.0,
+    3.0,
+    4.0,
+    4.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 68,
+    "indicator_compliance": 0.9,
+    "composite": 74.6,
+    "tier": "Needs Improvement",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY049",
+   "provider": "P48",
+   "domain_scores": [
+    3.0,
+    3.0,
+    1.0,
+    3.0,
+    2.0,
+    4.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 18,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 49,
+    "indicator_compliance": 0.5238095238095238,
+    "composite": 50.01428571428571,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY050",
+   "provider": "P49",
+   "domain_scores": [
+    3.0,
+    2.0,
+    1.0,
+    2.0,
+    1.0,
+    4.0,
+    1.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Critical",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 38,
+    "indicator_compliance": 0.7,
+    "composite": 47.599999999999994,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY051",
+   "provider": "P50",
+   "domain_scores": [
+    3.0,
+    3.0,
+    2.0,
+    2.0,
+    2.0,
+    5.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 13,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 14,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 15,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major"
+   ],
+   "expected": {
+    "quality_score": 53,
+    "indicator_compliance": 0.625,
+    "composite": 55.849999999999994,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY052",
+   "provider": "P51",
+   "domain_scores": [
+    3.0,
+    3.0,
+    3.0,
+    4.0,
+    3.0,
+    4.0,
+    3.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 64,
+    "indicator_compliance": 0.9,
+    "composite": 71.8,
+    "tier": "Needs Improvement",
+    "major_critical": 0,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY054",
+   "provider": "P52",
+   "domain_scores": [
+    4.0,
+    3.0,
+    2.0,
+    3.0,
+    3.0,
+    4.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 16,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 17,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 18,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 19,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 20,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 21,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 22,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 23,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 24,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 25,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 26,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 27,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 60,
+    "indicator_compliance": 0.6190476190476191,
+    "composite": 60.57142857142857,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY055",
+   "provider": "P53",
+   "domain_scores": [
+    2.0,
+    3.0,
+    3.0,
+    2.0,
+    2.0,
+    2.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 49,
+    "indicator_compliance": 0.4,
+    "composite": 46.3,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY056",
+   "provider": "P54",
+   "domain_scores": [
+    4.0,
+    3.0,
+    4.0,
+    2.0,
+    3.0,
+    5.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 68,
+    "indicator_compliance": 0.7272727272727273,
+    "composite": 69.41818181818181,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY057",
+   "provider": "P55",
+   "domain_scores": [
+    4.0,
+    2.0,
+    3.0,
+    3.0,
+    1.0,
+    4.0,
+    2.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 54,
+    "indicator_compliance": 0.7,
+    "composite": 58.8,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 0
+   }
+  },
+  {
+   "review_id": "WNY058",
+   "provider": "P56",
+   "domain_scores": [
+    4.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    4.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 50,
+    "indicator_compliance": 0.5,
+    "composite": 50,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY059",
+   "provider": "P57",
+   "domain_scores": [
+    5.0,
+    4.0,
+    3.0,
+    4.0,
+    3.0,
+    2.0,
+    4.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 51,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 52,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 53,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 54,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 55,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 56,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 57,
+     "result": "N",
+     "status_cached": "Not Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 70,
+    "indicator_compliance": 0.6470588235294118,
+    "composite": 68.41176470588235,
+    "tier": "Focused Review",
+    "major_critical": 0,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY060",
+   "provider": "P58",
+   "domain_scores": [
+    4.0,
+    3.0,
+    3.0,
+    2.0,
+    1.0,
+    5.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 51,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 52,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 53,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 54,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 55,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 56,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 57,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Major",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 58,
+    "indicator_compliance": 0.7058823529411765,
+    "composite": 61.776470588235284,
+    "tier": "Focused Review",
+    "major_critical": 2,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY061",
+   "provider": "P59",
+   "domain_scores": [
+    4.0,
+    3.0,
+    4.0,
+    2.0,
+    2.0,
+    4.0,
+    3.0,
+    2.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 3,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 8,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 33,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 34,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 35,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 36,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 37,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 38,
+     "result": "NA",
+     "status_cached": "NA"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Minor",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 63,
+    "indicator_compliance": 0.6666666666666666,
+    "composite": 64.1,
+    "tier": "Focused Review",
+    "major_critical": 0,
+    "commendation": 1
+   }
+  },
+  {
+   "review_id": "WNY062",
+   "provider": "P60",
+   "domain_scores": [
+    2.0,
+    3.0,
+    3.0,
+    4.0,
+    3.0,
+    2.0,
+    3.0,
+    3.0
+   ],
+   "indicators": [
+    {
+     "num": 1,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 2,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 3,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 4,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 5,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 6,
+     "result": "Y",
+     "status_cached": "Met"
+    },
+    {
+     "num": 7,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 8,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 9,
+     "result": "NA",
+     "status_cached": "NA"
+    },
+    {
+     "num": 10,
+     "result": "N",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 11,
+     "result": "Y",
+     "status_cached": "Not Met"
+    },
+    {
+     "num": 12,
+     "result": "Y",
+     "status_cached": "Met"
+    }
+   ],
+   "finding_severities": [
+    "Commendation",
+    "Major",
+    "Minor",
+    "Minor"
+   ],
+   "expected": {
+    "quality_score": 57,
+    "indicator_compliance": 0.4,
+    "composite": 51.9,
+    "tier": "Focused Review",
+    "major_critical": 1,
+    "commendation": 1
+   }
+  }
+ ]
+}

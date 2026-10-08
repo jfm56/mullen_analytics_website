@@ -56,6 +56,14 @@ backend/local_data/
 *.xlsx
 *.xls
 
+# EMSCS QA — NEVER commit the raw review workbook or any raw/real QA review data
+# (may contain PHI). Only de-identified/synthetic fixtures belong in source control.
+*Chart Review*.xlsx
+*EMSCS*.xlsx
+backend/local_data/emscs_qa_raw/
+**/emscs_qa_raw/
+**/*workbook_raw*
+
 # claude code / editor tooling
 .claude/
 

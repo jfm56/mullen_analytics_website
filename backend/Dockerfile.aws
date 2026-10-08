@@ -1,0 +1,38 @@
+# Staging/production image for the Mullen unified-platform API (ECS Fargate).
+# Build context = this backend/ directory:
+#     docker build -f Dockerfile.aws -t <ecr-repo>:<tag> .
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# Build toolchain is needed only while pip installs any sdist-only deps; it is
+# purged afterwards to keep the runtime image small and reduce attack surface.
+# (The DB drivers are binary wheels and bundle libpq, so no runtime libpq needed.)
+COPY requirements.txt .
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gcc libpq-dev; \
+    pip install --no-cache-dir -r requirements.txt; \
+    apt-get purge -y --auto-remove gcc libpq-dev; \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+# Writable runtime dirs for the storage-root settings. The S3 backend uses S3 for
+# real data; these are safe fallbacks so any local-path code never hits a
+# read-only filesystem as the non-root user.
+RUN mkdir -p /tmp/clientdata /tmp/datauploads \
+    && useradd -r -u 10001 appuser \
+    && chown -R appuser:appuser /app /tmp/clientdata /tmp/datauploads
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status==200 else 1)"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

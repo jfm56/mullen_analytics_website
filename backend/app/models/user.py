@@ -13,6 +13,13 @@ class User(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
+    # Cognito subject = the shared identity id across the unified platform. NULL
+    # until the user is migrated to Cognito (Phase 1, Option B invite); unique once set.
+    cognito_sub = Column(String(255), unique=True, nullable=True, index=True)
+    # Platform-level role (Mullen Analytics operator), SEPARATE from any agency role.
+    # NULL for normal users; "super_admin" ONLY for the authorized platform admin(s).
+    # This is the authoritative authorization record — no scattered email checks.
+    platform_role = Column(String(30), nullable=True, index=True)
     password_hash = Column(String(255), nullable=False)
     email_confirmed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

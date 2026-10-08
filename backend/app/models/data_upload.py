@@ -12,6 +12,9 @@ class EMSDatasetGroup(Base):
     __tablename__ = "ems_dataset_groups"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Authoritative tenant owner (unified platform). `client_id` is retained below
+    # for audit/history/compat but is NO LONGER the tenant boundary.
+    agency_id = Column(UUID(as_uuid=True), ForeignKey("agencies.id", ondelete="CASCADE"), nullable=True, index=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -33,6 +36,8 @@ class DataUpload(Base):
     __tablename__ = "data_uploads"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Authoritative tenant owner (unified platform). `client_id` retained for audit/compat.
+    agency_id = Column(UUID(as_uuid=True), ForeignKey("agencies.id", ondelete="CASCADE"), nullable=True, index=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=True, index=True)
     uploaded_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)

@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql://localhost:5432/mullen_analytics"
     database_pool_size: int = 10
+    # Unified-platform runtime DB identity. The app connects as the low-privilege
+    # `app_user` (RLS-enforced) for normal requests; schema migrations / RLS
+    # provisioning run as the owner via `database_admin_url`. Blank admin url =>
+    # fall back to database_url (local/session mode, where RLS is not provisioned).
+    database_admin_url: str = ""
+    app_db_password: str = ""  # password for the runtime app_user role (staging/prod)
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -30,7 +36,24 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = True  # Set to False for local dev without HTTPS
     session_cookie_httponly: bool = True
     session_cookie_samesite: str = "lax"
-    
+
+    # ── Cognito (unified-platform auth) ──
+    # When auth_mode == "cognito", the API authenticates Bearer Cognito ID tokens
+    # (JWKS-verified) instead of the legacy cookie sessions. Both coexist so the
+    # live portal keeps working while staging runs on Cognito.
+    auth_mode: str = "session"            # "session" (legacy) | "cognito" (unified)
+    cognito_region: str = "us-east-2"
+    cognito_user_pool_id: str = ""        # e.g. us-east-2_KyaPhydEl
+    cognito_client_id: str = ""           # app client id (ID-token audience)
+
+    # ── EMSCS QA Review Engine v1 (synthetic-only, feature-flagged) ──
+    # Clinical QA/CQI chart-review module (env EMSCS_QA_V1_ENABLED). OFF everywhere
+    # by default; only the approved dev/test (synthetic, no-PHI) environment sets it
+    # true. When false: QA routes do not mount, QA tables are not provisioned, and
+    # the module is inert. This flag NEVER enables live EMSCharts, PHI ingestion, or
+    # any client exposure — those remain separate, explicit approvals.
+    emscs_qa_v1_enabled: bool = False
+
     # Password Reset
     password_reset_expire_hours: int = 1
 

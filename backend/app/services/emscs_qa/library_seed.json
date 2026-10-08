@@ -1,0 +1,812 @@
+{
+ "source": "EMSCS Medical Oversight CQI Process, August 2025 revision (84 indicators); NJ EMS Clinical Practice Protocols v1 (8/21/2025). Methodology only \u2014 no PHI.",
+ "scoring_version": "emscs-wny-2026-09",
+ "domains": [
+  {
+   "order": 1,
+   "name": "HPI & Narrative",
+   "weight": 15.0
+  },
+  {
+   "order": 2,
+   "name": "Assessment",
+   "weight": 15.0
+  },
+  {
+   "order": 3,
+   "name": "Protocol Adherence",
+   "weight": 20.0
+  },
+  {
+   "order": 4,
+   "name": "Vitals & Reassessment",
+   "weight": 10.0
+  },
+  {
+   "order": 5,
+   "name": "Documentation Integrity",
+   "weight": 15.0
+  },
+  {
+   "order": 6,
+   "name": "Safety, Securement & Transfer",
+   "weight": 10.0
+  },
+  {
+   "order": 7,
+   "name": "Operational Decisions",
+   "weight": 10.0
+  },
+  {
+   "order": 8,
+   "name": "Administrative & Billing",
+   "weight": 5.0
+  }
+ ],
+ "scoring_config": {
+  "scoring_version": "emscs-wny-2026-09",
+  "quality_weight": 0.7,
+  "compliance_weight": 0.3,
+  "tiers": [
+   {
+    "name": "Exemplary",
+    "min": 90.0
+   },
+   {
+    "name": "Meets Standard",
+    "min": 80.0
+   },
+   {
+    "name": "Needs Improvement",
+    "min": 70.0
+   },
+   {
+    "name": "Focused Review",
+    "min": null
+   }
+  ],
+  "rating_anchors": [
+   {
+    "rating": 5,
+    "label": "Exemplary"
+   },
+   {
+    "rating": 4,
+    "label": "Meets Standard"
+   },
+   {
+    "rating": 3,
+    "label": "Acceptable"
+   },
+   {
+    "rating": 2,
+    "label": "Partial"
+   },
+   {
+    "rating": 1,
+    "label": "Deficient"
+   },
+   {
+    "rating": 0,
+    "label": "Absent or Unsafe"
+   }
+  ],
+  "rating_scale": [
+   0,
+   5
+  ]
+ },
+ "categories": [
+  "General",
+  "ALS Cancel",
+  "Cardiac/STEMI",
+  "Cardiac Arrest",
+  "Trauma",
+  "Stroke/CVA",
+  "Burns",
+  "OB/GYN",
+  "CPAP",
+  "Medication",
+  "Albuterol",
+  "Refusal",
+  "Overdose",
+  "Glucometer"
+ ],
+ "indicators": [
+  {
+   "number": 1,
+   "category": "General",
+   "indicator": "Does the chart adhere to the documentation standards policy and treatment protocols?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 2,
+   "category": "General",
+   "indicator": "Does the HPI contain pertinent information regarding the present illness or injury, answering all the questions of why 911 was activated?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 3,
+   "category": "General",
+   "indicator": "Does the activity log have a minimum of two full sets of vital signs, one of which is a manual BP, taken every 5 to 15 minutes based on acuity?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 4,
+   "category": "General",
+   "indicator": "Does the activity log document completion of a primary, secondary or rapid assessment (the word Assessment appears)?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 5,
+   "category": "General",
+   "indicator": "Does this patient have a pain level documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 6,
+   "category": "General",
+   "indicator": "Does the final activity log entry name the receiving facility staff member who received report and transfer of care?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 7,
+   "category": "General",
+   "indicator": "Does the chart identify securing the patient to all movement devices with a stated number of straps (3, 4 or 5)? All straps is not acceptable.",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 8,
+   "category": "General",
+   "indicator": "Are all medications and procedures documented by Add Action and not free typed in the comment field?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 9,
+   "category": "General",
+   "indicator": "Was a deviation from protocol identified; if so, is there a special report filed identifying the deviation?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 10,
+   "category": "General",
+   "indicator": "Were the appropriate signatures obtained? Required by federal law on all transports.",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 11,
+   "category": "General",
+   "indicator": "Were there any conflicting statements made in two separate places of the chart?",
+   "compliant_answer": "N"
+  },
+  {
+   "number": 12,
+   "category": "General",
+   "indicator": "Was the patient transported to an appropriate facility?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 13,
+   "category": "ALS Cancel",
+   "indicator": "Prior to cancellation of ALS, was a full patient assessment with vitals documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 14,
+   "category": "ALS Cancel",
+   "indicator": "If ALS was cancelled, is the reason for cancellation documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 15,
+   "category": "ALS Cancel",
+   "indicator": "If ALS was cancelled due to proximity, is the ETA or location of ALS at the time of cancellation documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 16,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of onset time with symptoms?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 17,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of prior interventions before 911 was called?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 18,
+   "category": "Cardiac/STEMI",
+   "indicator": "Initial assessment of pain type?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 19,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of duration of pain?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 20,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of the quality of pain?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 21,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of radiation of pain?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 22,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of whether palpation of the chest wall changes pain?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 23,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of gastric distress?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 24,
+   "category": "Cardiac/STEMI",
+   "indicator": "Appropriate oxygen therapy as indicated by perfusion (SpO2 below 92%)?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 25,
+   "category": "Cardiac/STEMI",
+   "indicator": "Chest pain treated per treatment protocol?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 26,
+   "category": "Cardiac/STEMI",
+   "indicator": "Did pain management interventions continue at regular intervals?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 27,
+   "category": "Cardiac/STEMI",
+   "indicator": "Documentation of patient taking aspirin or nitroglycerin, or why NTG or aspirin was not administered?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 28,
+   "category": "Cardiac Arrest",
+   "indicator": "Illness or injury documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 29,
+   "category": "Cardiac Arrest",
+   "indicator": "Date and time of injury documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 30,
+   "category": "Cardiac Arrest",
+   "indicator": "Mechanism of injury, if applicable?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 31,
+   "category": "Cardiac Arrest",
+   "indicator": "CPR initiated or continued?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 32,
+   "category": "Cardiac Arrest",
+   "indicator": "Airway secured?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 33,
+   "category": "Trauma",
+   "indicator": "Illness or injury (MVI or additional injuries) documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 34,
+   "category": "Trauma",
+   "indicator": "Date and time of injury documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 35,
+   "category": "Trauma",
+   "indicator": "Mechanism of injury documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 36,
+   "category": "Trauma",
+   "indicator": "Initial assessment of pain and associated symptoms?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 37,
+   "category": "Trauma",
+   "indicator": "Appropriate oxygen therapy, if required?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 38,
+   "category": "Trauma",
+   "indicator": "Spinal immobilization maintained?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 39,
+   "category": "Stroke/CVA",
+   "indicator": "BP above 180 systolic or 100 diastolic, ALS requested if not dispatched?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 40,
+   "category": "Stroke/CVA",
+   "indicator": "Stroke scale documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 41,
+   "category": "Stroke/CVA",
+   "indicator": "Documentation of last time seen normal?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 42,
+   "category": "Stroke/CVA",
+   "indicator": "Was the head of the bed elevated 30 degrees?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 43,
+   "category": "Burns",
+   "indicator": "Documentation of injury noted with burn?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 44,
+   "category": "Burns",
+   "indicator": "Time of burn documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 45,
+   "category": "Burns",
+   "indicator": "Burn exposure occurred in an enclosed or open space?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 46,
+   "category": "Burns",
+   "indicator": "Exposure to toxic inhalation potential?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 47,
+   "category": "Burns",
+   "indicator": "Percentage of body surface burned documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 48,
+   "category": "Burns",
+   "indicator": "Degree of burns?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 49,
+   "category": "Burns",
+   "indicator": "Airway assessment managed and secured?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 50,
+   "category": "Burns",
+   "indicator": "Burn site wrapped in dry sterile sheets?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 51,
+   "category": "OB/GYN",
+   "indicator": "Estimated date of confinement (EDC)?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 52,
+   "category": "OB/GYN",
+   "indicator": "Gestational age documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 53,
+   "category": "OB/GYN",
+   "indicator": "Prior and prenatal history documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 54,
+   "category": "OB/GYN",
+   "indicator": "Documentation of gravida and para?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 55,
+   "category": "OB/GYN",
+   "indicator": "Documentation of onset of current labor?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 56,
+   "category": "OB/GYN",
+   "indicator": "Duration of uterine contractions?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 57,
+   "category": "OB/GYN",
+   "indicator": "Frequency of uterine contractions?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 58,
+   "category": "CPAP",
+   "indicator": "Documentation of distress, rales or pulmonary edema?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 59,
+   "category": "CPAP",
+   "indicator": "Is the level of respiratory effort documented (for example three word sentences, tripod position)?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 60,
+   "category": "CPAP",
+   "indicator": "SBP above 100 mmHg documented prior to CPAP?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 61,
+   "category": "CPAP",
+   "indicator": "Documentation that the patient was placed in Fowler's position?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 62,
+   "category": "CPAP",
+   "indicator": "Oxygen via CPAP documented by Add Action with PEEP in cm H2O, and SpO2 before and after?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 63,
+   "category": "Medication",
+   "indicator": "All medications and procedures documented by Add Action identifying who performed them?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 64,
+   "category": "Medication",
+   "indicator": "Were indications documented in the HPI or activity log prior to the medication?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 65,
+   "category": "Medication",
+   "indicator": "Were route, dose, dose unit and response documented?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 66,
+   "category": "Medication",
+   "indicator": "Was a clinical reassessment noted in the activity log after all medication administrations?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 67,
+   "category": "Medication",
+   "indicator": "If ALS was not already dispatched or on scene, is there a documented request for ALS?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 68,
+   "category": "Medication",
+   "indicator": "Were dosages appropriate and in compliance with the treatment protocols?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 69,
+   "category": "Albuterol",
+   "indicator": "Specific documentation of COPD or asthma?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 70,
+   "category": "Albuterol",
+   "indicator": "Documentation of pre therapy respiratory rate and SpO2?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 71,
+   "category": "Albuterol",
+   "indicator": "Documentation of albuterol through Add Action?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 72,
+   "category": "Albuterol",
+   "indicator": "If more than one, each administration more than 5 minutes apart?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 73,
+   "category": "Albuterol",
+   "indicator": "Documentation of post therapy respiratory rate and SpO2?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 74,
+   "category": "Albuterol",
+   "indicator": "Documentation of patient respiratory status post albuterol?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 75,
+   "category": "Refusal",
+   "indicator": "Was the refusal matrix completed in its entirety and properly signed?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 76,
+   "category": "Refusal",
+   "indicator": "Is each individual check box marked without a line through the entire section?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 77,
+   "category": "Refusal",
+   "indicator": "Does the chart document decision making capacity (answers appropriately, A&O x4)?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 78,
+   "category": "Refusal",
+   "indicator": "Does the activity log have a minimum of one full set of vital signs?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 79,
+   "category": "Refusal",
+   "indicator": "Are follow up instructions completed?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 80,
+   "category": "Refusal",
+   "indicator": "Does the chart document the patient was not under the influence of drugs or alcohol?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 81,
+   "category": "Overdose",
+   "indicator": "Was patient interest in help assessed, with ReachNJ documented in the HPI when appropriate?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 82,
+   "category": "Overdose",
+   "indicator": "Narcan leave behind documented by Add Action with route Not Administered, Left Behind?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 83,
+   "category": "Glucometer",
+   "indicator": "Blood glucose documented by Add Action (Labs) identifying who performed it?",
+   "compliant_answer": "Y"
+  },
+  {
+   "number": 84,
+   "category": "Glucometer",
+   "indicator": "Wound care instructions provided and documented for the puncture site?",
+   "compliant_answer": "Y"
+  }
+ ],
+ "references": [
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "1.0 Routine Patient Care (pp. 10 to 13)",
+   "used_for": "ALS intercept triggers, pediatric definition and weight based tools, lights and sirens use, transport decision"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.4A Asthma/COPD/Reactive Airway Disease Adult (pp. 35 to 37)",
+   "used_for": "Albuterol dose and repeat dosing, CPAP for worsening distress, ALS intercept"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.17P Pain Management Pediatric (p. 81)",
+   "used_for": "Pain scales by age, non pharmacologic pain control, documentation of each pain score"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "3.2A Cardiac Arrest Adult (pp. 119 to 121)",
+   "used_for": "BLS resuscitation sequence, ventilation rate, mechanical CPR, ALS intercept"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "3.4A Post Resuscitative Care Adult (p. 127)",
+   "used_for": "Post ROSC ventilation rate, SpO2 target, continuous BP monitoring"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "4.4 Musculoskeletal Injuries Adult & Pediatric (p. 142)",
+   "used_for": "Splinting, distal CMS before and after immobilization, cold pack, elevation"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "8.6 Pediatric Transportation (p. 233)",
+   "used_for": "Child restraint use based on age and weight"
+  },
+  {
+   "source": "EMSCS Medical Oversight CQI Process (August 2025)",
+   "section": "CQI Indicators 1 to 84; Documentation Standards Pages 1 to 9",
+   "used_for": "Indicator scoring, QA flag format, required activity log wording (Assess, Secure, Transfer)"
+  },
+  {
+   "source": "N.J.A.C. 8:40-3.6",
+   "section": "Patient care report content",
+   "used_for": "Required PCR elements, signatures, times"
+  },
+  {
+   "source": "NEMSIS v3.5",
+   "section": "eArrest and eAirway data elements",
+   "used_for": "Cardiac arrest outcome and airway documentation accuracy"
+  },
+  {
+   "source": "45 CFR 164.520(c)(2)",
+   "section": "HIPAA Notice of Privacy Practices",
+   "used_for": "NPP provision for direct treatment providers, emergency exception"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "4.5 Spinal Motion Restriction (pp. 144 to 145)",
+   "used_for": "Advanced spinal assessment, reduced sensitivity at age 65 and older"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "4.8 Traumatic Brain Injury (p. 150)",
+   "used_for": "Serial GCS and pupils every 5 minutes, glucose, trauma triage"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "6.5 Restraints (pp. 197 to 198)",
+   "used_for": "Restraint indications, positioning, circulation checks, documentation, police accompaniment"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "6.7 Tourniquet & Hemostatic Agent (p. 201)",
+   "used_for": "Escalation from direct pressure to hemostatic gauze"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "3.0 Acute Coronary Syndrome Adult (pp. 114 to 115)",
+   "used_for": "Oxygen threshold, aspirin dosing and exclusions, ALS intercept, cath capable destination"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.8A Diabetic Emergencies (Hypoglycemia) Adult (p. 50)",
+   "used_for": "Glucometer (if approved), oral glucose 1 to 2 tubes, sulfonylurea risk"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Poisoning/Substance Abuse/Overdose Adult",
+   "used_for": "Intoxicated patient assessment, mimics of intoxication"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.22 Smoke Inhalation, CO guidance (pp. 108 to 110)",
+   "used_for": "Suspected CO poisoning should be transported; SpO2 unreliable"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Abuse and Maltreatment (pp. 218 to 220)",
+   "used_for": "Direct report to State Central Registry; APS reporting for vulnerable adults"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Consent and Refusal for Minors (p. 225)",
+   "used_for": "Who may refuse for a minor; medical command for minor refusals"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "Poisoning/Substance Abuse/Overdose Pediatric (pp. 90 to 91)",
+   "used_for": "Poison Control contact; medical command for ingested poisons"
+  },
+  {
+   "source": "N.J.S.A. 9:6-8.10",
+   "section": "Child abuse reporting",
+   "used_for": "Mandatory reporting by any person with reasonable cause"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.23 Stroke Adult & Pediatric (pp. 111 to 112)",
+   "used_for": "BE FAST, RACE, last known well, glucose, stroke alert"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.2 Allergic Reaction/Anaphylaxis Adult (pp. 24 to 26)",
+   "used_for": "Anaphylaxis criteria and screening"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.7A Diabetic Emergencies (Hyperglycemia) Adult (p. 48)",
+   "used_for": "Glucose and DKA signs"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "2.4P Bronchospasm/Asthma Pediatric (p. 39)",
+   "used_for": "Pediatric asthma oxygen, albuterol and ALS intercept"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "OB/Childbirth (pp. 71 to 73)",
+   "used_for": "Imminent delivery assessment, preeclampsia signs, positioning"
+  },
+  {
+   "source": "NJ EMS Clinical Practice Protocols & Guidelines v1 (8/21/2025)",
+   "section": "8.4 POLST and Advance Directives (pp. 226 to 228)",
+   "used_for": "Living wills and health care proxies; medical command contact"
+  }
+ ],
+ "lists": {
+  "Result": [
+   "Y",
+   "N",
+   "NA"
+  ],
+  "Rating": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Severity": [
+   "Critical",
+   "Major",
+   "Minor",
+   "Commendation"
+  ],
+  "Domain": [
+   "HPI & Narrative",
+   "Assessment",
+   "Protocol Adherence",
+   "Vitals & Reassessment",
+   "Documentation Integrity",
+   "Safety, Securement & Transfer",
+   "Operational Decisions",
+   "Administrative & Billing"
+  ],
+  "Feedback Status": [
+   "Pending",
+   "Sent to Crew",
+   "Acknowledged",
+   "Education Assigned",
+   "Closed"
+  ],
+  "Tier": [
+   "Exemplary",
+   "Meets Standard",
+   "Needs Improvement",
+   "Focused Review"
+  ]
+ }
+}

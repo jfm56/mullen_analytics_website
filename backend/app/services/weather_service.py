@@ -65,7 +65,7 @@ def get_weather_map(lat: float, lng: float, start: str, end: str) -> Dict[str, D
     out: Dict[str, Dict[str, Any]] = {}
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "MullenAnalytics/1.0"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:  # hardcoded https base URL, params urlencoded, no user-controlled scheme  # nosec B310
             data = json.loads(resp.read().decode("utf-8"))
         daily = data.get("daily", {}) or {}
         dates = daily.get("time", []) or []
@@ -124,7 +124,7 @@ def get_weather_forecast(lat: float, lng: float, start: str, end: str) -> Dict[s
     out: Dict[str, Dict[str, Any]] = {}
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "MullenAnalytics/1.0"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:  # hardcoded https base URL, params urlencoded, no user-controlled scheme  # nosec B310
             data = json.loads(resp.read().decode("utf-8"))
         daily = data.get("daily", {}) or {}
         dates = daily.get("time", []) or []
