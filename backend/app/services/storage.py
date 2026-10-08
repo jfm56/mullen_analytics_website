@@ -20,8 +20,14 @@ def create_agency_folders(agency_id: str, storage_root: str) -> str:
 
 
 def get_raw_upload_path(agency_id: str, storage_root: str, filename: str) -> str:
-    """Return the absolute path where a raw upload should be written."""
-    return str(Path(storage_root) / "agencies" / agency_id / "raw" / filename)
+    """Return the absolute path where a raw upload should be written.
+
+    Blocks in PHI_PRODUCTION_MODE — raw uploads may contain PHI and must go to the approved
+    private S3/KMS backend, not the local filesystem (PHI remediation Priority 3)."""
+    from ..phi_security_profile import guard_local_phi_write
+    target = str(Path(storage_root) / "agencies" / agency_id / "raw" / filename)
+    guard_local_phi_write(target)
+    return target
 
 
 def agency_folder_exists(agency_id: str, storage_root: str) -> bool:

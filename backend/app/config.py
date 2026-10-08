@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     # fall back to database_url (local/session mode, where RLS is not provisioned).
     database_admin_url: str = ""
     app_db_password: str = ""  # password for the runtime app_user role (staging/prod)
+    # RDS TLS (PHI remediation infra Priority 1). When set, the app appends/upgrades the DSN
+    # to at least this sslmode on BOTH the runtime and admin engines (never downgrades a
+    # stronger mode). "require" = encrypt; "verify-full" = encrypt + verify the server cert
+    # against db_sslrootcert (the RDS CA bundle). In PHI_PRODUCTION_MODE, TLS defaults to
+    # "require" even if this is blank, so a missing setting cannot silently disable TLS.
+    db_sslmode: str = ""          # "", "require", "verify-ca", "verify-full"
+    db_sslrootcert: str = ""      # path to the RDS CA bundle (for verify-ca/verify-full)
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -68,7 +75,19 @@ class Settings(BaseSettings):
     # AI (Anthropic) — powers the dashboard AI insights + report drafting.
     # Empty = those features show a graceful "enable" hint instead of running.
     anthropic_api_key: str = ""
-    
+
+    # PHI egress guard (Phase 4): hosts explicitly approved to receive POSSIBLE_PHI.
+    # Empty by default → the guard fails closed and no raw PHI may leave the boundary.
+    # Set (comma-separated) ONLY for a BAA-covered destination; never Anthropic/SendGrid/Stripe.
+    phi_egress_allowed_hosts: str = ""
+
+    # Production Security Profile (PHI remediation Priority 1). When TRUE, the app must
+    # FAIL STARTUP unless every PHI safety condition holds (non-superuser DB runtime, RLS
+    # active, approved auth mode, secure storage backend, external PHI egress disabled, DB
+    # TLS, secure cookies, production/synthetic separation, secure secrets). A config typo
+    # must never silently downgrade these protections — hence fail-closed at boot.
+    phi_production_mode: bool = False
+
     # Storage
     storage_provider: str = "s3"  # "s3" or "gcs"
     aws_access_key_id: str = ""

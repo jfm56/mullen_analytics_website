@@ -39,9 +39,29 @@ def _ctx(db, agency_id, actor_user_id=None):
     set_agency_context(db, agency_id)
 
 
+# PHI remediation Priority 5: QA audit records must not store raw clinical narrative, and
+# any identifier that slips into a value is scrubbed. Free-text narrative keys are dropped;
+# all other string values are redacted. Operational metadata (verdicts, severities, numbers,
+# override reasons) is preserved so the audit trail stays meaningful.
+_AUDIT_DROP_KEYS = {"narrative", "hpi_narrative", "chart_data"}
+
+
+def _sanitize_audit(obj):
+    from ...phi_redaction import redact_phi
+    if isinstance(obj, dict):
+        return {k: ("[REDACTED-CLINICAL]" if k in _AUDIT_DROP_KEYS else _sanitize_audit(v))
+                for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_audit(x) for x in obj]
+    if isinstance(obj, str):
+        return redact_phi(obj)
+    return obj
+
+
 def _audit(db, agency_id, session_id, actor, action, before=None, after=None, detail=None):
     db.add(QaAuditEvent(agency_id=agency_id, session_id=session_id, actor_user_id=actor,
-                        action=action, before=before, after=after, detail=detail or {}))
+                        action=action, before=_sanitize_audit(before),
+                        after=_sanitize_audit(after), detail=_sanitize_audit(detail or {})))
 
 
 def _get(db, model, agency_id, row_id):

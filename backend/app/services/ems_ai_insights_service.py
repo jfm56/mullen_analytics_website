@@ -420,6 +420,16 @@ async def _interpret(summary: Dict[str, Any], cache_key: str, refresh: bool = Fa
     if not refresh and cache_key in _CACHE:
         return {**_CACHE[cache_key], "cached": True}
 
+    # PHI egress guard (Phase 4): this path sends DE-IDENTIFIED AGGREGATE metrics only
+    # (counts, medians, forecast — no patient rows), classified NON_PHI, so it is permitted
+    # to the approved processor. The guard centralizes governance (a kill-switch if the host
+    # is ever removed from the allowlist) without changing behavior for aggregates.
+    from ..phi_egress import guard_egress, Sensitivity, PhiEgressBlocked
+    try:
+        guard_egress("api.anthropic.com", Sensitivity.NON_PHI, purpose="ai_dashboard_insights")
+    except PhiEgressBlocked:
+        return {"available": False, "reason": "External AI egress is disabled by policy."}
+
     api_key = _api_key()
     summary_json = json.dumps(summary, indent=2, default=str)
     active = summary.get("active_filters")

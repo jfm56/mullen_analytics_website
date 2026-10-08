@@ -156,3 +156,22 @@ async def view_as(request: Request, db: DBSession = Depends(get_db)):
     return {"agency_id": str(agency.id), "agency_name": agency.agency_name,
             "classification": agency.data_classification,
             "banner": f"MULLEN PLATFORM ADMIN — VIEW-AS — {agency.agency_name} / Agency Admin"}
+
+
+@router.post("/view-as/end")
+async def view_as_end(request: Request, db: DBSession = Depends(get_db)):
+    """Record the END of a SUPER_ADMIN View-As session (PHI remediation Priority 5).
+    Audited with the REAL actor; this only closes the context marker — no identity swap."""
+    user = await authz.require_super_admin_user(request, db)
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001 — body is optional
+        body = {}
+    agency_id = (body or {}).get("agency_id")
+    set_user_context(db, user.id)
+    authz.platform_audit(db, user.id, "view_as_end", scope="platform",
+                         selected_agency=agency_id, resource_agency=agency_id,
+                         view_as=True, view_as_role="agency_admin",
+                         ip=request.client.host if request.client else None)
+    db.commit()
+    return {"ended": True, "agency_id": str(agency_id) if agency_id else None}

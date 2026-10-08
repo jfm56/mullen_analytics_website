@@ -288,14 +288,18 @@ async def upload_csv(
             raise HTTPException(status_code=403, detail="Project does not belong to your account")
         resolved_project_id = p.id
 
-    # Build stored filename and save to disk
+    # Build stored filename and save to disk. PHI remediation Priority 3: uploaded EMS
+    # exports may contain PHI, so block new local persistent writes in PHI_PRODUCTION_MODE
+    # (production PHI must use the approved private S3/KMS backend).
+    from ..phi_security_profile import guard_local_phi_write
     stored_name = f"{uuid_lib.uuid4().hex}_{Path(file.filename).name}"
     upload_dir = _upload_dir(str(effective_client_id))
     upload_dir.mkdir(parents=True, exist_ok=True)
     file_path = upload_dir / stored_name
+    guard_local_phi_write(str(file_path))
 
     file_path.write_bytes(contents)
-    logger.info("Saved upload: %s (%d bytes)", file_path, len(contents))
+    logger.info("Saved upload (%d bytes)", len(contents))   # path/filename omitted — may embed identifiers
 
     # Persist record
     record = DataUpload(

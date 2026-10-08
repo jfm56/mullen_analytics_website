@@ -184,6 +184,17 @@ def test_view_as_audits_real_actor(plat, monkeypatch):
     assert ev is not None and ev.view_as is True and ev.actor_user_id == plat["su"].id  # real actor retained
 
 
+def test_view_as_end_is_audited(plat, monkeypatch):
+    # PHI remediation Priority 5 — View-As END is now an audited event (real actor retained).
+    _as(plat, plat["su"], monkeypatch)
+    r = plat["client"].post("/api/v1/platform/view-as/end", json={"agency_id": str(plat["prod"].id)})
+    assert r.status_code == 200 and r.json()["ended"] is True
+    ev = plat["s"].query(platform_audit.PlatformAuditEvent).filter_by(
+        actor_user_id=plat["su"].id, action="view_as_end").order_by(
+        platform_audit.PlatformAuditEvent.at.desc()).first()
+    assert ev is not None and ev.actor_user_id == plat["su"].id
+
+
 def test_view_as_requires_agency_id(plat, monkeypatch):
     _as(plat, plat["su"], monkeypatch)
     assert plat["client"].post("/api/v1/platform/view-as", json={}).status_code == 400  # missing != platform

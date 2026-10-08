@@ -318,6 +318,14 @@ def export_workbook(agency_id: UUID, ctx: QaCtx = Depends(qa_access)):
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
+    # Audit the PHI/QA export (PHI remediation Priority 5 — QA_EXPORT / PHI_EXPORT).
+    # Metadata only: actor, agency, chart count, format. No clinical content recorded.
+    try:
+        svc._audit(ctx.db, ctx.agency_id, None, ctx.actor_user_id, "qa_export",
+                   after={"format": "xlsx", "charts": len(bundle.get("charts", []))})
+        ctx.db.commit()
+    except Exception:  # noqa: BLE001 — auditing must not break the export
+        ctx.db.rollback()
     return StreamingResponse(
         buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=emscs-qa-export.xlsx"})

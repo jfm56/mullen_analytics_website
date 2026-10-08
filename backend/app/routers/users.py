@@ -182,15 +182,26 @@ async def update_user_role(
         raise HTTPException(status_code=400, detail="Invalid role")
     
     profile = db.query(Profile).filter(Profile.id == user_id).first()
-    
+
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
+    old_role = profile.role
     profile.role = role_update.role
     profile.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(profile)
-    
+
+    # Audit the privilege change (PHI remediation Priority 5 — ROLE_CHANGE / PERMISSION_CHANGE).
+    # Metadata only: actor, target, from/to role. No PHI.
+    from ..services.audit import log_action
+    try:
+        log_action(db, action="role_change", user_id=str(admin.id),
+                   resource_type="user", resource_id=str(user_id),
+                   details={"field": "role", "from": old_role, "to": role_update.role})
+    except Exception:  # noqa: BLE001 — auditing must not break the operation
+        pass
+
     return profile
 
 

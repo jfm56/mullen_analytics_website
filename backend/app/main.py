@@ -25,6 +25,7 @@ from .models import error_log as _error_log_models  # noqa: F401 – register wi
 from .models import web_analytics as _web_analytics_models  # noqa: F401 – register with Base
 from .models import lead as _lead_models  # noqa: F401 – register with Base
 from .services.storage import ensure_storage_root
+from .phi_redaction import configure_phi_safe_logging  # Phase 3 — PHI-safe logging
 
 settings = get_settings()
 
@@ -101,6 +102,9 @@ app.include_router(dispatch_router.router, prefix="/api")    # AI dispatch resou
 @app.on_event("startup")
 async def on_startup():
     import logging, os
+    # Install PHI-safe logging first so every subsequent log record (incl. uvicorn's
+    # handlers, configured after import) is scrubbed of PHI identifier patterns.
+    configure_phi_safe_logging()
     log = logging.getLogger(__name__)
 
     if settings.environment == "local":
@@ -315,6 +319,15 @@ async def on_startup():
 
     ensure_storage_root(settings.data_storage_root)
     ensure_storage_root(settings.data_uploads_root)
+
+    # Production Security Profile (PHI remediation P1) — runs LAST, after RLS is
+    # provisioned. If PHI_PRODUCTION_MODE is set but any PHI safety condition is not met
+    # (superuser runtime, RLS off, session mode, local storage, PHI egress open, no DB TLS,
+    # insecure cookies/secret, dev environment), this raises and ABORTS startup. Fail closed.
+    from .phi_security_profile import assert_phi_production_safe
+    _phi_checks = assert_phi_production_safe(settings, engine)
+    if _phi_checks is not None:
+        log.info("PHI_PRODUCTION_MODE active: all %s PHI safety checks passed", len(_phi_checks))
 
 
 @app.get("/")

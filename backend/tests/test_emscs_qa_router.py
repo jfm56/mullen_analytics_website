@@ -124,3 +124,8 @@ def test_create_review_review_and_export(qa_client):
     assert ex.status_code == 200
     wb = openpyxl.load_workbook(io.BytesIO(ex.content))
     assert "Chart Log" in wb.sheetnames and "Dashboard" in wb.sheetnames
+
+    # PHI remediation Priority 5 — the export is audited (QA_EXPORT), metadata only (no clinical text)
+    audit2 = client.get(f"/api/v1/agencies/{aid}/qa/audit").json()["events"]
+    exp_ev = next((e for e in audit2 if e["action"] == "qa_export"), None)
+    assert exp_ev is not None and "charts" in (exp_ev.get("after") or {})
