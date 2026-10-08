@@ -86,7 +86,8 @@ def build_automated_review(chart: QaChartData) -> AutomatedReview:
         # mislabel it as a treatment omission (that would wrongly auto-escalate to Critical).
         clinical_safety_gap = (r.number in (77, 78, 80)
                                or (category == "Medication" and r.number in (66, 67))
-                               or (category == "Cardiac/STEMI" and r.number in (24, 27)))
+                               or (category == "Cardiac/STEMI" and r.number in (24, 27))
+                               or (category == "Trauma" and r.number in (37, 38)))
         finding = {"kind": "consistency_conflict" if r.number == 11 else "indicator_fail",
                    "indicator_number": r.number, "classification": r.classification.value,
                    "category": category, "domain": _DOMAIN_HINT.get(r.number, category),

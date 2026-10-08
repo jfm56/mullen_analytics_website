@@ -14,7 +14,7 @@ from .chart_data import QaChartData, AddAction
 from .indicators import IndicatorResult, Classification, PASS, FAIL, NA, HUMAN, _ev
 from . import seed
 
-IMPLEMENTED_CATEGORIES = ("Refusal", "Medication", "Albuterol", "Cardiac/STEMI")
+IMPLEMENTED_CATEGORIES = ("Refusal", "Medication", "Albuterol", "Cardiac/STEMI", "Trauma")
 
 
 def _min(t) -> Optional[int]:
@@ -315,17 +315,37 @@ def _has_action(c, *names):
     return [a for a in c.add_actions if any(n in (a.name or "").lower() for n in names)]
 
 
-def c_24(c):
-    """Oxygen therapy as indicated by perfusion (SpO2 < 92%). N/A when not indicated."""
+def _oxygen_indicator(c, num):
+    """Shared oxygen-by-perfusion evaluator (#24 Cardiac, #37 Trauma). Threshold SpO2 < 92%
+    per the versioned protocol. N/A when SpO2 >= 92%; HUMAN when SpO2 undocumented (indication
+    unknown) or a withholding reason is documented (clinical confirmation)."""
+    pv = (seed.protocol(num) or {}).get("version", "v1")
+    spo2_vals = [v.spo2 for v in c.vitals if v.spo2 is not None]
     low = [v for v in c.vitals if v.spo2 is not None and v.spo2 < 92]
     o2 = _has_action(c, "oxygen", "nasal cannula", "non-rebreather", "nrb", "bvm", "cpap")
+    reason = (c.structured_fields or {}).get("oxygen_withheld_reason")
+    if not spo2_vals:
+        return _R(num, Classification.PROTOCOL_RULE, HUMAN,
+                  "No SpO2 documented — oxygen indication cannot be determined; HUMAN REVIEW REQUIRED.",
+                  [_ev("protocol_version", pv)])
     if not low:
-        return _R(24, Classification.PROTOCOL_RULE, NA, "Oxygen not indicated (no documented SpO2 < 92%).", [_ev("spo2_below_92", False)])
+        return _R(num, Classification.PROTOCOL_RULE, NA, "Oxygen not indicated (SpO2 >= 92% throughout).",
+                  [_ev("spo2_min", min(spo2_vals)), _ev("protocol_version", pv)])
     if o2:
-        return _R(24, Classification.PROTOCOL_RULE, PASS, "Oxygen administered for documented SpO2 < 92%.",
-                  [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen", True)])
-    return _R(24, Classification.PROTOCOL_RULE, FAIL, "SpO2 < 92% documented but no oxygen therapy recorded.",
-              [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen", False)])
+        return _R(num, Classification.PROTOCOL_RULE, PASS, "Oxygen administered for documented SpO2 < 92%.",
+                  [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen", True), _ev("protocol_version", pv)])
+    if reason:
+        return _R(num, Classification.PROTOCOL_RULE, HUMAN,
+                  "SpO2 < 92% and oxygen not given, but a withholding reason is documented — "
+                  "clinical confirmation required.",
+                  [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen_withheld_reason", reason), _ev("protocol_version", pv)])
+    return _R(num, Classification.PROTOCOL_RULE, FAIL,
+              "SpO2 < 92% documented but no oxygen therapy and no documented reason for withholding.",
+              [_ev("spo2_min", min(v.spo2 for v in low)), _ev("oxygen", False), _ev("protocol_version", pv)])
+
+
+def c_24(c):
+    return _oxygen_indicator(c, 24)
 
 
 def c_25(c):
@@ -360,24 +380,104 @@ def c_26(c):
 
 
 def c_27(c):
-    """Aspirin/Nitroglycerin given, OR a documented reason it was withheld."""
-    given = _has_action(c, "aspirin", "asa", "nitro", "ntg", "nitroglycerin")
-    reason = getattr(c, "asa_ntg_not_given_reason", None)
-    if given:
-        return _R(27, Classification.PROTOCOL_RULE, PASS, "Aspirin/Nitroglycerin administration documented.",
-                  [_ev("asa_ntg", [a.name for a in given])])
-    if reason:
-        return _R(27, Classification.PROTOCOL_RULE, PASS, "ASA/NTG not given; reason documented.",
-                  [_ev("reason_not_given", reason)])
+    """Aspirin AND nitroglycerin, evaluated INDEPENDENTLY (separate indications,
+    contraindications and documentation). Each must be given OR have a documented reason for
+    withholding — administration of one is NEVER proof the other requirement was met. NTG has
+    contraindications (e.g. hypotension / PDE5 inhibitor / RV MI): when NTG is missing and a
+    possible contraindication is evident (documented SBP < 100), the indicator routes to HUMAN
+    rather than auto-failing. Ambiguity → HUMAN_REVIEW_REQUIRED."""
+    pv = (seed.protocol(27) or {}).get("version", "v1")
+    asa = _has_action(c, "aspirin", "asa")
+    ntg = _has_action(c, "nitro", "ntg", "nitroglycerin")
+    legacy = getattr(c, "asa_ntg_not_given_reason", None)
+    asa_reason = getattr(c, "asa_not_given_reason", None) or legacy
+    ntg_reason = getattr(c, "ntg_not_given_reason", None) or legacy
+    hypotensive = any(v.sbp is not None and v.sbp < 100 for v in c.vitals)   # possible NTG contraindication
+
+    def status(given, reason):
+        return "given" if given else ("reason" if reason else "missing")
+    asa_s, ntg_s = status(asa, asa_reason), status(ntg, ntg_reason)
+
+    ev = [_ev("aspirin", asa_s), _ev("nitroglycerin", ntg_s), _ev("protocol_version", pv)]
+    if asa:
+        ev.append(_ev("asa_given", [a.name for a in asa]))
+    if ntg:
+        ev.append(_ev("ntg_given", [a.name for a in ntg]))
+
+    # NTG missing with a possible contraindication → clinical judgment, not an auto-fail.
+    if ntg_s == "missing" and hypotensive:
+        ev.append(_ev("possible_ntg_contraindication", "documented SBP < 100"))
+        if asa_s == "missing":
+            ev.append(_ev("aspirin_gap", "neither given nor documented"))
+        return _R(27, Classification.CLINICAL_CONTEXT, HUMAN,
+                  "Nitroglycerin not given with a possible contraindication (SBP < 100) — clinical "
+                  "determination required; evaluate aspirin and nitroglycerin independently.", ev)
+
+    missing = [m for m, s in (("aspirin", asa_s), ("nitroglycerin", ntg_s)) if s == "missing"]
+    if not missing:
+        return _R(27, Classification.PROTOCOL_RULE, PASS,
+                  "Aspirin and nitroglycerin each administered or documented as withheld with a reason.", ev)
     return _R(27, Classification.PROTOCOL_RULE, FAIL,
-              "No ASA/NTG administration and no documented reason for withholding.",
-              [_ev("asa_ntg", []), _ev("reason_not_given", None)])
+              f"Not addressed independently: {', '.join(missing)} neither administered nor documented as withheld.", ev)
+
+
+# ───────────────────────── Trauma #33-38 ─────────────────────────
+_TRAUMA_DOC = {
+    33: ("injuries", "illness/injury (MOI or additional injuries)"),
+    34: ("injury_datetime", "date and time of injury"),
+    35: ("mechanism", "mechanism of injury"),
+    36: ("pain_assessment", "initial assessment of pain and associated symptoms"),
+}
+
+
+def _trauma_doc(num, c):
+    key, label = _TRAUMA_DOC[num]
+    present = bool((c.hpi_elements or {}).get(key))
+    if num == 35 and getattr(c, "significant_mechanism", None) is not None:
+        present = present or True                 # mechanism assessed (documented either way)
+    if num == 36 and any(v.pain is not None for v in c.vitals):
+        present = True                            # pain documented in vitals
+    if present:
+        return _R(num, Classification.DETERMINISTIC_RULE, PASS, f"Documentation of {label} present.", [_ev(key, True)])
+    return _R(num, Classification.DETERMINISTIC_RULE, FAIL, f"Documentation of {label} not present.", [_ev(key, present)])
+
+
+def t_37(c):
+    return _oxygen_indicator(c, 37)
+
+
+def t_38(c):
+    """Spinal motion restriction. Applicability FIRST: indicated by significant mechanism /
+    spinal concern (structured or narrative). Not indicated → N/A; indicated + applied → Met;
+    indicated + documented SMR clearance → HUMAN (clinical); indicated + not documented → Not Met."""
+    pv = (seed.protocol(38) or {}).get("version", "v1")
+    sf = c.structured_fields or {}
+    hay = " ".join([c.hpi_narrative or "", c.primary_impression or "", c.chief_complaint or "", c.haystack()]).lower()
+    indicated = (bool(getattr(c, "significant_mechanism", None)) or bool(sf.get("spinal_concern"))
+                 or any(k in hay for k in ("c-spine", "cervical", "spinal", "neck injury", "back injury", "spine")))
+    applied = (bool(_has_action(c, "c-collar", "collar", "spinal", "backboard", "immobil", "smr"))
+               or bool(sf.get("spinal_immobilization")))
+    if not indicated:
+        return _R(38, Classification.PROTOCOL_RULE, NA, "Spinal motion restriction not indicated.", [_ev("indicated", False), _ev("protocol_version", pv)])
+    if applied:
+        return _R(38, Classification.PROTOCOL_RULE, PASS, "Spinal motion restriction applied/maintained.", [_ev("indicated", True), _ev("applied", True), _ev("protocol_version", pv)])
+    if sf.get("spinal_cleared"):
+        return _R(38, Classification.CLINICAL_CONTEXT, HUMAN,
+                  "Spinal precautions indicated but documented as cleared (SMR clearance) — clinical confirmation required.",
+                  [_ev("indicated", True), _ev("spinal_cleared", True), _ev("protocol_version", pv)])
+    return _R(38, Classification.PROTOCOL_RULE, FAIL, "Spinal motion restriction indicated but not documented.",
+              [_ev("indicated", True), _ev("applied", False), _ev("protocol_version", pv)])
 
 
 EVALUATORS = {
     "Refusal": {75: r_75, 76: r_76, 77: r_77, 78: r_78, 79: r_79, 80: r_80},
     "Medication": {63: m_63, 64: m_64, 65: m_65, 66: m_66, 67: m_67, 68: m_68},
     "Albuterol": {69: a_69, 70: a_70, 71: a_71, 72: a_72, 73: a_73, 74: a_74},
+    "Trauma": {
+        33: lambda c: _trauma_doc(33, c), 34: lambda c: _trauma_doc(34, c),
+        35: lambda c: _trauma_doc(35, c), 36: lambda c: _trauma_doc(36, c),
+        37: t_37, 38: t_38,
+    },
     "Cardiac/STEMI": {
         16: lambda c: _cardiac_doc(16, c), 17: lambda c: _cardiac_doc(17, c),
         18: lambda c: _cardiac_doc(18, c), 19: lambda c: _cardiac_doc(19, c),

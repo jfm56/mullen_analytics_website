@@ -1,8 +1,8 @@
 # EMSCS QA — Milestone 2 (Specialty CQI) Validation Report
 
-Ruleset version: `emscs-cqi-2025-08` · Implemented categories: Refusal, Medication, Albuterol, Cardiac/STEMI (indicators #63-80).
+Ruleset version: `emscs-cqi-2025-08` · Implemented categories: Refusal, Medication, Albuterol, Cardiac/STEMI, Trauma (indicators #63-80).
 
-> Scope note: this release automates **Cardiac/STEMI #16-27, Refusal #75-80, Medication #63-68, Albuterol #69-74**. All other specialty categories remain human-review stubs. The engine proposes; a human approves. No AI computes a score.
+> Scope note: this release automates **Cardiac/STEMI #16-27, Trauma #33-38, Refusal #75-80, Medication #63-68, Albuterol #69-74**. All other specialty categories remain human-review stubs. The engine proposes; a human approves. No AI computes a score.
 
 > **Corrections applied (2026-10-08):** (1) **#77 capacity** — A&Ox/orientation is supporting evidence only and can never AUTO-MET; AUTO MET requires explicit capacity-specific documentation; AMS / intoxication / possible ingestion / insufficient documentation route to HUMAN REVIEW REQUIRED; incapacity is never auto-inferred. (2) **#71 albuterol** — applicability is established before Met/Not-Met: no evidence → N/A; evidence albuterol was given/indicated but the Add Action is missing → Not Met; a structured Add Action → normal #69-74 evaluation.
 
@@ -15,7 +15,7 @@ Six designed cases with known-correct outcomes. Agreement here demonstrates the 
 | Clean compliant | Refusal #75-80 all Met; no findings. | Refusal | 6/6 | — none — | ✓ |
 | Minor documentation failure | #75 unsigned → Minor (documentation). | Refusal | 6/6 | #75 Minor | ✓ |
 | Major failure | #78 no vitals on refusal → Major, human confirm. | Refusal | 6/6 | #78 Major | ✓ |
-| Critical refusal | #78 + pediatric + significant mechanism → Critical. | Refusal, Trauma | 6/6 | #78 Critical | ✓ |
+| Critical refusal | #78 + pediatric + significant mechanism → Critical. | Refusal, Trauma | 6/6 | #33 Major, #34 Major, #36 Major, #38 Major, #78 Critical | ✓ |
 | Multi-category | Albuterol + Medication; #72 repeat <5 min → human review (abnormal SpO2). | Albuterol, Medication | 12/12 | #72 HUMAN_REVIEW_REQUIRED | ✓ |
 | Ambiguous | #77 capacity (AMS/ingestion) → HUMAN REVIEW REQUIRED. | Refusal | 6/6 | #80 Major | ✓ |
 
@@ -23,7 +23,7 @@ Six designed cases with known-correct outcomes. Agreement here demonstrates the 
 
 - Applicability agreement: **100%** (6/6 cases)
 - Indicator Met/Not-Met agreement: **100%** (42/42 indicators)
-- Finding detection: expected 5, produced 5, matched **5/5**
+- Finding detection: expected 5, produced 9, matched **5/5**
 - Severity-proposal agreement (on expected findings): **5/5**
 - False positives: **0** · False negatives: **0**
 - Routed to HUMAN REVIEW REQUIRED: **2** specialty indicator(s) (e.g., capacity under AMS/ingestion, clinical dose appropriateness)
@@ -46,6 +46,12 @@ Source: de-identified fixture of the WNY September 2026 chart review (n=60 chart
 | 25 | Cardiac/STEMI | auto | 12 | 7 | 5 | 0 | Chest pain treatment per protocol v1 |
 | 26 | Cardiac/STEMI | auto | 12 | 0 | 7 | 5 | Pain-management reassessment v1 |
 | 27 | Cardiac/STEMI | auto | 12 | 10 | 2 | 0 | Aspirin/Nitroglycerin administration v1 |
+| 33 | Trauma | auto | 15 | 15 | 0 | 0 | Injury/illness documentation v1 |
+| 34 | Trauma | auto | 15 | 1 | 14 | 0 | Injury date/time documentation v1 |
+| 35 | Trauma | auto | 15 | 15 | 0 | 0 | Mechanism of injury documentation v1 |
+| 36 | Trauma | auto | 15 | 11 | 4 | 0 | Pain + associated-symptoms assessment v1 |
+| 37 | Trauma | auto | 15 | 1 | 0 | 14 | Oxygen therapy if required v1 |
+| 38 | Trauma | auto | 15 | 0 | 10 | 5 | Spinal motion restriction v1 |
 | 63 | Medication | auto | 12 | 12 | 0 | 0 | Medication documentation v1 |
 | 64 | Medication | auto | 12 | 12 | 0 | 0 | Medication indication v1 |
 | 65 | Medication | auto | 12 | 12 | 0 | 0 | Medication detail v1 |

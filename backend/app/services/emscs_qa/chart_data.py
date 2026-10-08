@@ -120,8 +120,11 @@ class QaChartData(BaseModel):
 
     # Cardiac/STEMI (#16-27). Pain/HPI documentation elements live in hpi_elements with keys:
     #   onset, prior_interventions, pain_type, pain_duration, pain_quality, pain_radiation,
-    #   pain_palpation, gastric_distress. This field documents WHY ASA/NTG was withheld (#27).
-    asa_ntg_not_given_reason: Optional[str] = None
+    #   pain_palpation, gastric_distress. #27 evaluates aspirin and nitroglycerin INDEPENDENTLY:
+    #   each is "given", "reason documented", or "missing" — one does not satisfy the other.
+    asa_not_given_reason: Optional[str] = None    # #27 reason aspirin was withheld (allergy, GI bleed, already taken…)
+    ntg_not_given_reason: Optional[str] = None    # #27 reason nitroglycerin was withheld (hypotension, PDE5 inhibitor, RV MI…)
+    asa_ntg_not_given_reason: Optional[str] = None  # legacy combined reason (applies to both when set)
 
     # outcome / arrest (for consistency + category triggers)
     outcome: dict = Field(default_factory=dict)        # {"rosc":bool,"condition":str,...}

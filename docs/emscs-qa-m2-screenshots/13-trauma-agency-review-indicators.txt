@@ -1,0 +1,10 @@
+Agency QA Review — SYN-08-TRAUMA (Indicator Review tab), captured 2026-10-08.
+(Screenshot compositing was intermittent; this is the verbatim rendered text.)
+
+CQI #33 DETERMINISTIC_RULE  AUTO MET / HUMAN MET  — Documentation of illness/injury (MOI or additional injuries) present.
+CQI #34 DETERMINISTIC_RULE  AUTO NOT MET / HUMAN NOT MET — Documentation of date and time of injury not present.
+        evidence: injury_datetime: false ; applicability_reason: text contains 'mvc'
+CQI #35 DETERMINISTIC_RULE  AUTO MET / HUMAN MET  — Documentation of mechanism of injury present.
+CQI #36 DETERMINISTIC_RULE  AUTO MET / HUMAN MET  — Documentation of initial assessment of pain and associated symptoms present.
+CQI #37 PROTOCOL_RULE       AUTO MET / HUMAN MET  — Oxygen administered for documented SpO2 < 92%.
+CQI #38 PROTOCOL_RULE       AUTO MET / HUMAN MET  — Spinal motion restriction applied/maintained.

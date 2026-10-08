@@ -80,18 +80,59 @@ def test_cardiac_26_pass_with_reassessment():
     assert _spec(_cat(c), 26).verdict == specialty.PASS
 
 
-# ───────── #27 ASA/NTG ─────────
-def test_cardiac_27_pass_when_given():
-    assert _spec(_cat(_cardiac(add_actions=[AddAction(kind="medication", name="Aspirin 324mg")])), 27).verdict == specialty.PASS
+# ───────── #24 clinical exceptions (Step 3) ─────────
+def test_cardiac_24_human_when_spo2_undocumented():
+    assert _spec(_cat(_cardiac()), 24).verdict == specialty.HUMAN     # no SpO2 → indication unknown
 
 
-def test_cardiac_27_pass_when_reason_documented():
-    c = _cardiac(asa_ntg_not_given_reason="patient took own ASA; NTG held for hypotension")
+def test_cardiac_24_human_when_withholding_reason_documented():
+    c = _cardiac(vitals=[Vitals(time="10:00", spo2=88)],
+                 structured_fields={"oxygen_withheld_reason": "patient refused oxygen"})
+    assert _spec(_cat(c), 24).verdict == specialty.HUMAN
+
+
+def test_cardiac_24_cites_protocol_version():
+    ev = _spec(_cat(_cardiac(vitals=[Vitals(time="10:00", spo2=98)])), 24).evidence
+    assert any((e or {}).get("field") == "protocol_version" for e in ev)
+
+
+# ───────── #27 ASA + NTG evaluated INDEPENDENTLY (Step 3) ─────────
+def test_cardiac_27_pass_when_both_given():
+    c = _cardiac(add_actions=[AddAction(kind="medication", name="Aspirin 324mg"),
+                              AddAction(kind="medication", name="Nitroglycerin")])
+    assert _spec(_cat(c), 27).verdict == specialty.PASS
+
+
+def test_cardiac_27_aspirin_only_does_not_satisfy_ntg():
+    # ASA given, NTG neither given nor explained, no hypotension → Not Met (independent requirement)
+    c = _cardiac(add_actions=[AddAction(kind="medication", name="Aspirin 324mg")],
+                 vitals=[Vitals(time="10:00", sbp=140, spo2=97)])
+    r = _spec(_cat(c), 27)
+    assert r.verdict == specialty.FAIL and any((e or {}).get("field") == "nitroglycerin" for e in r.evidence)
+
+
+def test_cardiac_27_ntg_missing_with_hypotension_routes_human():
+    # NTG missing but SBP < 100 (possible contraindication) → clinical determination
+    c = _cardiac(add_actions=[AddAction(kind="medication", name="Aspirin 324mg")],
+                 vitals=[Vitals(time="10:00", sbp=88, spo2=97)])
+    assert _spec(_cat(c), 27).verdict == specialty.HUMAN
+
+
+def test_cardiac_27_pass_with_independent_reasons():
+    c = _cardiac(add_actions=[AddAction(kind="medication", name="Aspirin 324mg")],
+                 ntg_not_given_reason="held for SBP 86", vitals=[Vitals(time="10:00", sbp=140, spo2=97)])
     assert _spec(_cat(c), 27).verdict == specialty.PASS
 
 
 def test_cardiac_27_fail_when_neither_given_nor_explained():
-    assert _spec(_cat(_cardiac()), 27).verdict == specialty.FAIL
+    c = _cardiac(vitals=[Vitals(time="10:00", sbp=140, spo2=97)])
+    assert _spec(_cat(c), 27).verdict == specialty.FAIL
+
+
+def test_cardiac_27_legacy_combined_reason_covers_both():
+    c = _cardiac(asa_ntg_not_given_reason="patient took own ASA; NTG held for hypotension",
+                 vitals=[Vitals(time="10:00", sbp=140, spo2=97)])
+    assert _spec(_cat(c), 27).verdict == specialty.PASS
 
 
 # ───────── orchestration + cross-category ─────────

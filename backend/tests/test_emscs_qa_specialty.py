@@ -171,10 +171,12 @@ def test_implemented_specialty_is_evaluated_not_stubbed():
 
 
 def test_unimplemented_specialty_still_human():
-    c = QaChartData(external_ref="TRAUMA", transported=True, primary_impression="Fall injury", chief_complaint="fall")
+    # Stroke/CVA (#39-42) is NOT yet automated → its indicators remain human-review stubs.
+    c = QaChartData(external_ref="STROKE", transported=True, primary_impression="Stroke / CVA",
+                    chief_complaint="facial droop and slurred speech")
     rev = review.build_automated_review(c)
-    r33 = next((r for r in rev.indicator_results if r.number == 33), None)
-    assert r33 is not None and r33.verdict == specialty.HUMAN      # Trauma not yet automated
+    r39 = next((r for r in rev.indicator_results if r.number == 39), None)
+    assert r39 is not None and r39.verdict == specialty.HUMAN      # Stroke/CVA not yet automated
 
 
 def test_cross_category_activation_albuterol_and_medication():
