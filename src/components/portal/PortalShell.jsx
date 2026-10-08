@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { portalBrand } from '@/lib/portalBrand';
 import {
   Home, Upload, BarChart3, Search, FileText,
   MessageSquare, Receipt, Database, Settings, Menu, X, LogOut, Lightbulb, Globe,
@@ -59,6 +60,12 @@ export default function PortalShell({ children }) {
     if (bypass) { setReady(true); return; }
     auth.getSession().then((s) => {
       if (!s.authenticated) { router.replace('/portal/login'); return; }
+      // Clients enroll/verify at the portal entrance. Protected backends still
+      // enforce their own authorization and MFA requirements independently.
+      if (s.mfa_enrollment_required || s.mfa_required) {
+        router.replace('/portal/login');
+        return;
+      }
       setProfile(s.profile);
       // Nudge unverified self-serve users (not admins, not while impersonating).
       const needs = s.user?.email_confirmed === false && !s.impersonating && s.profile?.role !== 'admin';
@@ -176,10 +183,10 @@ export default function PortalShell({ children }) {
         <aside className="hidden md:flex flex-col w-56 bg-white border-r border-gray-200 flex-shrink-0">
           <div className="px-4 py-4 border-b border-gray-200">
             <div className="flex items-center gap-2.5">
-              <Image src="/navbar-logo.png" alt="Mullen Analytics" width={28} height={28} priority className="object-contain" style={{ width: 'auto', height: 26 }} />
+              <Image src={portalBrand.logo} alt={portalBrand.name} width={28} height={28} priority className="object-contain" style={{ width: 'auto', height: 26 }} />
               <div className="min-w-0">
-                <p className="font-bold text-sm text-gray-900 truncate leading-tight">Mullen Analytics</p>
-                <p className="text-[11px] text-gray-500 truncate leading-tight">{profile?.full_name || profile?.email || 'Client Portal'}</p>
+                <p className="font-bold text-sm text-gray-900 truncate leading-tight">{portalBrand.name}</p>
+                <p className="text-[11px] text-gray-500 truncate leading-tight">{profile?.full_name || profile?.email || portalBrand.label}</p>
               </div>
             </div>
           </div>
@@ -188,7 +195,7 @@ export default function PortalShell({ children }) {
           </nav>
           <div className="border-t border-gray-200 p-2 space-y-0.5">
             <Link
-              href="/"
+              href={portalBrand.homeUrl}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
             >
               <Globe size={18} className="flex-shrink-0" />
@@ -204,6 +211,8 @@ export default function PortalShell({ children }) {
           </div>
         </aside>
 
+        <div className="fixed bottom-1 right-3 text-[10px] text-gray-400 z-10 pointer-events-none">{portalBrand.attribution}</div>
+
         {/* Mobile topbar */}
         <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 z-30 flex items-center px-4 gap-3">
           <button
@@ -214,8 +223,8 @@ export default function PortalShell({ children }) {
             <Menu size={22} />
           </button>
           <div className="flex items-center gap-2">
-            <Image src="/navbar-logo.png" alt="" width={24} height={24} className="object-contain" style={{ width: 'auto', height: 22 }} />
-            <span className="font-semibold text-sm text-gray-900">Mullen Analytics</span>
+            <Image src={portalBrand.logo} alt="" width={24} height={24} className="object-contain" style={{ width: 'auto', height: 22 }} />
+            <span className="font-semibold text-sm text-gray-900">{portalBrand.name}</span>
           </div>
         </div>
 
@@ -226,8 +235,8 @@ export default function PortalShell({ children }) {
             <div className="relative w-64 bg-white h-full flex flex-col shadow-xl">
               <div className="px-4 py-4 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Image src="/navbar-logo.png" alt="" width={24} height={24} className="object-contain" style={{ width: 'auto', height: 22 }} />
-                  <span className="font-bold text-sm text-gray-900">Mullen Analytics</span>
+                  <Image src={portalBrand.logo} alt="" width={24} height={24} className="object-contain" style={{ width: 'auto', height: 22 }} />
+                  <span className="font-bold text-sm text-gray-900">{portalBrand.name}</span>
                 </div>
                 <button
                   onClick={() => setMobileOpen(false)}
@@ -242,7 +251,7 @@ export default function PortalShell({ children }) {
               </nav>
               <div className="border-t border-gray-200 p-2 space-y-0.5">
                 <Link
-                  href="/"
+                  href={portalBrand.homeUrl}
                   onClick={() => setMobileOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
                 >

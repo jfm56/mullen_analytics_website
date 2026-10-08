@@ -478,29 +478,14 @@ def filtered_dashboard(upload: DataUpload, db: Session, filters: Dict[str, Any])
 
     metrics: Optional[Dict[str, Any]] = None
     try:
-        import os
-        import tempfile
-        from .ems_analytics_service import compute_ems_metrics
-        overrides = get_column_overrides(upload, db)
-        fd, tmp_path = tempfile.mkstemp(suffix=".csv")
-        os.close(fd)
-        try:
-            df.to_csv(tmp_path, index=False)
-            metrics = compute_ems_metrics(
-                tmp_path,
-                {
-                    "file_name": getattr(upload, "original_filename", None),
-                    "row_count_original": len(df),
-                    "row_count_cleaned": len(df),
-                },
-                {"duplicate_rows_count": 0, "removed_rows_count": 0, "missing_values_summary": {}},
-                overrides,
-            )
-        finally:
-            try:
-                os.remove(tmp_path)
-            except Exception:  # noqa: BLE001
-                pass
+        from .ems_analytics_service import compute_ems_metrics_frame
+        metrics = compute_ems_metrics_frame(
+            df,
+            {"file_name": getattr(upload, "original_filename", None),
+             "row_count_original": len(df), "row_count_cleaned": len(df)},
+            {"duplicate_rows_count": int(df.duplicated().sum()), "removed_rows_count": 0},
+            overrides,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning("filtered_dashboard: full pipeline failed, using snapshot: %s", exc)
         metrics = None

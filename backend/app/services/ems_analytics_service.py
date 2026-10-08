@@ -688,9 +688,9 @@ def _bls_ambulance_runs(df: pd.DataFrame, overrides: Optional[Dict] = None) -> O
 
 
 def _collapse_to_incidents(df: pd.DataFrame, overrides: Optional[Dict] = None) -> pd.DataFrame:
-    """Reduce multi-unit incidents to ONE row each, keeping the FIRST dispatched
-    unit that actually responded: among an incident's rows, prefer those with an
-    arrival (or enroute) time, then take the earliest dispatch. This makes call
+    """Reduce multi-unit incidents to ONE row each, keeping the FIRST arriving
+    unit: prefer the earliest parseable on-scene timestamp, then dispatch time.
+    Incidents without an arrival remain in volume totals. This makes call
     volume and response times reflect the incident and its first unit, not every
     unit that rolled. No-op when there's no recognizable incident-id column; rows
     with a blank incident id are left as their own records.
@@ -699,22 +699,19 @@ def _collapse_to_incidents(df: pd.DataFrame, overrides: Optional[Dict] = None) -
     if not inc_col or df.empty:
         return df
     disp_col = detect_mapped_column(df, "dispatch_time", overrides)
-    resp_col = (detect_mapped_column(df, "arrival_time", overrides)
-                or detect_mapped_column(df, "enroute_time", overrides))
+    resp_col = detect_mapped_column(df, "arrival_time", overrides)
     work = df.copy()
-    work["__id"] = work[inc_col].astype(str).str.strip().replace("", pd.NA)
-    if resp_col:
-        work["__responded"] = work[resp_col].astype(str).str.strip().replace("", pd.NA).notna()
-    else:
-        work["__responded"] = True
+    work["__id"] = work[inc_col].astype("string").str.strip().replace(
+        {"": pd.NA, "nan": pd.NA, "None": pd.NA, "null": pd.NA, "NaN": pd.NA}
+    )
+    work["__arrival"] = pd.to_datetime(work[resp_col], errors="coerce") if resp_col else pd.NaT
     work["__disp"] = pd.to_datetime(work[disp_col], errors="coerce") if disp_col else pd.NaT
-    # responded-first, then earliest dispatch -> the "first dispatched & responding" unit
-    work = work.sort_values(by=["__responded", "__disp"], ascending=[False, True],
+    work = work.sort_values(by=["__arrival", "__disp"], ascending=[True, True],
                             kind="stable", na_position="last")
     has_id = work["__id"].notna()
     collapsed = work[has_id].drop_duplicates(subset="__id", keep="first")
     result = pd.concat([collapsed, work[~has_id]], ignore_index=True)
-    return result.drop(columns=[c for c in ("__id", "__responded", "__disp") if c in result.columns])
+    return result.drop(columns=["__id", "__arrival", "__disp"])
 
 
 def compute_ems_metrics(
@@ -749,22 +746,21 @@ def compute_ems_metrics(
             "upload_summary": upload_summary,
         }
 
-    # Build response-time series for reuse in unit_performance
+    return compute_ems_metrics_frame(df, upload_summary, cleaning_stats, overrides)
+
+
+def compute_ems_metrics_frame(df, upload_summary, cleaning_stats, overrides=None):
+    """Shared in-memory calculation for saved and filtered dashboards."""
+    # Build dispatch-to-scene series; missing arrival never means task duration.
     dispatch_col = detect_mapped_column(df, "dispatch_time", overrides)
     arrival_col  = detect_mapped_column(df, "arrival_time",  overrides)
-    clear_col    = detect_mapped_column(df, "clear_time",    overrides)
-    enroute_col  = detect_mapped_column(df, "enroute_time",  overrides)
 
     rt_series: Optional[pd.Series] = None
     if dispatch_col and arrival_col:
         rt_series = _minutes_between(df, dispatch_col, arrival_col)
-    elif dispatch_col and clear_col:
-        rt_series = _minutes_between(df, dispatch_col, clear_col)
-    elif enroute_col and arrival_col:
-        rt_series = _minutes_between(df, enroute_col, arrival_col)
 
     # Incident-level view: collapse multi-unit incidents to one record (first
-    # dispatched-and-responding unit's times) so call volume and response times are
+    # arriving unit's times) so call volume and response times are
     # per incident, not per unit response. Unit performance stays on the full,
     # per-response rows (it is inherently per-unit).
     df_inc = _collapse_to_incidents(df, overrides)
@@ -783,6 +779,6 @@ def compute_ems_metrics(
             "unit_responses": int(len(df)),
             "incidents":      int(len(df_inc)),
             "bls_ambulance_runs": _bls_ambulance_runs(df, overrides),
-            "basis":          "first dispatched & responding unit per incident",
+            "basis":          "first arriving unit per incident; dispatch fallback for volume only",
         },
     }

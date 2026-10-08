@@ -496,25 +496,8 @@ async def clean_upload(
     except Exception as _exc:  # noqa: BLE001
         logger.warning("Could not store cleaned-data blob for %s: %s", upload_id, _exc)
 
-    # Persist cleaning result
-    result = DataCleaningResult(
-        data_upload_id=upload.id,
-        missing_values_summary=stats["missing_values_summary"],
-        duplicate_rows_count=stats["duplicate_rows_count"],
-        removed_rows_count=stats["removed_rows_count"],
-        cleaned_file_path=cleaned_path,
-        cleaned_data_gz=cleaned_blob,
-        cleaning_notes=stats["cleaning_notes"],
-    )
-    db.add(result)
-
-    # Update upload record
-    upload.upload_status = "CLEANED"
-    upload.row_count_original = stats["row_count_original"]
-    upload.row_count_cleaned = stats["row_count_cleaned"]
-    db.commit()
-
-    # Generate dashboard metrics
+    # Generate metrics before publishing CLEANED. A cleaned file without a
+    # matching dashboard snapshot is not a successful pipeline result.
     try:
         from ..services.ems_analytics_service import compute_ems_metrics
         summary = {
@@ -529,7 +512,18 @@ async def clean_upload(
         }
         overrides = get_column_overrides(upload, db)
         metrics_json = compute_ems_metrics(cleaned_path, summary, stats, overrides=overrides)
-        # Upsert: replace if exists
+
+        result = DataCleaningResult(
+            data_upload_id=upload.id,
+            missing_values_summary=stats["missing_values_summary"],
+            duplicate_rows_count=stats["duplicate_rows_count"],
+            removed_rows_count=stats["removed_rows_count"],
+            cleaned_file_path=cleaned_path,
+            cleaned_data_gz=cleaned_blob,
+            cleaning_notes=stats["cleaning_notes"],
+        )
+        db.add(result)
+
         existing_dm = (
             db.query(EMSDashboardMetrics)
             .filter(EMSDashboardMetrics.data_upload_id == upload.id)
@@ -546,9 +540,18 @@ async def clean_upload(
                 metrics_json=metrics_json,
             )
             db.add(dm)
+        upload.upload_status = "CLEANED"
+        upload.row_count_original = stats["row_count_original"]
+        upload.row_count_cleaned = stats["row_count_cleaned"]
         db.commit()
     except Exception as dm_exc:
-        logger.warning("Dashboard metrics generation failed for %s: %s", upload_id, dm_exc)
+        db.rollback()
+        failed = db.query(DataUpload).filter(DataUpload.id == upload_id).first()
+        if failed:
+            failed.upload_status = "FAILED"
+            db.commit()
+        logger.error("Dashboard metrics generation failed for %s: %s", upload_id, dm_exc)
+        raise HTTPException(status_code=500, detail="Dashboard metrics generation failed") from dm_exc
 
     db.refresh(upload)
     return upload

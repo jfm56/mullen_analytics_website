@@ -26,7 +26,8 @@ from ..security_rls import set_agency_context
 from ..services.emscharts.lifecycle import (
     assert_org_active, check_caps, delete_agency, export_agency,
 )
-from ..services.emscharts.pipeline import live_dashboard, refresh_analytics, run_sync
+from ..services.emscharts.pipeline import SyncAlreadyRunning, live_dashboard, refresh_analytics, run_sync
+from ..services.jobs import JobConfigurationError, JobEnqueueError, enqueue
 
 router = APIRouter(prefix="/v1", tags=["emscharts"])
 settings = get_settings()
@@ -109,6 +110,8 @@ def require_sync_access(
     conn = db.query(EMSChartsConnection).filter(EMSChartsConnection.agency_id == agency_id).first()
     if conn is None or not conn.ems_sync_enabled:
         deny("EMSCharts sync is not enabled for this agency")
+    if conn.sync_status in ("queued", "running"):
+        deny("An EMSCharts sync is already in progress for this agency", status.HTTP_409_CONFLICT)
     # Trial expiration (non-platform-admin) + per-agency resource caps.
     try:
         if not ctx.is_platform_admin:
@@ -128,9 +131,22 @@ def _finish(db, agency_id, conn_id, run):
         conn.last_attempted_sync = now
         conn.sync_status = run["final_status"]
         conn.sync_error = None if run["final_status"] != "failed" else "see sync_runs"
-        if run["final_status"] in ("succeeded", "partial"):
+        # A partial run may contain malformed/unmapped objects. Do not advance
+        # the incremental watermark or those objects would be skipped forever.
+        if run["final_status"] == "succeeded":
             conn.last_successful_sync = now
         db.commit()
+
+
+def _sync_job_payload(agency_id, conn_id, raw_prefix, since, user_id, ip):
+    return {
+        "agency_id": str(agency_id),
+        "connection_id": str(conn_id),
+        "raw_prefix": raw_prefix,
+        "since": since.isoformat() if since else None,
+        "triggered_by": str(user_id),
+        "ip": ip,
+    }
 
 
 @router.post("/agencies/{agency_id}/emscharts/sync")
@@ -150,8 +166,25 @@ def sync_now(
     since = conn.last_successful_sync
     user_id = ctx.user.id
     ip = request.client.host if request.client else None
-    run = run_sync(db, agency_id, _s3(), settings.aws_s3_bucket, raw_prefix,
-                   since=since, trigger="manual", triggered_by=user_id, connection_id=conn_id)
+    if settings.job_backend.lower() == "sqs":
+        try:
+            queued = enqueue(
+                "emscharts_sync",
+                _sync_job_payload(agency_id, conn_id, raw_prefix, since, user_id, ip),
+            )
+            conn.sync_status = "queued"
+            conn.last_attempted_sync = datetime.utcnow()
+            db.commit()
+            _audit(db, agency_id, user_id, "emscharts_sync_queued", True,
+                   {"message_id": queued.get("message_id")}, ip=ip)
+            return {"queued": True, "backend": "sqs", "message_id": queued.get("message_id")}
+        except (JobConfigurationError, JobEnqueueError) as exc:
+            raise HTTPException(status_code=503, detail="EMSCharts worker is not available") from exc
+    try:
+        run = run_sync(db, agency_id, _s3(), settings.aws_s3_bucket, raw_prefix,
+                       since=since, trigger="manual", triggered_by=user_id, connection_id=conn_id)
+    except SyncAlreadyRunning as exc:
+        raise HTTPException(status_code=409, detail="An EMSCharts sync is already running for this agency") from exc
     _finish(db, agency_id, conn_id, run)
     # Atomic analytics refresh only on a usable run; a failed/invalid refresh keeps
     # the last known-good dashboard.
@@ -213,15 +246,43 @@ async def upload(
     try:
         s3.head_object(Bucket=settings.aws_s3_bucket, Key=key)
         reject("Raw object path already exists", code=status.HTTP_409_CONFLICT)
-    except s3.exceptions.ClientError:
-        pass  # 404 = available
+    except s3.exceptions.ClientError as exc:
+        # A missing object is the only expected exception. Do not turn missing
+        # permissions, a disabled bucket, or an AWS outage into a false
+        # "available" result before attempting the write.
+        error_code = str(exc.response.get("Error", {}).get("Code", ""))
+        if error_code not in {"404", "NoSuchKey", "NotFound"}:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Unable to verify raw object storage",
+            ) from exc
 
     s3.put_object(Bucket=settings.aws_s3_bucket, Key=key, Body=data,
                   ServerSideEncryption="aws:kms", ContentType="application/octet-stream")
 
+    if settings.job_backend.lower() == "sqs":
+        try:
+            queued = enqueue(
+                "emscharts_sync",
+                _sync_job_payload(agency_id, conn_id, prefix, None, uid, ip),
+            )
+            conn.sync_status = "queued"
+            conn.last_attempted_sync = datetime.utcnow()
+            db.commit()
+            _audit(db, agency_id, uid, "emscharts_upload_queued", True,
+                   {"raw_key": key, "bytes": len(data), "sha256": sha,
+                    "message_id": queued.get("message_id")}, ip=ip)
+            return {"ok": True, "queued": True, "backend": "sqs", "raw_key": key,
+                    "bytes": len(data), "sha256": sha, "message_id": queued.get("message_id")}
+        except (JobConfigurationError, JobEnqueueError) as exc:
+            raise HTTPException(status_code=503, detail="EMSCharts worker is not available") from exc
+
     # Process via the SAME pipeline (so the upload is validated + normalized + reconciled).
-    run = run_sync(db, agency_id, s3, settings.aws_s3_bucket, prefix,
-                   since=None, trigger="manual", triggered_by=uid, connection_id=conn_id)
+    try:
+        run = run_sync(db, agency_id, s3, settings.aws_s3_bucket, prefix,
+                       since=None, trigger="manual", triggered_by=uid, connection_id=conn_id)
+    except SyncAlreadyRunning as exc:
+        raise HTTPException(status_code=409, detail="An EMSCharts sync is already running for this agency") from exc
     _finish(db, agency_id, conn_id, run)
     refresh = {"swapped": False, "reason": "run not successful"}
     if run["final_status"] in ("succeeded", "partial"):

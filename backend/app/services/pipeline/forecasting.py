@@ -71,6 +71,8 @@ _Z80            = 1.282
 
 def _daily_series(df: pd.DataFrame) -> Optional[pd.Series]:
     """Return daily call counts indexed by date, or None if not possible."""
+    from ..ems_analytics_service import _collapse_to_incidents
+    df = _collapse_to_incidents(df)
     if "_dt_created" in df.columns:
         dates = df["_dt_created"].dropna()
     else:
@@ -318,7 +320,9 @@ def _forecast_call_volume(
     for name, model in _build_models().items():
         try:
             model.fit(X_train, y_train)
-            preds = model.predict(X_test)
+            # Same fixed-origin recursive protocol as the baseline. No actual
+            # holdout values may become lag features during this forecast.
+            preds = _iterative_forecast(model, feature_df.iloc[:n_train], daily_train, n_test)
             preds = np.clip(preds, 0, None)
             scores[name] = {
                 "mae":  round(float(mean_absolute_error(y_test, preds)), 3),
@@ -349,12 +353,12 @@ def _forecast_call_volume(
         reason = f"Moving average (7-day) achieved lowest MAE={ma_mae:.2f} among all candidates."
     else:
         winner_model = fitted_models[winner_name]
+        preds_test = _iterative_forecast(winner_model, feature_df.iloc[:n_train], daily_train, n_test)
+        residuals = y_test - preds_test  # preserve holdout residuals before refit
         winner_model.fit(X, y)                         # retrain on all data
         daily_vals_fcast = _iterative_forecast(
             winner_model, feature_df, daily, _HORIZON_DAYS
         )
-        preds_test   = fitted_models[winner_name].predict(X_test)
-        residuals    = y_test - preds_test
         top_features_out = _feature_importance(winner_model, feature_cols)
         reason = (
             f"{winner_name} achieved lowest MAE={winner_scores['mae']:.2f} "

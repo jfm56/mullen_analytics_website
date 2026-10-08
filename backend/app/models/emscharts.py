@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint,
+    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
@@ -52,6 +52,14 @@ class EMSChartsConnection(Base):
 class SyncRun(Base):
     """Non-PHI operational reconciliation for one ingestion run."""
     __tablename__ = "sync_runs"
+    __table_args__ = (
+        Index(
+            "uq_sync_runs_active_agency",
+            "agency_id",
+            unique=True,
+            postgresql_where=text("final_status = 'running'"),
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agency_id = Column(UUID(as_uuid=True), ForeignKey("agencies.id", ondelete="CASCADE"),
@@ -128,6 +136,14 @@ class EMSAnalyticsSnapshot(Base):
     live snapshot, so a failed/partial refresh never exposes partial data — the
     previous live snapshot stays active until a new one is validated and swapped in."""
     __tablename__ = "ems_analytics_snapshots"
+    __table_args__ = (
+        Index(
+            "uq_ems_analytics_live_agency",
+            "agency_id",
+            unique=True,
+            postgresql_where=text("status = 'live'"),
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agency_id = Column(UUID(as_uuid=True), ForeignKey("agencies.id", ondelete="CASCADE"),

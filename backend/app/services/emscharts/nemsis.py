@@ -4,7 +4,9 @@ Namespace-agnostic (matches by local element name), tolerant of version differen
 `parse_records` raises xml.etree.ElementTree.ParseError on malformed XML so the
 pipeline can count the whole file as a validation failure.
 """
+import csv
 import hashlib
+import io
 import xml.etree.ElementTree as ET  # tostring only (serializing an already-parsed tree is safe)
 from datetime import datetime
 
@@ -97,6 +99,66 @@ def parse_records(xml_bytes):
             row[field] = _dt(texts.get(nem))
         row["content_hash"] = hashlib.sha256(ET.tostring(rec)).hexdigest()
         out.append(row)
+    return out
+
+
+def parse_csv_records(csv_bytes):
+    """Parse a delimited EMS export into the same operational record contract.
+
+    CSV is intentionally conservative: fields must use NEMSIS names or the
+    documented normalized aliases. Unknown columns are ignored, and rows that
+    lack the required dedup/timestamp fields are returned with an error marker
+    so the reconciliation run reports them instead of silently inventing data.
+    """
+    text = csv_bytes.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text), strict=True)
+    if not reader.fieldnames:
+        raise csv.Error("CSV has no header")
+
+    normalized = {
+        "".join(ch.lower() for ch in str(name).strip() if ch.isalnum()): name
+        for name in reader.fieldnames if name
+    }
+
+    def value(row, *names):
+        for name in names:
+            source = normalized.get("".join(ch.lower() for ch in name if ch.isalnum()))
+            if source is not None:
+                raw = row.get(source)
+                if raw is not None and str(raw).strip():
+                    return str(raw).strip()
+        return None
+
+    out = []
+    for row in reader:
+        # DictReader stores surplus fields under a None key. Treat those rows
+        # as malformed instead of dropping the extra values silently.
+        if None in row:
+            out.append({"_error": "malformed CSV row (extra fields)"})
+            continue
+        rid = value(row, "eRecord.01", "source_record_id", "record_id", "record id")
+        timestamps = {
+            field: _dt(value(row, nemsis_name, field))
+            for nemsis_name, field in _TIME_MAP.items()
+        }
+        if not rid:
+            out.append({"_error": "missing eRecord.01/source_record_id (no dedup key)"})
+            continue
+        record = {
+            "source_record_id": rid,
+            "response_number": value(row, "eResponse.03", "response_number"),
+            "incident_number": value(row, "eCad.01", "eResponse.04", "incident_number"),
+            "unit_id": value(row, "eUnit.02", "eResponse.14", "eResponse.13", "unit_id"),
+            "disposition": value(row, "eDisposition.12", "eDisposition.01", "disposition"),
+            "call_type": _call_type(value(row, "eResponse.05", "eResponse.23", "call_type") or ""),
+            "scene_lat": _f(value(row, "eScene.17", "scene_lat", "latitude")),
+            "scene_lng": _f(value(row, "eScene.18", "scene_lng", "longitude")),
+            **timestamps,
+        }
+        record["content_hash"] = hashlib.sha256(
+            "|".join(str(row.get(name) or "") for name in reader.fieldnames).encode("utf-8")
+        ).hexdigest()
+        out.append(record)
     return out
 
 
