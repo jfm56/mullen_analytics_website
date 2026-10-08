@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import URL, create_engine, event, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import get_settings
@@ -13,19 +13,41 @@ def _norm(url: str) -> str:
     return url
 
 
-def _get_database_url() -> str:
+def _get_database_url():
     """Runtime DSN — the low-privilege app_user in staging/prod (RLS enforced)."""
-    return _norm(os.environ.get("DATABASE_URL") or settings.database_url)
+    explicit = os.environ.get("DATABASE_URL")
+    if explicit:
+        return _norm(explicit)
+    if settings.database_host:
+        return URL.create(
+            "postgresql+psycopg",
+            username=settings.database_user,
+            password=settings.database_password or settings.app_db_password,
+            host=settings.database_host,
+            port=settings.database_port,
+            database=settings.database_name,
+            query={"sslmode": settings.database_sslmode},
+        )
+    return _norm(settings.database_url)
 
 
-def _get_admin_url() -> str:
+def _get_admin_url():
     """Owner DSN for schema migrations / RLS provisioning. Falls back to the
     runtime URL when no separate admin URL is configured (local/session mode)."""
-    return _norm(
-        os.environ.get("DATABASE_ADMIN_URL")
-        or settings.database_admin_url
-        or _get_database_url()
-    )
+    explicit = os.environ.get("DATABASE_ADMIN_URL") or settings.database_admin_url
+    if explicit:
+        return _norm(explicit)
+    if settings.database_host and settings.database_admin_password:
+        return URL.create(
+            "postgresql+psycopg",
+            username=settings.database_admin_user,
+            password=settings.database_admin_password,
+            host=settings.database_host,
+            port=settings.database_port,
+            database=settings.database_name,
+            query={"sslmode": settings.database_sslmode},
+        )
+    return _get_database_url()
 
 
 engine = create_engine(

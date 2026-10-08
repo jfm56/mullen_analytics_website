@@ -14,6 +14,18 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql://localhost:5432/mullen_analytics"
     database_pool_size: int = 10
+    # AWS/ECS can inject passwords from Secrets Manager without assembling a
+    # credential-bearing DSN in Terraform or task-definition environment data.
+    # DATABASE_URL / DATABASE_ADMIN_URL still take precedence for local and
+    # legacy deployments.
+    database_host: str = ""
+    database_port: int = 5432
+    database_name: str = "mullen_analytics"
+    database_user: str = "app_user"
+    database_password: str = ""
+    database_admin_user: str = "mullen_admin"
+    database_admin_password: str = ""
+    database_sslmode: str = "require"
     # Unified-platform runtime DB identity. The app connects as the low-privilege
     # `app_user` (RLS-enforced) for normal requests; schema migrations / RLS
     # provisioning run as the owner via `database_admin_url`. Blank admin url =>
@@ -90,6 +102,7 @@ class Settings(BaseSettings):
     aws_secret_access_key: str = ""
     aws_s3_bucket: str = ""
     aws_region: str = "us-east-1"
+    aws_kms_key_id: str = ""  # AWS production CMK ARN for S3 object writes
     # Durable processing jobs. "background" preserves local/Railway behavior;
     # AWS sets "sqs" and runs backend.worker as a separate ECS service.
     job_backend: str = "background"  # background | sqs
@@ -129,6 +142,11 @@ class Settings(BaseSettings):
     app_url: str = "http://localhost:3000"
     api_url: str = "http://localhost:8000"
     debug: bool = False
+    # Emergency / rollout kill switch. AWS keeps this false until BAA scope,
+    # migrations, isolation, reconciliation, backups and monitoring are signed
+    # off. It blocks writes to known clinical-data routes without disabling
+    # health checks or authentication.
+    phi_ingestion_enabled: bool = False
 
     # SSO handoff to the EMS QA platform (one login). The portal signs a
     # short-lived, single-use Ed25519 token; the EMS QA app verifies it with the

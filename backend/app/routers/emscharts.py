@@ -257,8 +257,16 @@ async def upload(
                 detail="Unable to verify raw object storage",
             ) from exc
 
-    s3.put_object(Bucket=settings.aws_s3_bucket, Key=key, Body=data,
-                  ServerSideEncryption="aws:kms", ContentType="application/octet-stream")
+    encryption = {"ServerSideEncryption": "aws:kms"}
+    if settings.aws_kms_key_id:
+        encryption["SSEKMSKeyId"] = settings.aws_kms_key_id
+    s3.put_object(
+        Bucket=settings.aws_s3_bucket,
+        Key=key,
+        Body=data,
+        ContentType="application/octet-stream",
+        **encryption,
+    )
 
     if settings.job_backend.lower() == "sqs":
         try:
