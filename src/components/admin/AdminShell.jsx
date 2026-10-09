@@ -7,30 +7,7 @@ import AdminTopbar from './AdminTopbar';
 import AdminBreadcrumbs from './AdminBreadcrumbs';
 import ClientErrorReporter from '@/components/ClientErrorReporter';
 
-const PAGE_TITLES = {
-  '/admin':                'Admin Home',
-  '/admin/clients':        'Clients',
-  '/admin/data':           'Data Uploads',
-  '/admin/dashboard':      'Dashboards',
-  '/admin/data-explorer':  'Data Explorer',
-  '/admin/column-mapping': 'Column Mapping',
-  '/admin/messages':       'Messages',
-  '/admin/users':          'Users & Roles',
-  '/admin/errors':         'Errors & Issues',
-  '/admin/projects':       'Projects',
-  '/admin/invoices':       'Invoices',
-  '/admin/analytics':      'Analytics',
-  '/admin/audit-logs':     'Audit Logs',
-  '/admin/settings':       'Settings',
-};
-
-function getTitle(pathname) {
-  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  for (const [key, label] of Object.entries(PAGE_TITLES)) {
-    if (pathname.startsWith(key + '/')) return label;
-  }
-  return 'Admin';
-}
+import { getAdminTitle } from '@/lib/adminNavigation.mjs';
 
 export default function AdminShell({ children }) {
   const router = useRouter();
@@ -69,8 +46,12 @@ export default function AdminShell({ children }) {
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
       <div className="flex flex-col flex-1 min-w-0">
-        <AdminTopbar title={getTitle(pathname)} profile={profile} />
-        <main className="flex-1 p-6 overflow-auto">
+        <AdminTopbar title={getAdminTitle(pathname)} profile={profile} />
+        <details className="border-b border-gray-200 bg-white lg:hidden">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-800">Admin navigation</summary>
+          <AdminSidebar mobile />
+        </details>
+        <main className="flex-1 min-w-0 p-4 sm:p-6 overflow-auto">
           <AdminBreadcrumbs />
           {children}
         </main>

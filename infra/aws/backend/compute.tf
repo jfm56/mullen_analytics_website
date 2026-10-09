@@ -46,10 +46,7 @@ data "aws_iam_policy_document" "ecs_execution_secrets" {
   statement {
     actions = ["secretsmanager:GetSecretValue"]
     resources = concat(
-      [
-        aws_secretsmanager_secret.runtime.arn,
-        aws_db_instance.main.master_user_secret[0].secret_arn,
-      ],
+      [aws_secretsmanager_secret.runtime.arn],
       values(var.extra_secret_arns),
     )
   }
@@ -64,6 +61,80 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
   name   = "secrets"
   role   = aws_iam_role.ecs_execution.id
   policy = data.aws_iam_policy_document.ecs_execution_secrets.json
+}
+
+# API execution can inject the dedicated platform secret; worker execution cannot.
+resource "aws_iam_role" "api_execution" {
+  name               = "${local.prefix}-api-execution"
+  assume_role_policy = aws_iam_role.ecs_execution.assume_role_policy
+}
+
+resource "aws_iam_role_policy_attachment" "api_execution" {
+  role       = aws_iam_role.api_execution.name
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+data "aws_iam_policy_document" "api_execution_secrets" {
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = concat(
+      [aws_secretsmanager_secret.runtime.arn, aws_secretsmanager_secret.platform.arn],
+      values(var.extra_secret_arns),
+    )
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [aws_kms_key.data.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "api_execution_secrets" {
+  name   = "secrets"
+  role   = aws_iam_role.api_execution.id
+  policy = data.aws_iam_policy_document.api_execution_secrets.json
+}
+
+# Only the migration execution role may retrieve the RDS administrator secret.
+resource "aws_iam_role" "migration_execution" {
+  name               = "${local.prefix}-migration-execution"
+  assume_role_policy = aws_iam_role.ecs_execution.assume_role_policy
+}
+
+resource "aws_iam_role_policy_attachment" "migration_execution" {
+  role       = aws_iam_role.migration_execution.name
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+data "aws_iam_policy_document" "migration_execution_secrets" {
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = concat(
+      [
+        aws_secretsmanager_secret.runtime.arn,
+        aws_secretsmanager_secret.platform.arn,
+        aws_db_instance.main.master_user_secret[0].secret_arn,
+      ],
+      values(var.extra_secret_arns),
+    )
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [aws_kms_key.data.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "migration_execution_secrets" {
+  name   = "secrets"
+  role   = aws_iam_role.migration_execution.id
+  policy = data.aws_iam_policy_document.migration_execution_secrets.json
+}
+
+# Migration has no S3/SQS application permissions.
+resource "aws_iam_role" "migration" {
+  name               = "${local.prefix}-migration-task"
+  assume_role_policy = aws_iam_role.ecs_execution.assume_role_policy
 }
 
 resource "aws_iam_role" "api" {
@@ -337,10 +408,9 @@ locals {
     { name = "DATABASE_PORT", value = tostring(aws_db_instance.main.port) },
     { name = "DATABASE_NAME", value = var.database_name },
     { name = "DATABASE_USER", value = "app_user" },
-    { name = "DATABASE_ADMIN_USER", value = aws_db_instance.main.username },
     { name = "DATABASE_SSLMODE", value = "require" },
     { name = "AUTH_MODE", value = var.auth_mode },
-    { name = "COGNITO_REGION", value = var.aws_region },
+    { name = "COGNITO_REGION", value = "us-east-2" },
     { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
     { name = "COGNITO_CLIENT_ID", value = var.cognito_client_id },
     { name = "SESSION_COOKIE_SECURE", value = "true" },
@@ -351,23 +421,60 @@ locals {
     { name = "PHI_INGESTION_ENABLED", value = tostring(var.enable_phi_ingestion) },
   ]
 
-  common_secrets = concat([
-    { name = "SECRET_KEY", valueFrom = "${aws_secretsmanager_secret.runtime.arn}:SECRET_KEY::" },
-    { name = "APP_DB_PASSWORD", valueFrom = "${aws_secretsmanager_secret.runtime.arn}:APP_DB_PASSWORD::" },
-    { name = "DATABASE_PASSWORD", valueFrom = "${aws_secretsmanager_secret.runtime.arn}:APP_DB_PASSWORD::" },
-    { name = "DATABASE_ADMIN_PASSWORD", valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::" },
-  ], [for name, arn in var.extra_secret_arns : { name = name, valueFrom = arn }])
-}
+  migration_environment = concat(local.common_environment, [
+    {
+      name  = "DATABASE_ADMIN_USER"
+      value = aws_db_instance.main.username
+    }
+  ])
 
+  common_secrets = concat([
+    {
+      name      = "SECRET_KEY"
+      valueFrom = "${aws_secretsmanager_secret.runtime.arn}:SECRET_KEY::"
+    },
+    {
+      name      = "DATABASE_PASSWORD"
+      valueFrom = "${aws_secretsmanager_secret.runtime.arn}:APP_DB_PASSWORD::"
+    }
+    ], [for name, arn in var.extra_secret_arns : {
+      name      = name
+      valueFrom = arn
+  }])
+
+  platform_secrets = concat(local.common_secrets, [
+    {
+      name      = "PLATFORM_DB_PASSWORD"
+      valueFrom = "${aws_secretsmanager_secret.platform.arn}:PLATFORM_DB_PASSWORD::"
+    }
+  ])
+
+  migration_secrets = concat(local.platform_secrets, [
+    {
+      name      = "APP_DB_PASSWORD"
+      valueFrom = "${aws_secretsmanager_secret.runtime.arn}:APP_DB_PASSWORD::"
+    },
+    {
+      name      = "DATABASE_ADMIN_PASSWORD"
+      valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::"
+    }
+  ])
+}
 resource "aws_ecs_task_definition" "api" {
   count = var.deploy_services ? 1 : 0
+
+  depends_on = [
+    aws_secretsmanager_secret_version.platform,
+    aws_iam_role_policy.api_execution_secrets,
+    aws_iam_role_policy_attachment.api_execution,
+  ]
 
   family                   = "${local.prefix}-api"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.api_cpu
   memory                   = var.api_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  execution_role_arn       = aws_iam_role.api_execution.arn
   task_role_arn            = aws_iam_role.api.arn
 
   volume {
@@ -387,7 +494,7 @@ resource "aws_ecs_task_definition" "api" {
     image                  = var.container_image
     essential              = true
     environment            = local.common_environment
-    secrets                = local.common_secrets
+    secrets                = local.platform_secrets
     portMappings           = [{ containerPort = 8000, hostPort = 8000, protocol = "tcp" }]
     mountPoints            = [{ sourceVolume = "legacy-storage", containerPath = "/mnt/mullen", readOnly = false }]
     readonlyRootFilesystem = true
@@ -459,21 +566,26 @@ resource "aws_ecs_task_definition" "worker" {
 resource "aws_ecs_task_definition" "migration" {
   count = var.deploy_services ? 1 : 0
 
+  depends_on = [
+    aws_secretsmanager_secret_version.platform,
+    aws_iam_role_policy.migration_execution_secrets,
+  ]
+
   family                   = "${local.prefix}-migration"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.api.arn
+  execution_role_arn       = aws_iam_role.migration_execution.arn
+  task_role_arn            = aws_iam_role.migration.arn
 
   container_definitions = jsonencode([{
     name                   = "migration"
     image                  = var.container_image
     essential              = true
-    command                = ["python", "scripts/run_migrations.py"]
-    environment            = local.common_environment
-    secrets                = local.common_secrets
+    command                = ["python", "-m", "scripts.run_migrations"]
+    environment            = local.migration_environment
+    secrets                = local.migration_secrets
     readonlyRootFilesystem = true
     logConfiguration = {
       logDriver = "awslogs"

@@ -120,9 +120,8 @@ export default function ProjectDetailPage() {
         credentials: 'include',
       });
 
-      if (!res.ok) throw new Error('Failed to generate report');
-
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || 'Failed to generate report');
       alert('Report generated successfully!');
       setActiveTab('documents');
       await loadTabData();

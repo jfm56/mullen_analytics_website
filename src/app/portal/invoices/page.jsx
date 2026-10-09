@@ -13,9 +13,11 @@ export default function PortalInvoicesPage() {
   const [user, setUser] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   const loadInvoices = async () => {
+    setError('');
     try {
       const session = await auth.getSession();
       
@@ -26,12 +28,13 @@ export default function PortalInvoicesPage() {
 
       setUser(session.user);
 
-      // TODO: Replace with FastAPI endpoint when ready
       const res = await fetch(`${API_URL}/invoices/`, {
         credentials: 'include',
       });
       const data = await res.json();
-      setInvoices(data || []);
+      if (!res.ok) throw new Error(data.detail || data.error || 'Could not load invoices.');
+      if (!Array.isArray(data)) throw new Error('Could not load invoices. Please try again.');
+      setInvoices(data);
 
       // Load unread count
       try {
@@ -41,8 +44,7 @@ export default function PortalInvoicesPage() {
         setUnreadMessages(count || 0);
       } catch (e) {}
     } catch (e) {
-      console.error(e);
-      router.replace('/portal/login');
+      setError(e.message || 'Could not load invoices. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -113,7 +115,12 @@ export default function PortalInvoicesPage() {
       </div>
 
       <PortalSectionTabs active="invoices" unread={unreadMessages} />
-      {invoices.length === 0 ? (
+      {error ? (
+        <div role="alert" className="rounded border border-red-200 bg-red-50 p-4 text-red-800">
+          <p>{error}</p>
+          <button onClick={loadInvoices} className="mt-2 underline">Try again</button>
+        </div>
+      ) : invoices.length === 0 ? (
         <p className="text-sm text-gray-600">No invoices found yet.</p>
       ) : (
         <div className="border rounded-lg bg-white divide-y">

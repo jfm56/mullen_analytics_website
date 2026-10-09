@@ -1,0 +1,282 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "url": "https://mullenanalytics.com/",
+    "seconds": 4.6,
+    "bytes": 127127,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/about",
+    "status": 200,
+    "url": "https://mullenanalytics.com/about",
+    "seconds": 4.67,
+    "bytes": 53960,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/admin/login",
+    "status": 200,
+    "url": "https://mullenanalytics.com/admin/login",
+    "seconds": 4.84,
+    "bytes": 15895,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/api/vcard",
+    "status": 200,
+    "url": "https://mullenanalytics.com/api/vcard",
+    "seconds": 4.88,
+    "bytes": 415,
+    "type": "text/vcard; charset=utf-8"
+  },
+  {
+    "path": "/biomedical-research",
+    "status": 200,
+    "url": "https://mullenanalytics.com/biomedical-research",
+    "seconds": 4.74,
+    "bytes": 66882,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/business-analytics",
+    "status": 200,
+    "url": "https://mullenanalytics.com/business-analytics",
+    "seconds": 4.68,
+    "bytes": 85247,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/business-dashboard-example",
+    "status": 200,
+    "url": "https://mullenanalytics.com/business-dashboard-example",
+    "seconds": 3.54,
+    "bytes": 60011,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/capabilities",
+    "status": 200,
+    "url": "https://mullenanalytics.com/capabilities",
+    "seconds": 3.38,
+    "bytes": 92798,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/connect",
+    "status": 200,
+    "url": "https://mullenanalytics.com/connect",
+    "seconds": 3.5,
+    "bytes": 53031,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/contact",
+    "status": 200,
+    "url": "https://mullenanalytics.com/contact",
+    "seconds": 3.27,
+    "bytes": 47605,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/documents/mullen-analytics-brochure.pdf",
+    "status": 404
+  },
+  {
+    "path": "/documents/mullen-analytics-capability-statement.pdf",
+    "status": 404
+  },
+  {
+    "path": "/drone-intelligence",
+    "status": 200,
+    "url": "https://mullenanalytics.com/drone-intelligence",
+    "seconds": 3.47,
+    "bytes": 65233,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/ems-qa",
+    "status": 200,
+    "url": "https://mullenanalytics.com/ems-qa",
+    "seconds": 3.34,
+    "bytes": 52096,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/environmental",
+    "status": 200,
+    "url": "https://mullenanalytics.com/environmental",
+    "seconds": 3.39,
+    "bytes": 54684,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/first-responders",
+    "status": 200,
+    "url": "https://mullenanalytics.com/first-responders",
+    "seconds": 3.38,
+    "bytes": 70128,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/free-assessments",
+    "status": 200,
+    "url": "https://mullenanalytics.com/free-assessments",
+    "seconds": 3.27,
+    "bytes": 40841,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/free-assessments/business",
+    "status": 200,
+    "url": "https://mullenanalytics.com/free-assessments/business",
+    "seconds": 3.24,
+    "bytes": 51481,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/free-assessments/ems",
+    "status": 200,
+    "url": "https://mullenanalytics.com/free-assessments/ems",
+    "seconds": 3.42,
+    "bytes": 57359,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/guides/data-science-vs-data-engineering",
+    "status": 200,
+    "url": "https://mullenanalytics.com/guides/data-science-vs-data-engineering",
+    "seconds": 3.32,
+    "bytes": 42613,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/healthcare",
+    "status": 200,
+    "url": "https://mullenanalytics.com/healthcare",
+    "seconds": 3.29,
+    "bytes": 77041,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/images/connect-preview.jpg",
+    "status": 404
+  },
+  {
+    "path": "/industries",
+    "status": 200,
+    "url": "https://mullenanalytics.com/industries",
+    "seconds": 3.29,
+    "bytes": 49659,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/portal/login",
+    "status": 200,
+    "url": "https://mullenanalytics.com/portal/login",
+    "seconds": 3.28,
+    "bytes": 16879,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/portfolio",
+    "status": 200,
+    "url": "https://mullenanalytics.com/portfolio",
+    "seconds": 5.49,
+    "bytes": 41560,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/pricing",
+    "status": 200,
+    "url": "https://mullenanalytics.com/pricing",
+    "seconds": 5.45,
+    "bytes": 64209,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/privacy",
+    "status": 200,
+    "url": "https://mullenanalytics.com/privacy",
+    "seconds": 5.5,
+    "bytes": 51493,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/products",
+    "status": 200,
+    "url": "https://mullenanalytics.com/products",
+    "seconds": 5.48,
+    "bytes": 80483,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/profit-calculator",
+    "status": 200,
+    "url": "https://mullenanalytics.com/profit-calculator",
+    "seconds": 5.45,
+    "bytes": 32651,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/revenue-checker",
+    "status": 200,
+    "url": "https://mullenanalytics.com/revenue-checker",
+    "seconds": 5.5,
+    "bytes": 33864,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/robots.txt",
+    "status": 200,
+    "url": "https://mullenanalytics.com/robots.txt",
+    "seconds": 3.53,
+    "bytes": 178,
+    "type": "text/plain; charset=utf-8"
+  },
+  {
+    "path": "/sample-report",
+    "status": 200,
+    "url": "https://mullenanalytics.com/sample-report",
+    "seconds": 3.63,
+    "bytes": 47654,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/services",
+    "status": 200,
+    "url": "https://mullenanalytics.com/services",
+    "seconds": 3.68,
+    "bytes": 34009,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/signup",
+    "status": 200,
+    "url": "https://mullenanalytics.com/signup",
+    "seconds": 3.61,
+    "bytes": 29044,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/sitemap.xml",
+    "status": 200,
+    "url": "https://mullenanalytics.com/sitemap.xml",
+    "seconds": 3.55,
+    "bytes": 6437,
+    "type": "application/xml"
+  },
+  {
+    "path": "/technology",
+    "status": 200,
+    "url": "https://mullenanalytics.com/technology",
+    "seconds": 3.54,
+    "bytes": 40166,
+    "type": "text/html; charset=utf-8"
+  },
+  {
+    "path": "/videos/mullen-analytics-demo.mp4",
+    "status": 404
+  }
+]

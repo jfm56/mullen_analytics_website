@@ -37,12 +37,14 @@ def rls():
     Base.metadata.create_all(bind=owner)
     A, B = uuid.uuid4(), uuid.uuid4()
     try:
-        apply_rls(owner, app_role_password=APP_PW)   # (re)provisions policies incl. the platform clause
+        apply_rls(owner, app_role_password=APP_PW, platform_role_password="rls_platform_distinct_pw")   # (re)provisions policies incl. the platform clause
         with owner.begin() as c:
             c.execute(text("INSERT INTO agencies (id,agency_name,slug,data_classification) VALUES "
                            "(:a,'Plat A',:sa,'production'),(:b,'Plat B',:sb,'synthetic')"),
                       {"a": A, "sa": f"plat-a-{uuid.uuid4().hex[:6]}", "b": B, "sb": f"plat-b-{uuid.uuid4().hex[:6]}"})
     except Exception as exc:  # noqa: BLE001
+        if os.environ.get("CI", "").lower() == "true":
+            pytest.fail(f"CI could not provision the required platform role/policies: {exc}")
         pytest.skip(f"cannot provision RLS: {exc}")
     yield {"A": A, "B": B}
     with owner.begin() as c:
@@ -55,8 +57,14 @@ def _app_engine():
     return create_engine(u, future=True)
 
 
-def _visible(ctx_sql, ids):
-    eng = _app_engine()
+def _platform_engine():
+    u = make_url(os.environ["DATABASE_URL"]).set(username="app_platform", password="rls_platform_distinct_pw",
+                                                 drivername="postgresql+psycopg2")
+    return create_engine(u, future=True)
+
+
+def _visible(ctx_sql, ids, engine=None):
+    eng = engine or _app_engine()
     with eng.connect() as conn:
         with conn.begin():
             for s in ctx_sql:
@@ -66,11 +74,20 @@ def _visible(ctx_sql, ids):
     return {str(r[0]) for r in rows}
 
 
-def test_platform_context_sees_all_agencies(rls):
+def test_platform_role_sees_all_agencies(rls):
+    # Super Admin platform scope = the app_platform ROLE connection (role-keyed RLS
+    # clause), NOT a GUC. It sees A and B without setting any session variable.
+    A, B = rls["A"], rls["B"]
+    assert _visible([], [A, B], engine=_platform_engine()) == {str(A), str(B)}
+
+
+def test_forged_platform_guc_grants_nothing(rls):
+    # The retired bypass: an ordinary app_user that forges the old app.platform_admin
+    # GUC (and a random user) now obtains NO cross-agency access.
     A, B = rls["A"], rls["B"]
     seen = _visible(["SELECT set_config('app.current_user','%s',true)" % uuid.uuid4(),
                      "SELECT set_config('app.platform_admin','true',true)"], [A, B])
-    assert seen == {str(A), str(B)}            # SUPER_ADMIN platform scope sees A and B
+    assert seen == set()
 
 
 def test_agency_context_sees_only_that_agency(rls):
@@ -121,6 +138,7 @@ def plat():
     app = FastAPI()
     app.include_router(pa.router, prefix="/api")
     app.dependency_overrides[pa.get_db] = lambda: s
+    app.dependency_overrides[pa.get_platform_db] = lambda: s   # platform path uses the platform session
 
     yield {"client": TestClient(app), "s": s, "su": su, "reg": reg, "prod": prod, "syn": syn, "authz": authz}
 

@@ -7,7 +7,7 @@ const STATIC_ROUTES = [
   "", "/about", "/capabilities", "/technology", "/industries", "/services",
   "/products", "/pricing", "/portfolio", "/connect", "/contact",
   "/business-analytics", "/healthcare", "/first-responders", "/ems-qa",
-  "/biomedical-research", "/drone-intelligence", "/environmental",
+  "/biomedical-research",
   "/business-dashboard-example", "/guides/data-science-vs-data-engineering",
   "/free-assessments", "/free-assessments/business", "/free-assessments/ems",
   "/revenue-checker", "/profit-calculator", "/sample-report", "/privacy",

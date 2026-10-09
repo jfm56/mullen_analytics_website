@@ -43,7 +43,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d test_mullen_analytics"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -79,7 +79,18 @@ jobs:
       - name: Run migrations
         run: |
           set -euo pipefail
+          # Fresh CI databases have no runtime role. Migration 017 deliberately
+          # requires it; create a non-login, unprivileged role for schema tests.
+          PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics \
+            -c 'CREATE ROLE app_user NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;'
           for f in backend/migrations/*.sql; do
+            if [[ "$(basename "$f")" == "017_rls_least_privilege.sql" ]]; then
+              # Legacy SQL does not define all ORM-backed tables. Mirror the
+              # test fixture's table creation after 001-016, before 017 grants
+              # privileges on those tables. Importing the app registers models
+              # without running startup hooks, seeds, or background jobs.
+              PYTHONPATH=backend python -c 'from app.main import app; from app.database import Base, engine; Base.metadata.create_all(bind=engine)'
+            fi
             echo "Running $f"
             PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics -f "$f"
           done
@@ -101,7 +112,9 @@ jobs:
         continue-on-error: false
 
       - name: Pytest
-        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=40 -v --tb=long
+        run: |
+          pytest --cov=app --cov-report=term-missing --cov-fail-under=40 -v --tb=long
+          pytest scripts/audit/test_role_boundary_review.py -q
         working-directory: backend
 
   frontend:
@@ -124,6 +137,9 @@ jobs:
 
       - name: Install deps
         run: npm ci --legacy-peer-deps
+
+      - name: Check internal links and assets
+        run: npm run audit:links
 
       - name: Build
         run: npm run build

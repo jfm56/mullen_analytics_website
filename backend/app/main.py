@@ -116,14 +116,36 @@ async def on_startup():
         print("=" * 70)
 
     raw_url = os.environ.get("DATABASE_URL", "<NOT SET>")
-    masked = raw_url[:40] + "..." if len(raw_url) > 40 else raw_url
-    log.info("DATABASE_URL env var: %s", masked)
+    log.info("DATABASE_URL configured: %s", raw_url != "<NOT SET>")
     log.info("ENVIRONMENT: %s | STORAGE_BACKEND: %s", settings.environment, settings.storage_backend)
-    try:
-        Base.metadata.create_all(bind=admin_engine)
-        log.info("DB create_all succeeded")
-    except Exception as exc:  # noqa: BLE001
-        log.error("DB create_all failed: %s", exc)
+
+    # Schema provisioning (create_all / self-heal ALTERs / backfills / RLS) runs
+    # ONLY in local dev. In staging/production the API and worker connect as the
+    # low-privilege runtime role and must never modify schema at runtime (that needs
+    # owner credentials and risks drift on every boot) — they VALIDATE the schema an
+    # operator migrated and fail fast if it is missing/invalid. See startup_checks.py.
+    require_rls = settings.auth_mode == "cognito"
+    if require_rls and settings.environment != "local" and settings.db_auto_provision:
+        raise RuntimeError("Cognito deployments require operator-run migrations; DB_AUTO_PROVISION must be false")
+    should_provision = settings.environment == "local" or settings.db_auto_provision
+    if not should_provision:
+        from .startup_checks import assert_runtime_ready
+        assert_runtime_ready(
+            engine, require_rls=require_rls, qa_enabled=settings.emscs_qa_v1_enabled
+        )
+        if require_rls:
+            from .database import get_platform_engine
+            assert_runtime_ready(
+                get_platform_engine(), require_rls=True,
+                qa_enabled=settings.emscs_qa_v1_enabled, expected_role="app_platform"
+            )
+
+    if should_provision:
+        try:
+            Base.metadata.create_all(bind=admin_engine)
+            log.info("DB create_all succeeded")
+        except Exception as exc:  # noqa: BLE001
+            log.error("DB create_all failed: %s", exc)
 
     # Self-healing schema patches: create_all() creates new tables but never
     # ALTERs existing ones, and the Railway deploy does not run the SQL
@@ -195,21 +217,23 @@ async def on_startup():
             "ALTER TABLE ems_incidents ADD COLUMN IF NOT EXISTS incident_number VARCHAR(120)",
             "CREATE INDEX IF NOT EXISTS ix_ems_incidents_incident_number ON ems_incidents(incident_number)",
         ]
-        with admin_engine.begin() as conn:
-            for _stmt in _schema_patches:
-                conn.execute(_text(_stmt))
-        log.info("DB schema self-heal patches applied")
+        if should_provision:
+            with admin_engine.begin() as conn:
+                for _stmt in _schema_patches:
+                    conn.execute(_text(_stmt))
+            log.info("DB schema self-heal patches applied")
     except Exception as exc:  # noqa: BLE001
         log.error("DB schema self-heal failed: %s", exc)
 
     # Provision the low-privilege runtime role + RLS policies (owner connection).
     # Only in unified/cognito mode with a configured app_user password — local and
     # legacy session mode keep the single-identity behavior (no RLS provisioning).
-    if settings.app_db_password and settings.auth_mode == "cognito":
+    if should_provision and settings.app_db_password and settings.auth_mode == "cognito":
         try:
             from .security_rls import apply_rls
-            apply_rls(admin_engine, app_role_password=settings.app_db_password)
-            log.info("RLS provisioned (app_user role + agency-isolation policies)")
+            apply_rls(admin_engine, app_role_password=settings.app_db_password,
+                      platform_role_password=settings.platform_db_password)
+            log.info("RLS provisioned (app_user + app_platform roles + agency-isolation policies)")
         except Exception as exc:  # noqa: BLE001
             log.error("RLS provisioning failed: %s", exc)
 
@@ -217,7 +241,7 @@ async def on_startup():
     # (default everywhere except the approved dev/test env) the QA models are never
     # registered, so no QA tables are created and the module is fully inert. When
     # ON, register + create the QA tables (idempotent) and extend RLS to them.
-    if settings.emscs_qa_v1_enabled:
+    if should_provision and settings.emscs_qa_v1_enabled:
         try:
             from .models import emscs_qa as _emscs_qa_models  # noqa: F401 — register QA tables with Base
             Base.metadata.create_all(bind=admin_engine)        # creates the new QA tables only
@@ -235,26 +259,27 @@ async def on_startup():
     # app_settings marker so it runs exactly once and never re-confirms future
     # (genuinely unverified) self-serve signups on later restarts.
     try:
-        from sqlalchemy import text as _text
-        _marker = "email_verification_backfill_v1"
-        with admin_engine.begin() as conn:
-            already_done = conn.execute(
-                _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
-            ).first()
-            if not already_done:
-                result = conn.execute(
-                    _text("UPDATE users SET email_confirmed = TRUE WHERE email_confirmed = FALSE")
-                )
-                conn.execute(
-                    _text(
-                        "INSERT INTO app_settings (key, value, category, value_type, description, "
-                        "created_at, updated_at) VALUES (:k, 'true', 'system', 'boolean', :d, "
-                        "NOW(), NOW()) ON CONFLICT (key) DO NOTHING"
-                    ),
-                    {"k": _marker, "d": "Existing users confirmed when email verification shipped"},
-                )
-                log.info("Email-verification backfill: confirmed %s pre-existing user(s)",
-                         getattr(result, "rowcount", "?"))
+        if should_provision:
+            from sqlalchemy import text as _text
+            _marker = "email_verification_backfill_v1"
+            with admin_engine.begin() as conn:
+                already_done = conn.execute(
+                    _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
+                ).first()
+                if not already_done:
+                    result = conn.execute(
+                        _text("UPDATE users SET email_confirmed = TRUE WHERE email_confirmed = FALSE")
+                    )
+                    conn.execute(
+                        _text(
+                            "INSERT INTO app_settings (key, value, category, value_type, description, "
+                            "created_at, updated_at) VALUES (:k, 'true', 'system', 'boolean', :d, "
+                            "NOW(), NOW()) ON CONFLICT (key) DO NOTHING"
+                        ),
+                        {"k": _marker, "d": "Existing users confirmed when email verification shipped"},
+                    )
+                    log.info("Email-verification backfill: confirmed %s pre-existing user(s)",
+                             getattr(result, "rowcount", "?"))
     except Exception as exc:  # noqa: BLE001
         log.error("Email-verification backfill failed: %s", exc)
 
@@ -265,30 +290,31 @@ async def on_startup():
     # ems_qa_enabled. New clients (created after this runs) follow their tier's
     # default bundle. Guarded by an app_settings marker so it runs exactly once.
     try:
-        from sqlalchemy import text as _text
-        _marker = "module_overrides_grandfather_v1"
-        with admin_engine.begin() as conn:
-            already_done = conn.execute(
-                _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
-            ).first()
-            if not already_done:
-                result = conn.execute(
-                    _text(
-                        "UPDATE profiles SET module_overrides = "
-                        "'{\"analytics\": true, \"predictive\": true, \"geographic\": true}'::json "
-                        "WHERE module_overrides IS NULL"
+        if should_provision:
+            from sqlalchemy import text as _text
+            _marker = "module_overrides_grandfather_v1"
+            with admin_engine.begin() as conn:
+                already_done = conn.execute(
+                    _text("SELECT 1 FROM app_settings WHERE key = :k"), {"k": _marker}
+                ).first()
+                if not already_done:
+                    result = conn.execute(
+                        _text(
+                            "UPDATE profiles SET module_overrides = "
+                            "'{\"analytics\": true, \"predictive\": true, \"geographic\": true}'::json "
+                            "WHERE module_overrides IS NULL"
+                        )
                     )
-                )
-                conn.execute(
-                    _text(
-                        "INSERT INTO app_settings (key, value, category, value_type, description, "
-                        "created_at, updated_at) VALUES (:k, 'true', 'system', 'boolean', :d, "
-                        "NOW(), NOW()) ON CONFLICT (key) DO NOTHING"
-                    ),
-                    {"k": _marker, "d": "Existing clients granted dashboard modules when per-module access shipped"},
-                )
-                log.info("Module grandfather backfill: updated %s pre-existing profile(s)",
-                         getattr(result, "rowcount", "?"))
+                    conn.execute(
+                        _text(
+                            "INSERT INTO app_settings (key, value, category, value_type, description, "
+                            "created_at, updated_at) VALUES (:k, 'true', 'system', 'boolean', :d, "
+                            "NOW(), NOW()) ON CONFLICT (key) DO NOTHING"
+                        ),
+                        {"k": _marker, "d": "Existing clients granted dashboard modules when per-module access shipped"},
+                    )
+                    log.info("Module grandfather backfill: updated %s pre-existing profile(s)",
+                             getattr(result, "rowcount", "?"))
     except Exception as exc:  # noqa: BLE001
         log.error("Module grandfather backfill failed: %s", exc)
 

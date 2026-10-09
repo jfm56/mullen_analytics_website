@@ -6,10 +6,12 @@ import { trackLead } from '../lib/conversions';
 
 export default function ContactForm() {
   const [status, setStatus] = useState('');
+  const [sending, setSending] = useState(false);
   const recaptchaRef = useRef(null);
 
   async function onSubmit(e) {
     e.preventDefault();
+    if (sending) return;
     setStatus('Sending...');
     
     const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -23,15 +25,18 @@ export default function ContactForm() {
     const payload = Object.fromEntries(form.entries());
     payload.recaptchaToken = recaptchaToken;
     
-    const res = await fetch('/api/contact', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
-    const data = await res.json();
-    setStatus(data.ok ? 'Sent! We will be in touch shortly.' : 'Error sending message.');
-    
-    if (data.ok) {
+    setSending(true);
+    try {
+      const res = await fetch('/api/contact', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Could not send your message. Please try again.');
+      setStatus('Sent! We will be in touch shortly.');
       recaptchaRef.current?.reset();
-      // Fire the lead conversion ONLY on a successful submit (a real lead):
-      // GA4 generate_lead (Key Event) + Google Ads conversion. Not on pageview.
       trackLead({ focus: payload.projectFocus });
+    } catch (error) {
+      setStatus(error.message || 'Could not connect. Please email jmullen@mullenanalytics.com.');
+    } finally {
+      setSending(false);
     }
   }
 
@@ -43,16 +48,16 @@ export default function ContactForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <label className={labelClass}>Name</label>
-        <input name="name" required className={fieldClass} />
+        <label htmlFor="contact-name" className={labelClass}>Name</label>
+        <input id="contact-name" name="name" required className={fieldClass} />
       </div>
       <div>
-        <label className={labelClass}>Email</label>
-        <input type="email" name="email" required className={fieldClass} />
+        <label htmlFor="contact-email" className={labelClass}>Email</label>
+        <input type="email" id="contact-email" name="email" required className={fieldClass} />
       </div>
       <div>
-        <label className={labelClass}>What are you trying to improve?</label>
-        <select name="projectFocus" className={fieldClass}>
+        <label htmlFor="contact-projectFocus" className={labelClass}>What are you trying to improve?</label>
+        <select id="contact-projectFocus" name="projectFocus" className={fieldClass}>
           <option value="Analytics Strategy">Analytics Strategy</option>
           <option value="Data Platform">Data Platform</option>
           <option value="Dashboard Build">Dashboard Build</option>
@@ -61,8 +66,8 @@ export default function ContactForm() {
         </select>
       </div>
       <div>
-        <label className={labelClass}>Message</label>
-        <textarea name="message" rows="4" required className={fieldClass} />
+        <label htmlFor="contact-message" className={labelClass}>Message</label>
+        <textarea id="contact-message" name="message" rows="4" required className={fieldClass} />
       </div>
       {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
         <div>
@@ -74,9 +79,10 @@ export default function ContactForm() {
       )}
       <button
         type="submit"
+        disabled={sending}
         className="w-full sm:w-auto px-8 py-3.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
       >
-        Send message
+        {sending ? 'Sending…' : 'Send message'}
       </button>
       {status && <div className="text-sm text-slate-600" aria-live="polite">{status}</div>}
     </form>

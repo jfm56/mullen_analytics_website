@@ -12,6 +12,7 @@ _PHI_PREFIXES = (
     "/api/reports",
     "/api/emscharts",
     "/api/dispatch",
+    "/api/qa",
 )
 
 
@@ -23,7 +24,9 @@ def is_phi_write(method: str, path: str) -> bool:
     """
     if method.upper() not in _WRITE_METHODS:
         return False
-    if path.startswith(_PHI_PREFIXES):
+    if any(path == prefix or path.startswith(prefix + "/") for prefix in _PHI_PREFIXES):
+        return True
+    if path.startswith("/api/projects/") and path.endswith("/generate-report"):
         return True
     return path.startswith("/api/v1/") and (
         "/emscharts" in path or "/qa" in path or "/incidents" in path

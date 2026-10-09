@@ -7,7 +7,7 @@ export default function robots() {
         userAgent: "*",
         allow: "/",
         // Private app surfaces and API routes shouldn't be crawled or indexed.
-        disallow: ["/admin/", "/portal/", "/api/", "/signup"],
+        disallow: ["/admin", "/portal", "/api/", "/signup"],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

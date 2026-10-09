@@ -15,7 +15,7 @@ import boto3
 from app.config import get_settings
 from app.routers.emscharts_ingest import _process_upload
 from app.routers.emscharts import _audit, _finish, _s3
-from app.database import SessionLocal
+from app.database import SessionLocal, engine
 from app.services.emscharts.pipeline import SyncAlreadyRunning, refresh_analytics, run_sync
 from app.services.pipeline.runner import execute_background
 
@@ -76,6 +76,12 @@ def run_forever():
     settings = get_settings()
     if settings.job_backend.lower() != "sqs" or not settings.pipeline_queue_url:
         raise RuntimeError("JOB_BACKEND=sqs and PIPELINE_QUEUE_URL are required")
+    if settings.environment != "local":
+        from app.startup_checks import assert_runtime_ready
+        assert_runtime_ready(
+            engine, require_rls=settings.auth_mode == "cognito",
+            qa_enabled=settings.emscs_qa_v1_enabled,
+        )
     client = _client(settings)
     logger.info("pipeline worker started")
     while True:

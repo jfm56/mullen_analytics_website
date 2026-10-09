@@ -477,6 +477,8 @@ export default function AdminSettingsPage() {
                     ))}
                     <div className="pt-3 text-xs text-gray-400">
                       Checked at: {health.checked_at ? fmtTimeOnly(health.checked_at) : '—'}
+                      {' · '} Database host: {health.database_host || 'unknown'}
+                      {' · '} S3: {health.storage_checks?.s3 || 'not checked'}
                       {' · '} Uploads root: {health.uploads_root_exists ? '✓ exists' : '✗ missing'}
                       {' · '} Storage root: {health.storage_root_exists ? '✓ exists' : '✗ missing'}
                     </div>

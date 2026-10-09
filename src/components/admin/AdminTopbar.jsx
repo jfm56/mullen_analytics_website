@@ -25,9 +25,18 @@ export default function AdminTopbar({ title, profile }) {
           Admin
         </span>
 
-        <div className="relative">
+        <div className="relative" onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false);
+        }} onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            setMenuOpen(false);
+            event.currentTarget.querySelector('button')?.focus();
+          }
+        }}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Admin account"
+            aria-expanded={menuOpen}
             className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
