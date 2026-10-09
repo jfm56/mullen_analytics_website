@@ -1,10 +1,13 @@
 """Apply ordered SQL migrations once, with checksum and advisory-lock safety.
 
+
+
 Designed for an ECS one-off task. It uses the admin database identity; the API
 and worker continue to use the RLS-enforced ``app_user`` identity.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 import hashlib
 import logging
 from pathlib import Path
@@ -22,9 +25,26 @@ LOCK_ID = 73420519
 
 def _dsn() -> str:
     value = _get_admin_url()
+
     if isinstance(value, URL):
-        return value.render_as_string(hide_password=False)
+        return value.set(
+            drivername="postgresql"
+        ).render_as_string(hide_password=False)
+
     return str(value)
+
+@contextmanager
+def safe_connection():
+    try:
+        connection = psycopg.connect(_dsn())
+    except psycopg.Error:
+        raise RuntimeError(
+            "Database connection failed. Check credentials, "
+            "network access, and PostgreSQL configuration."
+        ) from None
+
+    with connection:
+        yield connection
 
 
 def apply_migrations() -> None:
@@ -32,7 +52,7 @@ def apply_migrations() -> None:
     if not files:
         raise RuntimeError(f"No migrations found in {MIGRATION_DIR}")
 
-    with psycopg.connect(_dsn()) as connection:
+    with safe_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_lock(%s)", (LOCK_ID,))
             try:
