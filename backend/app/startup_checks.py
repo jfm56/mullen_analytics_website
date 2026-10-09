@@ -46,6 +46,14 @@ _REQUIRED_COLUMNS = (
     ("ems_dataset_groups", "agency_id"),
     ("profiles", "module_overrides"),
     ("profiles", "ems_qa_enabled"),
+    ("profiles", "plan"),
+    ("profiles", "plan_status"),
+    ("profiles", "trial_ends_at"),
+    ("profiles", "plan_selected_at"),
+    ("profiles", "stripe_customer_id"),
+    ("profiles", "stripe_subscription_id"),
+    ("profiles", "extra_dataset_slots"),
+    ("messages", "direction"),
 )
 
 

@@ -32,6 +32,15 @@ Status: AWS STAGING INFRASTRUCTURE EXISTS; API/WORKER STOPPED; CLIENT DATA MIGRA
   missing tables in its isolated test database after 016 and before 017. This
   mirrors the existing test fixture. It does not establish that an AWS database
   has every prerequisite table; verify that separately before running 017 there.
+- On `0a6a834`, migrations and lint passed, but backend tests reported missing
+  `profiles.plan` and `profiles.module_overrides`. Model table creation does not
+  alter existing tables. Forward migration 019 adds the eight missing profile
+  fields and message direction, preserving existing values. Startup validation
+  checks these fields, and an isolated PostgreSQL regression test exercises
+  populated legacy tables, defaults, and repeat application. That new test has
+  not been run locally because PostgreSQL/application dependencies are unavailable;
+  full CI must validate it. Migration 018 remains reserved for the role-boundary
+  draft; the runner sorts filenames and does not require consecutive numbering.
 - A Railway backend has a Railway PostgreSQL DATABASE_URL. Vercel's saved secret
   FASTAPI_URL has not been independently read or correlated to that service.
 
