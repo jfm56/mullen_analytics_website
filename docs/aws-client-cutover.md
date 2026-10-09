@@ -1,6 +1,6 @@
 # AWS migration and release checkpoint — 2026-10-09
 
-Status: NOT DEPLOYED / CLIENT DATA MIGRATION NOT VERIFIED.
+Status: AWS STAGING INFRASTRUCTURE EXISTS; API/WORKER STOPPED; CLIENT DATA MIGRATION NOT VERIFIED.
 
 ## Verified release state
 
@@ -12,6 +12,20 @@ Status: NOT DEPLOYED / CLIENT DATA MIGRATION NOT VERIFIED.
   of offline tests. Read `docs/aws-role-boundary-follow-up.md` in that draft.
 - User's CloudShell account `681225014038` lists no ECS clusters or RDS instances
   in us-east-1/us-east-2. This is not an inventory of all AWS services/regions.
+- The authorized desktop uses account `224796773195`. Its Terraform default
+  workspace records the existing staging infrastructure in us-east-1. ECS
+  cluster `mullen-analytics-staging` exists, and the same-named RDS instance is
+  available. API and worker services both have desired/running counts of zero.
+- API task revision 8 uses image tag `v6` by immutable digest, RDS, S3 storage,
+  Cognito auth, and `PHI_INGESTION_ENABLED=false`. The image's source commit is
+  not yet established. Recent migration logs show 001–014 already applied,
+  015–016 being applied, then runtime-role/RLS provisioning. They do not verify
+  017, successful client-data transfer, or SBES reconciliation.
+- Draft PR #31 targets main from `release/aws-client-cutover` at `a61cf7a`.
+  Frontend build and Terraform validation passed. Backend CI failed because
+  its fresh test database lacked the prerequisite `app_user` role for 017.
+  The workflow fix provisions a non-login test role without changing 017;
+  a new CI run is still required to validate the remaining steps.
 - A Railway backend has a Railway PostgreSQL DATABASE_URL. Vercel's saved secret
   FASTAPI_URL has not been independently read or correlated to that service.
 
@@ -52,8 +66,8 @@ or apply against a different state backend until this discrepancy is resolved.
 
 1. Rotate the database credential exposed in a screenshot; keep updates private
    and verify the current backend still connects.
-2. Resolve the Terraform account/state discrepancy; review a foundation plan
-   and its cost/deletion actions. Do not create a duplicate production stack.
+2. Use the verified desktop account and existing Terraform state; review the
+   update plan and its cost/deletion actions. Do not create a duplicate stack.
 3. Inventory every client using stable IDs, not display names: users/profiles,
    memberships, uploads, agency files, incidents, snapshots, QA decisions,
    exports, reports, logos, model artifacts and any remaining external stores.

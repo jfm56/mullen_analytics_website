@@ -43,7 +43,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d test_mullen_analytics"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -79,6 +79,10 @@ jobs:
       - name: Run migrations
         run: |
           set -euo pipefail
+          # Fresh CI databases have no runtime role. Migration 017 deliberately
+          # requires it; create a non-login, unprivileged role for schema tests.
+          PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics \
+            -c 'CREATE ROLE app_user NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;'
           for f in backend/migrations/*.sql; do
             echo "Running $f"
             PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics -f "$f"
