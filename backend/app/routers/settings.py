@@ -20,7 +20,9 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..database import get_db
+from ..database import get_db, engine
+from ..config import get_settings
+from ..services.runtime_status import storage_metadata, check_storage
 from ..models.app_settings import AppSetting
 from ..models.user import User
 from .auth import get_current_user, require_admin
@@ -159,24 +161,10 @@ async def get_admin_settings(
     db: Session = Depends(get_db),
 ):
     grouped = _merged_settings(db)
-    env = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "local")).lower()
-    storage_backend = os.environ.get("STORAGE_BACKEND", "local")
-    upload_root = os.environ.get("DATA_UPLOADS_ROOT", "D:/MullenAnalytics/DataUploads")
-    storage_root = os.environ.get("DATA_STORAGE_ROOT", "D:/MullenAnalytics/ClientData")
-    s3_bucket = os.environ.get("S3_BUCKET", "")
-    aws_region = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", ""))
-
     return {
         "settings": grouped,
-        "meta": {
-            "environment": env,
-            "storage_backend": storage_backend,
-            "upload_root": upload_root,
-            "storage_root": storage_root,
-            "s3_bucket": s3_bucket or None,
-            "aws_region": aws_region or None,
-            "last_updated": datetime.utcnow().isoformat(),
-        },
+        "meta": {**storage_metadata(get_settings()),
+                 "last_updated": datetime.utcnow().isoformat()},
     }
 
 
@@ -234,20 +222,14 @@ async def settings_health_check(
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    env = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "local")).lower()
-    storage_backend = os.environ.get("STORAGE_BACKEND", "local")
-    upload_root = os.environ.get("DATA_UPLOADS_ROOT", "")
-    storage_root = os.environ.get("DATA_STORAGE_ROOT", "")
-
+    settings = get_settings()
     db_status = "ok"
     try:
         db.execute(text("SELECT 1"))
     except Exception:
         db_status = "error"
 
-    upload_root_exists = os.path.isdir(upload_root) if upload_root else False
-    storage_root_exists = os.path.isdir(storage_root) if storage_root else False
-
+    storage = check_storage(settings)
     sendgrid_key = os.environ.get("SENDGRID_API_KEY", "")
     smtp_host = os.environ.get("SMTP_HOST", "")
     email_configured = bool(sendgrid_key or smtp_host)
@@ -255,15 +237,16 @@ async def settings_health_check(
     return {
         "backend": "ok",
         "database": db_status,
-        "storage": "ok" if (storage_backend == "local" and upload_root_exists) else "warning",
+        **storage,
         "email": "configured" if email_configured else "not_configured",
-        "analytics_pipeline": "ok",
-        "environment": env,
-        "storage_backend": storage_backend,
-        "uploads_root": upload_root,
-        "uploads_root_exists": upload_root_exists,
-        "storage_root": storage_root,
-        "storage_root_exists": storage_root_exists,
+        "analytics_pipeline": "not_checked",
+        "migration_verification": "not_checked",
+        "database_host": engine.url.host,
+        "database_name": engine.url.database,
+        "environment": settings.environment,
+        "storage_backend": settings.storage_backend,
+        "uploads_root": settings.data_uploads_root,
+        "storage_root": settings.data_storage_root,
         "checked_at": datetime.utcnow().isoformat(),
     }
 
