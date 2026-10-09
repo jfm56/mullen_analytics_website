@@ -14,3 +14,4 @@ from .platform_audit import PlatformAuditEvent  # noqa: F401 – register with B
 from .app_settings import AppSetting
 from .data_upload import EMSDatasetGroup  # noqa: F401 – register with Base
 from .emscharts import EMSChartsConnection, SyncRun, EMSIncident, EMSAnalyticsSnapshot  # noqa: F401 – register with Base
+from . import error_log, lead, tool_usage, web_analytics  # noqa: F401 – core metadata for migration grants

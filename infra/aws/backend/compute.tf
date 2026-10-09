@@ -63,6 +63,38 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
   policy = data.aws_iam_policy_document.ecs_execution_secrets.json
 }
 
+# API execution can inject the dedicated platform secret; worker execution cannot.
+resource "aws_iam_role" "api_execution" {
+  name               = "${local.prefix}-api-execution"
+  assume_role_policy = aws_iam_role.ecs_execution.assume_role_policy
+}
+
+resource "aws_iam_role_policy_attachment" "api_execution" {
+  role       = aws_iam_role.api_execution.name
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+data "aws_iam_policy_document" "api_execution_secrets" {
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = concat(
+      [aws_secretsmanager_secret.runtime.arn, aws_secretsmanager_secret.platform.arn],
+      values(var.extra_secret_arns),
+    )
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [aws_kms_key.data.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "api_execution_secrets" {
+  name   = "secrets"
+  role   = aws_iam_role.api_execution.id
+  policy = data.aws_iam_policy_document.api_execution_secrets.json
+}
+
 # Only the migration execution role may retrieve the RDS administrator secret.
 resource "aws_iam_role" "migration_execution" {
   name               = "${local.prefix}-migration-execution"
@@ -80,6 +112,7 @@ data "aws_iam_policy_document" "migration_execution_secrets" {
     resources = concat(
       [
         aws_secretsmanager_secret.runtime.arn,
+        aws_secretsmanager_secret.platform.arn,
         aws_db_instance.main.master_user_secret[0].secret_arn,
       ],
       values(var.extra_secret_arns),
@@ -409,7 +442,14 @@ locals {
       valueFrom = arn
   }])
 
-  migration_secrets = concat(local.common_secrets, [
+  platform_secrets = concat(local.common_secrets, [
+    {
+      name      = "PLATFORM_DB_PASSWORD"
+      valueFrom = "${aws_secretsmanager_secret.platform.arn}:PLATFORM_DB_PASSWORD::"
+    }
+  ])
+
+  migration_secrets = concat(local.platform_secrets, [
     {
       name      = "APP_DB_PASSWORD"
       valueFrom = "${aws_secretsmanager_secret.runtime.arn}:APP_DB_PASSWORD::"
@@ -423,12 +463,18 @@ locals {
 resource "aws_ecs_task_definition" "api" {
   count = var.deploy_services ? 1 : 0
 
+  depends_on = [
+    aws_secretsmanager_secret_version.platform,
+    aws_iam_role_policy.api_execution_secrets,
+    aws_iam_role_policy_attachment.api_execution,
+  ]
+
   family                   = "${local.prefix}-api"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.api_cpu
   memory                   = var.api_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  execution_role_arn       = aws_iam_role.api_execution.arn
   task_role_arn            = aws_iam_role.api.arn
 
   volume {
@@ -448,7 +494,7 @@ resource "aws_ecs_task_definition" "api" {
     image                  = var.container_image
     essential              = true
     environment            = local.common_environment
-    secrets                = local.common_secrets
+    secrets                = local.platform_secrets
     portMappings           = [{ containerPort = 8000, hostPort = 8000, protocol = "tcp" }]
     mountPoints            = [{ sourceVolume = "legacy-storage", containerPath = "/mnt/mullen", readOnly = false }]
     readonlyRootFilesystem = true
@@ -519,6 +565,11 @@ resource "aws_ecs_task_definition" "worker" {
 # up. It is intentionally not attached to a service or deployment hook.
 resource "aws_ecs_task_definition" "migration" {
   count = var.deploy_services ? 1 : 0
+
+  depends_on = [
+    aws_secretsmanager_secret_version.platform,
+    aws_iam_role_policy.migration_execution_secrets,
+  ]
 
   family                   = "${local.prefix}-migration"
   requires_compatibilities = ["FARGATE"]

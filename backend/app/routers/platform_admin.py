@@ -1,9 +1,11 @@
 """Platform SUPER_ADMIN API (Mullen Analytics operator).
 
 Every endpoint requires SUPER_ADMIN (users.platform_role). Platform-scope (cross-
-agency) endpoints set the authenticated platform RLS clause (set_platform_context);
-agency View-As uses set_agency_context for the chosen tenant. Missing agency_id never
-implies platform scope. All access is audited with the REAL actor.
+agency) endpoints run on the dedicated `app_platform` DB connection (get_platform_db):
+cross-agency visibility is granted by the role-keyed RLS policy clause
+(`current_user = 'app_platform'`), NOT by a forgeable GUC and NOT by BYPASSRLS. An
+ordinary app_user session can never reach this scope. All access is audited with the
+REAL actor.
 """
 from __future__ import annotations
 from uuid import UUID
@@ -12,8 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session as DBSession
 
 from ..config import get_settings
-from ..database import get_db
-from ..security_rls import set_user_context, set_platform_context, set_agency_context
+from ..database import get_db, get_platform_db
+from ..security_rls import set_user_context
 from ..services.platform_admin import authz, aggregates
 from ..models.agency import Agency
 from ..models.platform_audit import PlatformAuditEvent
@@ -28,11 +30,12 @@ class PlatformCtx:
         self.ip = None
 
 
-async def platform_ctx(request: Request, db: DBSession = Depends(get_db)) -> PlatformCtx:
-    """SUPER_ADMIN + platform scope. Sets user + platform RLS context; audits access."""
+async def platform_ctx(request: Request, db: DBSession = Depends(get_platform_db)) -> PlatformCtx:
+    """SUPER_ADMIN + platform scope. Authorizes the caller as SUPER_ADMIN, then serves
+    the request on the app_platform connection (role-based cross-agency RLS clause).
+    `set_user_context` records the actor for auditing; it does NOT grant access."""
     user = await authz.require_super_admin_user(request, db)
-    set_user_context(db, user.id)
-    set_platform_context(db)          # authenticated cross-agency clause — NOT an RLS bypass
+    set_user_context(db, user.id)     # records the actor; cross-agency access is role-keyed
     ctx = PlatformCtx(db, user)
     ctx.ip = request.client.host if request.client else None
     return ctx
@@ -136,10 +139,10 @@ def audit(ctx: PlatformCtx = Depends(platform_ctx), limit: int = Query(200, le=1
 
 
 @router.post("/view-as")
-async def view_as(request: Request, db: DBSession = Depends(get_db)):
+async def view_as(request: Request, db: DBSession = Depends(get_platform_db)):
     """Record a SUPER_ADMIN View-As selection (context switch, NOT impersonation).
-    The actual tenant data is then read through the normal agency-scoped endpoints,
-    which authorize the super admin per request. Audited with the real actor."""
+    Runs on the app_platform connection so the operator can resolve the chosen agency
+    cross-tenant; the selection is audited with the real actor."""
     user = await authz.require_super_admin_user(request, db)
     body = await request.json()
     agency_id = body.get("agency_id")

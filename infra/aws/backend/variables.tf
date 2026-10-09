@@ -182,6 +182,13 @@ variable "extra_secret_arns" {
   type        = map(string)
   default     = {}
   sensitive   = true
+  validation {
+    condition = alltrue([
+      for name in keys(var.extra_secret_arns) :
+      !contains(["PLATFORM_DB_PASSWORD", "PLATFORM_DATABASE_URL"], name)
+    ])
+    error_message = "Platform database credentials are injected only into API/migration tasks through the dedicated secret."
+  }
 }
 
 variable "enable_phi_ingestion" {

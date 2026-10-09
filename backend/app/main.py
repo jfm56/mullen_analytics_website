@@ -116,8 +116,7 @@ async def on_startup():
         print("=" * 70)
 
     raw_url = os.environ.get("DATABASE_URL", "<NOT SET>")
-    masked = raw_url[:40] + "..." if len(raw_url) > 40 else raw_url
-    log.info("DATABASE_URL env var: %s", masked)
+    log.info("DATABASE_URL configured: %s", raw_url != "<NOT SET>")
     log.info("ENVIRONMENT: %s | STORAGE_BACKEND: %s", settings.environment, settings.storage_backend)
 
     # Schema provisioning (create_all / self-heal ALTERs / backfills / RLS) runs
@@ -125,13 +124,21 @@ async def on_startup():
     # low-privilege runtime role and must never modify schema at runtime (that needs
     # owner credentials and risks drift on every boot) — they VALIDATE the schema an
     # operator migrated and fail fast if it is missing/invalid. See startup_checks.py.
-    require_rls = bool(settings.app_db_password and settings.auth_mode == "cognito")
+    require_rls = settings.auth_mode == "cognito"
+    if require_rls and settings.environment != "local" and settings.db_auto_provision:
+        raise RuntimeError("Cognito deployments require operator-run migrations; DB_AUTO_PROVISION must be false")
     should_provision = settings.environment == "local" or settings.db_auto_provision
     if not should_provision:
         from .startup_checks import assert_runtime_ready
         assert_runtime_ready(
             engine, require_rls=require_rls, qa_enabled=settings.emscs_qa_v1_enabled
         )
+        if require_rls:
+            from .database import get_platform_engine
+            assert_runtime_ready(
+                get_platform_engine(), require_rls=True,
+                qa_enabled=settings.emscs_qa_v1_enabled, expected_role="app_platform"
+            )
 
     if should_provision:
         try:
@@ -224,8 +231,9 @@ async def on_startup():
     if should_provision and settings.app_db_password and settings.auth_mode == "cognito":
         try:
             from .security_rls import apply_rls
-            apply_rls(admin_engine, app_role_password=settings.app_db_password)
-            log.info("RLS provisioned (app_user role + agency-isolation policies)")
+            apply_rls(admin_engine, app_role_password=settings.app_db_password,
+                      platform_role_password=settings.platform_db_password)
+            log.info("RLS provisioned (app_user + app_platform roles + agency-isolation policies)")
         except Exception as exc:  # noqa: BLE001
             log.error("RLS provisioning failed: %s", exc)
 

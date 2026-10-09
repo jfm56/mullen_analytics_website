@@ -279,6 +279,26 @@ resource "random_password" "app_db_password" {
   override_special = "!#$%&*+-=?"
 }
 
+resource "random_password" "platform_db_password" {
+  length           = 48
+  special          = true
+  override_special = "!#$%&*+-=?"
+}
+
+# Separate secret: workers must not retrieve the platform database credential.
+resource "aws_secretsmanager_secret" "platform" {
+  name                    = "${local.prefix}/platform-database"
+  kms_key_id              = aws_kms_key.data.arn
+  recovery_window_in_days = 30
+}
+
+resource "aws_secretsmanager_secret_version" "platform" {
+  secret_id = aws_secretsmanager_secret.platform.id
+  secret_string = jsonencode({
+    PLATFORM_DB_PASSWORD = random_password.platform_db_password.result
+  })
+}
+
 resource "aws_secretsmanager_secret" "runtime" {
   name                    = "${local.prefix}/runtime"
   kms_key_id              = aws_kms_key.data.arn

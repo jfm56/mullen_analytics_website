@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     # fall back to database_url (local/session mode, where RLS is not provisioned).
     database_admin_url: str = ""
     app_db_password: str = ""  # password for the runtime app_user role (staging/prod)
+    # Super Admin (cross-agency) DB identity. The platform engine connects as the
+    # dedicated low-privilege `app_platform` role (NOT superuser, NOT BYPASSRLS); its
+    # cross-agency visibility comes solely from the role-keyed RLS policy clause. An
+    # ordinary app_user session cannot assume it. A blank password/url => the platform
+    # engine falls back to the app_user/owner connection (local/session mode).
+    platform_db_user: str = "app_platform"
+    platform_db_password: str = ""
+    platform_database_url: str = ""
 
     @field_validator("database_url", mode="before")
     @classmethod

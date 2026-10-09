@@ -48,6 +48,12 @@ def safe_connection():
 
 
 def apply_migrations() -> None:
+    settings = get_settings()
+    if settings.auth_mode == "cognito" and (
+        not settings.app_db_password or not settings.platform_db_password
+        or settings.platform_db_password == settings.app_db_password
+    ):
+        raise RuntimeError("Migration requires distinct ordinary and platform role passwords")
     files = sorted(MIGRATION_DIR.glob("*.sql"))
     if not files:
         raise RuntimeError(f"No migrations found in {MIGRATION_DIR}")
@@ -99,13 +105,26 @@ def apply_migrations() -> None:
                     # Provision the deliberately low-privilege runtime role and
                     # RLS only after the complete schema exists.
                     from app.database import admin_engine
+                    from app import models  # noqa: F401 – register the complete core grant matrix
                     from app.security_rls import apply_rls
 
                     apply_rls(
                         admin_engine,
                         app_role_password=settings.app_db_password,
+                        platform_role_password=settings.platform_db_password,
                     )
-                    LOG.info("runtime database role and RLS policies provisioned")
+                    # Core provisioning revokes old grants, including QA grants.
+                    # Restore QA policy/grant profiles whenever that schema exists.
+                    from app.security_rls import apply_rls_qa, _QA_TABLE_NAMES
+                    from sqlalchemy import text
+                    with admin_engine.connect() as probe:
+                        present = {r[0] for r in probe.execute(text(
+                            "SELECT tablename FROM pg_tables WHERE schemaname='public'"))}
+                    if _QA_TABLE_NAMES <= present:
+                        apply_rls_qa(admin_engine)
+                    elif _QA_TABLE_NAMES & present:
+                        raise RuntimeError("Incomplete QA schema; provisioning cannot finish safely")
+                    LOG.info("runtime database roles and RLS policies provisioned")
             finally:
                 cursor.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
                 connection.commit()
