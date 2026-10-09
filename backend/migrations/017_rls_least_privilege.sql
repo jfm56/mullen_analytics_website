@@ -11,13 +11,12 @@
 --   3. Recreates the agency_isolation policies with BOTH USING (reads) and
 --      WITH CHECK (writes) so cross-agency INSERT/UPDATE is rejected, not just hidden.
 --
--- NOTE ON BASELINE: the committed migration history in this repo ends at
--- 012_add_mfa.sql; the live schema is otherwise provisioned by create_all +
--- self-heal in app/main.py. This file is numbered 017 to sit AFTER the "migrations
--- through 016" the operator reported as applied, and is written to be correct
--- whether the live baseline is 012 or 016. Confirm the applied baseline before use.
-
-BEGIN;
+-- Applied by backend/scripts/run_migrations.py, which runs each migration inside a
+-- single transaction, records it in schema_migrations (filename + sha256), and holds
+-- an advisory lock — so this file does NOT manage its own transaction (no BEGIN/COMMIT),
+-- matching 013-016. It sits immediately after 016_unified_platform_identity.sql and
+-- changes NO earlier migration. The runner also calls apply_rls() after all migrations
+-- in cognito mode, which converges to the same hardened state this file sets.
 
 -- app_user must already exist (apply_rls / an earlier migration creates it). Fail
 -- loudly if it does not, rather than silently skipping the hardening.
@@ -150,5 +149,3 @@ BEGIN
         END IF;
     END LOOP;
 END $$;
-
-COMMIT;

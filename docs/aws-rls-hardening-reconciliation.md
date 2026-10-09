@@ -43,6 +43,15 @@ branch); `017` is a new file only. (Minor pre-existing history quirk on the targ
 here: two `006_*` files and no `004_*` — the old `004_ems_column_mappings` was renumbered to
 `006_ems_column_mappings`. Flagged, not altered.)
 
+**Migration runner — also present on the target (correction to the prior milestone's "no runner").**
+`backend/scripts/run_migrations.py` applies each `*.sql` once inside its own transaction under an
+advisory lock, records `filename + sha256` in a `schema_migrations` table, and (in cognito mode) calls
+the now-hardened `apply_rls()` after all migrations. **The runner is unchanged by this PR.** `017` was
+adjusted to match the runner's convention: it defers transaction control to the runner (no self-managed
+`BEGIN`/`COMMIT`, like 013–016) and was verified to apply cleanly under the runner's single-transaction
+execution model. Because the runner also runs `apply_rls()`, the final state converges identically
+whether reached via `017` or `apply_rls()` (both idempotent).
+
 ---
 
 ## 3. File-by-file change summary (delta on top of `6b08d7f`)
@@ -119,8 +128,9 @@ for approval as a separate change. Implementing the identity-bound clause also r
 
 ## 6. Remaining security gaps
 - **F5 platform-admin GUC** — forgeable at the DB layer; mitigation proposed above, not yet applied.
-- **Migration runner** — there is still no runner (Alembic/script); `013`–`016`+`017` are applied
-  out-of-band by an operator. Adopting a runner would make numbering/state authoritative.
+- **Migration runner** — `backend/scripts/run_migrations.py` exists on this branch (checksum-tracked,
+  advisory-locked, run as a one-off ECS task). `017` is runner-compatible and unchanged migrations are
+  checksum-verified by the runner. No gap here; noted for completeness.
 - **Legacy self-serve agency creation** (`agencies.py`) is session-mode / RLS-off by design; under the
   unified platform, agency provisioning is a platform-admin operation.
 - **Tests skip** where no Postgres/role-creation is available (same pattern as `test_emscs_qa_rls.py`).
