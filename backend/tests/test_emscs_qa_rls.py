@@ -49,15 +49,17 @@ def rls(request):
             c.execute(text(f"ALTER ROLE app_user WITH LOGIN PASSWORD '{APP_PW}'"))  # nosec B608
             c.execute(text("GRANT USAGE ON SCHEMA public TO app_user"))
         apply_rls_qa(owner)
-        with owner.begin() as c:
-            for aid, slug in ((A, "rls-qa-a"), (B, "rls-qa-b")):
-                c.execute(text("INSERT INTO agencies (id, agency_name, slug) VALUES (:id,:n,:s)"),
-                          {"id": aid, "n": slug, "s": f"{slug}-{uuid.uuid4().hex[:6]}"})
-                c.execute(text("INSERT INTO qa_charts (id, agency_id, external_ref, source, is_synthetic, chart_data, status) "
-                               "VALUES (:id,:a,:ref,'synthetic',true,'{}','pending')"),
-                          {"id": uuid.uuid4(), "a": aid, "ref": f"{slug}-chart"})
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"cannot provision RLS in this environment: {exc}")
+
+    # Invalid synthetic seed rows must fail, not silently skip isolation tests.
+    with owner.begin() as c:
+        for aid, slug in ((A, "rls-qa-a"), (B, "rls-qa-b")):
+            c.execute(text("INSERT INTO agencies (id, agency_name, slug, data_classification) VALUES (:id,:n,:s,'synthetic')"),
+                      {"id": aid, "n": slug, "s": f"{slug}-{uuid.uuid4().hex[:6]}"})
+            c.execute(text("INSERT INTO qa_charts (id, agency_id, external_ref, source, is_synthetic, chart_data, status) "
+                           "VALUES (:id,:a,:ref,'synthetic',true,'{}','pending')"),
+                      {"id": uuid.uuid4(), "a": aid, "ref": f"{slug}-chart"})
 
     yield {"A": A, "B": B}
 

@@ -76,7 +76,7 @@ def seeded():
                            "VALUES (:id,:a,:ref,'synthetic',true,'{}','pending')"),
                       {"id": uuid.uuid4(), "a": aid, "ref": f"{slug}-chart"})
         # A user who is a member of agency A only.
-        c.execute(text("INSERT INTO users (id, email, password_hash) VALUES (:id,:e,'')"),
+        c.execute(text("INSERT INTO users (id, email, password_hash, totp_enabled) VALUES (:id,:e,'',false)"),
                   {"id": user_a, "e": f"rls-h-{uuid.uuid4().hex[:6]}@example.com"})
         c.execute(text(
             "INSERT INTO agency_memberships (id, agency_id, user_id, can_review, can_receive_reviews, is_agency_admin) "
@@ -200,7 +200,7 @@ def test_membership_write_in_current_agency_ok(seeded):
     A = seeded["A"]
     new_user, mid = uuid.uuid4(), uuid.uuid4()
     with seeded["owner"].begin() as c:
-        c.execute(text("INSERT INTO users (id, email, password_hash) VALUES (:id,:e,'')"),
+        c.execute(text("INSERT INTO users (id, email, password_hash, totp_enabled) VALUES (:id,:e,'',false)"),
                   {"id": new_user, "e": f"rls-h-staff-{uuid.uuid4().hex[:6]}@example.com"})
     with seeded["app"].connect() as conn, conn.begin():
         _ctx(conn, agency=A)
