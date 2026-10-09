@@ -75,7 +75,8 @@ def seeded():
 
     with owner.begin() as c:  # seed-data failures are real bugs, not skips
         for aid, slug in ((A, "rls-h-a"), (B, "rls-h-b")):
-            c.execute(text("INSERT INTO agencies (id, agency_name, slug) VALUES (:id,:n,:s)"),
+            c.execute(text("INSERT INTO agencies (id, agency_name, slug, data_classification) "
+                           "VALUES (:id,:n,:s,'synthetic')"),
                       {"id": aid, "n": slug, "s": f"{slug}-{uuid.uuid4().hex[:6]}"})
             c.execute(text("INSERT INTO pipeline_runs (id, agency_id, status) VALUES (:id,:a,'done')"),
                       {"id": uuid.uuid4(), "a": aid})
