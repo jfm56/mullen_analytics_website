@@ -309,8 +309,6 @@ async def generate_project_report(
     db: Session = Depends(get_db),
 ):
     """Generate an AI report for a project (client portal)."""
-    from ..models.document import Document
-    
     # Verify project belongs to user
     project = db.query(Project).filter(
         Project.id == project_id,
@@ -321,39 +319,11 @@ async def generate_project_report(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Get project-scoped data for report generation
-    project_uploads = project.uploads if project.uploads else []
-    project_documents = [d for d in project.documents if d.visibility == "client_visible"] if project.documents else []
-    
-    # TODO: Integrate with your actual report generator here
-    # For now, create a placeholder document
-    # In production, this would:
-    # 1. Gather all project uploads and documents
-    # 2. Extract text and analyze images
-    # 3. Generate report using AI
-    # 4. Save as PDF and create document record
-    
-    report_doc = Document(
-        client_id=current_user.id,
-        project_id=project_id,
-        title=f"Generated Report - {project.name}",
-        description=f"AI-generated report for project {project.name}",
-        original_filename=f"report_{project.name.lower().replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d')}.pdf",
-        storage_path=f"reports/{current_user.id}/{project_id}/generated_report.pdf",
-        content_type="application/pdf",
-        document_type="report",
-        visibility="client_visible",
-        generated_by="report_generator",
-    )
-    
-    db.add(report_doc)
-    db.commit()
-    db.refresh(report_doc)
-    
-    return ReportGenerateResponse(
-        success=True,
-        message="Report generated successfully",
-        document_id=report_doc.id
+    # No renderer/storage integration exists for this legacy endpoint yet.
+    # Never create a downloadable document record without an actual artifact.
+    raise HTTPException(
+        status_code=501,
+        detail="Project report generation is not available yet. Contact support to request a report.",
     )
 
 

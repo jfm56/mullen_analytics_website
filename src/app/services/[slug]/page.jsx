@@ -1,6 +1,7 @@
 import services from "@/data/services.json" assert { type: "json" };
 import details from "@/data/serviceDetails.json" assert { type: "json" };
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 const icons = {
   "ai-strategy-and-advisory": (
@@ -53,7 +54,7 @@ export default async function ServicePage({ params }) {
   const { slug } = await params;
   const service = services.find((s) => s.slug === slug);
   const detail = details.find((d) => d.slug === slug) || {};
-  if (!service) return <div className="p-10 text-center text-xl">Service not found</div>;
+  if (!service) notFound();
 
   const Icon = icons[service.slug] ?? icons._default;
 

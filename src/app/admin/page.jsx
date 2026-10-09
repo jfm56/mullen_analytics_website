@@ -6,12 +6,11 @@ import Link from 'next/link';
 import {
   Users, Upload, BarChart2, MessageSquare, AlertTriangle,
   CheckCircle2, RefreshCw, Database, Server, HardDrive,
-  Mail, Activity, Shield, Plus, Search, FileText, Clock,
+  Mail, Plus, Clock,
   XCircle, HelpCircle, Zap, ArrowRight,
 } from 'lucide-react';
 import { auth } from '@/lib/api';
 import MetricCard from '@/components/ui/MetricCard';
-import PipelineStepper from '@/components/ui/PipelineStepper';
 import StatusBadge from '@/components/ui/StatusBadge';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import { getAdminDashboardSummary } from '@/lib/api/adminDashboard';
@@ -48,7 +47,7 @@ const EMPTY_SUMMARY = {
   open_tasks: 0, data_quality_warnings: 0,
   recent_uploads: [], clients_needing_attention: [],
   recent_messages: [], tasks_due_soon: [],
-  system_health: { backend: 'ok', database: 'ok', storage: 'unknown', email: 'unknown', analytics_pipeline: 'unknown', environment: 'local' },
+  system_health: { backend: 'unknown', database: 'unknown', storage: 'unknown', email: 'unknown', analytics_pipeline: 'unknown', environment: 'unknown' },
 };
 
 // ── main component ────────────────────────────────────────────────────────────
@@ -82,7 +81,7 @@ export default function AdminDashboardPage() {
         const session = await auth.getSession();
         if (!mounted) return;
         if (!session.authenticated) {
-          router.replace('/portal/login');
+          router.replace('/admin/login');
           return;
         }
         if (!session.profile || session.profile.role !== 'admin') {
@@ -92,7 +91,7 @@ export default function AdminDashboardPage() {
         setAuthState('ok');
         loadSummary();
       } catch {
-        router.replace('/portal/login');
+        router.replace('/admin/login');
       }
     })();
     return () => { mounted = false; };
@@ -113,30 +112,37 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (summaryLoading && !lastRefreshed && !summaryError) {
+    return <div role="status" className="flex h-64 items-center justify-center gap-2 text-sm text-gray-500">
+      <RefreshCw size={16} className="animate-spin" aria-hidden="true" /> Loading overview…
+    </div>;
+  }
+
+  if (summaryError && !lastRefreshed) {
+    return <div className="mx-auto max-w-5xl space-y-4">
+      <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
+      <ErrorAlert message={summaryError} />
+      <p className="text-sm text-gray-500">Dashboard totals are unavailable. You can still navigate to clients, uploads and messages.</p>
+      <button onClick={loadSummary} disabled={summaryLoading} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50">{summaryLoading ? 'Retrying…' : 'Retry overview'}</button>
+    </div>;
+  }
+
   const { system_health: health = {} } = summary;
-  const env = health.environment || 'local';
+  const env = health.environment || 'unknown';
+  const environmentLabel = env.charAt(0).toUpperCase() + env.slice(1);
   const isProd = env === 'production';
 
-  // Pipeline steps derived from summary data
-  const pipelineSteps = [
-    { label: 'Upload CSV',      sub: `${summary.total_uploads} total`,       status: summary.total_uploads > 0 ? 'done' : 'active' },
-    { label: 'Clean Data',      sub: `${summary.dashboards_ready} cleaned`,  status: summary.dashboards_ready > 0 ? 'done' : summary.total_uploads > 0 ? 'active' : 'pending' },
-    { label: 'Map Columns',     sub: summary.data_quality_warnings > 0 ? `${summary.data_quality_warnings} need mapping` : 'OK', status: summary.data_quality_warnings > 0 ? 'error' : summary.dashboards_ready > 0 ? 'done' : 'pending' },
-    { label: 'Compute Metrics', sub: `${summary.dashboards_ready} ready`,    status: summary.dashboards_ready > 0 ? 'done' : 'pending' },
-    { label: 'Dashboard',       sub: `${summary.dashboards_ready} available`,status: summary.dashboards_ready > 0 ? 'done' : 'pending' },
-    { label: 'Explorer',        sub: 'Data explorer',                         status: summary.dashboards_ready > 0 ? 'done' : 'pending' },
-  ];
-
   const quickActions = [
-    { label: 'Upload EMSCharts CSV', href: '/admin/data',           primary: true,  Icon: Upload },
-    { label: 'Add New Client',       href: '/admin/clients',        primary: false, Icon: Plus },
-    { label: 'Invite User',          href: '/admin/users',          primary: false, Icon: Users },
-    { label: 'View Data Uploads',    href: '/admin/data',           primary: false, Icon: FileText },
-    { label: 'Dashboard Center',     href: '/admin/dashboard',      primary: false, Icon: BarChart2 },
-    { label: 'Data Explorer',        href: '/admin/data-explorer',  primary: false, Icon: Search },
-    { label: 'Column Mapping',       href: '/admin/column-mapping', primary: false, Icon: Activity },
-    { label: 'Messages',             href: '/admin/messages',       primary: false, Icon: MessageSquare },
-    { label: 'Settings',             href: '/admin/settings',       primary: false, Icon: Shield },
+    { label: 'Upload data', href: '/admin/data', primary: true, Icon: Upload },
+    { label: 'Manage clients', href: '/admin/clients', Icon: Plus },
+    { label: 'Open messages', href: '/admin/messages', Icon: MessageSquare },
+    { label: 'Analytics workspace', href: '/admin/dashboard', Icon: BarChart2 },
+  ];
+  const workflow = [
+    { label: '1. Upload source data', href: '/admin/data' },
+    { label: '2. Review column mapping', href: '/admin/column-mapping' },
+    { label: '3. Inspect cleaned data', href: '/admin/data-explorer' },
+    { label: '4. Open dataset comparisons', href: '/admin/data/datasets' },
   ];
 
   const healthItems = [
@@ -148,19 +154,19 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+    <div className="max-w-[1400px] mx-auto space-y-6">
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-xl font-bold text-gray-900">Overview</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Manage clients, EMS data uploads, analytics dashboards, messages, and platform operations.
+            Review client work, resolve issues and move data through the analytics workflow.
           </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className={`text-xs px-2 py-1 rounded-full font-medium border ${isProd ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
-            {isProd ? 'Production' : 'Local'}
+            {environmentLabel}
           </span>
           <span className="text-xs px-2 py-1 rounded-full font-medium border bg-purple-50 text-purple-700 border-purple-200">
             Admin
@@ -187,69 +193,29 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <MetricCard label="Total Clients"    value={summary.total_clients}        sub="Managed accounts"      icon={<Users size={14} />}         color="blue"   href="/admin/clients"       loading={summaryLoading} />
         <MetricCard label="Active Clients"   value={summary.active_clients}       sub="Currently active"      icon={<CheckCircle2 size={14} />}   color="green"  href="/admin/clients"       loading={summaryLoading} />
         <MetricCard label="Data Uploads"     value={summary.total_uploads}        sub="EMSCharts CSVs"        icon={<Upload size={14} />}         color="blue"   href="/admin/data"          loading={summaryLoading} />
-        <MetricCard label="Dashboards Ready" value={summary.dashboards_ready}     sub="Available for review"  icon={<BarChart2 size={14} />}      color="green"  href="/admin/dashboard"     loading={summaryLoading} />
+        <MetricCard label="Cleaned Uploads" value={summary.dashboards_ready}     sub="Marked CLEANED"  icon={<BarChart2 size={14} />}      color="green"  href="/admin/dashboard"     loading={summaryLoading} />
+      </div>
+      <section aria-labelledby="attention-heading" className="space-y-3">
+        <div><h2 id="attention-heading" className="text-sm font-semibold text-gray-900">Needs attention</h2>
+          <p className="text-xs text-gray-500 mt-1">Open an area below to review outstanding work.</p></div>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <MetricCard label="Failed Uploads"   value={summary.failed_uploads}       sub="Need admin review"     icon={<XCircle size={14} />}        color={summary.failed_uploads > 0 ? 'red' : 'gray'}   href="/admin/data"          loading={summaryLoading} />
         <MetricCard label="Unread Messages"  value={summary.unread_messages}      sub="Client communication"  icon={<MessageSquare size={14} />}  color={summary.unread_messages > 0 ? 'amber' : 'gray'} href="/admin/messages"      loading={summaryLoading} />
-        <MetricCard label="Open Tasks"       value={summary.open_tasks}           sub="Pending work"          icon={<Clock size={14} />}          color="purple" loading={summaryLoading} />
-        <MetricCard label="Quality Warnings" value={summary.data_quality_warnings} sub="Mapping issues"       icon={<AlertTriangle size={14} />}  color={summary.data_quality_warnings > 0 ? 'amber' : 'gray'} href="/admin/column-mapping" loading={summaryLoading} />
+        <MetricCard label="Open Tasks"       value={summary.open_tasks}           sub="Pending work"          icon={<Clock size={14} />}          color="purple" href="/admin/projects" loading={summaryLoading} />
+        <MetricCard label="Quality Warnings" value={summary.data_quality_warnings} sub="Need column mapping"       icon={<AlertTriangle size={14} />}  color={summary.data_quality_warnings > 0 ? 'amber' : 'gray'} href="/admin/column-mapping" loading={summaryLoading} />
       </div>
+
+      </section>
 
       {/* ── Main grid: 2/3 left + 1/3 right ── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
         {/* LEFT column */}
         <div className="xl:col-span-2 space-y-6">
-
-          {/* Recent Uploads */}
-          <Panel
-            title="Recent EMS Data Uploads"
-            action={<Link href="/admin/data" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">View all <ArrowRight size={12} /></Link>}
-          >
-            {summary.recent_uploads.length === 0 ? (
-              <div className="text-center py-6">
-                <Upload size={28} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-400">No EMS data uploads yet.</p>
-                <p className="text-xs text-gray-400 mt-0.5 mb-3">Upload a client EMSCharts CSV to generate analytics dashboards.</p>
-                <Link href="/admin/data" className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-1.5">
-                  <Upload size={12} /> Upload Data
-                </Link>
-              </div>
-            ) : (
-              <div className="overflow-x-auto -mx-1">
-                <table className="w-full text-xs min-w-[520px]">
-                  <thead>
-                    <tr className="text-left text-[10px] uppercase tracking-wide text-gray-400 border-b">
-                      <th className="pb-2 pr-3">Client</th>
-                      <th className="pb-2 pr-3">File</th>
-                      <th className="pb-2 pr-3">Status</th>
-                      <th className="pb-2 pr-3">Uploaded</th>
-                      <th className="pb-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {summary.recent_uploads.map(u => (
-                      <tr key={u.id} className="hover:bg-gray-50">
-                        <td className="py-2 pr-3 font-medium text-gray-800">{u.client_name}</td>
-                        <td className="py-2 pr-3 text-gray-500 truncate max-w-[160px]">{u.original_filename}</td>
-                        <td className="py-2 pr-3"><StatusBadge status={u.upload_status} type="upload" /></td>
-                        <td className="py-2 pr-3 text-gray-400">{u.created_at ? fmtDate(u.created_at) : '—'}</td>
-                        <td className="py-2 flex items-center gap-2">
-                          <Link href={`/admin/data-explorer/${u.id}`} className="text-blue-600 hover:underline">Explore</Link>
-                          {u.upload_status === 'CLEANED' && (
-                            <Link href={`/admin/dashboard?uploadId=${u.id}`} className="text-purple-600 hover:underline">Dashboard</Link>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Panel>
 
           {/* Clients Needing Attention */}
           <Panel
@@ -258,7 +224,7 @@ export default function AdminDashboardPage() {
           >
             {summary.clients_needing_attention.length === 0 ? (
               <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-4 py-3">
-                <CheckCircle2 size={15} /> All clients are up to date.
+                <CheckCircle2 size={15} /> No client issues reported.
               </div>
             ) : (
               <div className="overflow-x-auto -mx-1">
@@ -286,6 +252,53 @@ export default function AdminDashboardPage() {
                         <td className="py-2 pr-3 text-gray-400">{c.last_upload ? fmtDate(c.last_upload) : 'Never'}</td>
                         <td className="py-2">
                           <Link href={`/admin/clients/${c.id}`} className="text-blue-600 hover:underline">View</Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Panel>
+
+          {/* Recent Uploads */}
+          <Panel
+            title="Recent data uploads"
+            action={<Link href="/admin/data" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">View all <ArrowRight size={12} /></Link>}
+          >
+            {summary.recent_uploads.length === 0 ? (
+              <div className="text-center py-6">
+                <Upload size={28} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-sm text-gray-400">No data uploads yet.</p>
+                <p className="text-xs text-gray-400 mt-0.5 mb-3">Choose a client and upload source data to begin processing.</p>
+                <Link href="/admin/data" className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-1.5">
+                  <Upload size={12} /> Upload Data
+                </Link>
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-1">
+                <table className="w-full text-xs min-w-[520px]">
+                  <thead>
+                    <tr className="text-left text-[10px] uppercase tracking-wide text-gray-400 border-b">
+                      <th className="pb-2 pr-3">Client</th>
+                      <th className="pb-2 pr-3">File</th>
+                      <th className="pb-2 pr-3">Status</th>
+                      <th className="pb-2 pr-3">Uploaded</th>
+                      <th className="pb-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {summary.recent_uploads.map(u => (
+                      <tr key={u.id} className="hover:bg-gray-50">
+                        <td className="py-2 pr-3 font-medium text-gray-800">{u.client_name}</td>
+                        <td className="py-2 pr-3 text-gray-500 truncate max-w-[160px]">{u.original_filename}</td>
+                        <td className="py-2 pr-3"><StatusBadge status={u.upload_status} type="upload" /></td>
+                        <td className="py-2 pr-3 text-gray-400">{u.created_at ? fmtDate(u.created_at) : '—'}</td>
+                        <td className="py-2 flex items-center gap-2">
+                          <Link href={`/admin/data-explorer/${u.id}`} className="text-blue-600 hover:underline">Explore</Link>
+                          {u.upload_status === 'CLEANED' && (
+                            <Link href={`/admin/data-explorer/${u.id}`} className="text-purple-600 hover:underline">Analytics</Link>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -331,18 +344,13 @@ export default function AdminDashboardPage() {
         {/* RIGHT column */}
         <div className="space-y-6">
 
-          {/* Pipeline Health */}
-          <Panel title="EMS Analytics Pipeline">
-            <div className="overflow-x-auto pb-1">
-              <PipelineStepper steps={pipelineSteps} />
+          <Panel title="Data workflow">
+            <p className="text-xs text-gray-500 mb-3">Use these steps for each upload. Check its processing status in Uploads.</p>
+            <div className="space-y-2">
+              {workflow.map(({ label, href }) => <Link key={href} href={href} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm text-gray-700 hover:border-blue-300 hover:text-blue-600">
+                {label}<ArrowRight size={14} aria-hidden="true" />
+              </Link>)}
             </div>
-            {summary.data_quality_warnings > 0 && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-                <AlertTriangle size={13} />
-                {summary.data_quality_warnings} upload{summary.data_quality_warnings !== 1 ? 's' : ''} need column mapping.
-                <Link href="/admin/column-mapping" className="underline ml-auto">Fix now</Link>
-              </div>
-            )}
           </Panel>
 
           {/* Quick Actions */}
@@ -366,7 +374,8 @@ export default function AdminDashboardPage() {
           </Panel>
 
           {/* System Health */}
-          <Panel title="System Health">
+          <Panel title="Reported system status">
+            <p className="text-xs text-gray-500 mb-3">Reported by the summary API; this is not an end-to-end service test.</p>
             <div className="space-y-2">
               {healthItems.map(({ label, key, Icon }) => (
                 <div key={key} className="flex items-center justify-between text-sm">
@@ -389,7 +398,7 @@ export default function AdminDashboardPage() {
               <div className="pt-2 mt-2 border-t flex items-center justify-between text-xs text-gray-500">
                 <span>Environment</span>
                 <span className={`font-medium px-2 py-0.5 rounded-full ${isProd ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
-                  {isProd ? 'Production' : 'Local — no production data'}
+                  {environmentLabel}
                 </span>
               </div>
             </div>

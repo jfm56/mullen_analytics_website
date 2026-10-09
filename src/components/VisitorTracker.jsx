@@ -12,6 +12,7 @@
 
 import { Suspense, useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { isPrivateAppPath } from '@/lib/sitePaths.mjs';
 
 const CONSENT_COOKIE = 'mullen-analytics-cookie-consent';
 const VISITOR_COOKIE = 'ma_vid';
@@ -87,17 +88,19 @@ function Tracker() {
 
   // pageview on first load + every client-side route change
   useEffect(() => {
-    if (!consentGranted()) return;
+    if (isPrivateAppPath(pathname) || !consentGranted()) return;
     flushDwell(false); // close out the previous page's dwell
 
-    const qs = searchParams?.toString();
-    const path = pathname + (qs ? `?${qs}` : '');
+    const path = pathname;
     const { vid, isNew } = ensureVisitor();
     const payload = { session_id: ensureSession(), visitor_id: vid, type: 'pageview', path, is_new: isNew };
 
     if (!contextSentRef.current) {
       const sp = new URLSearchParams(window.location.search);
-      payload.referrer = document.referrer || undefined;
+      try {
+        const referrer = new URL(document.referrer);
+        payload.referrer = `${referrer.origin}${referrer.pathname}`;
+      } catch { /* empty or invalid referrer */ }
       payload.utm_source = sp.get('utm_source') || undefined;
       payload.utm_medium = sp.get('utm_medium') || undefined;
       payload.utm_campaign = sp.get('utm_campaign') || undefined;

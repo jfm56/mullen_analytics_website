@@ -1,0 +1,91 @@
+[
+  {
+    "url": "https://app.mullenanalytics.com/login",
+    "status": 200,
+    "destination": "https://app.mullenanalytics.com/login"
+  },
+  {
+    "url": "https://app.mullenanalytics.com/trial/ems-qa",
+    "status": 200,
+    "destination": "https://app.mullenanalytics.com/trial/ems-qa"
+  },
+  {
+    "url": "https://calendar.app.google/1BFgdi2pgjF9vwAB8",
+    "status": 200,
+    "destination": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0slh4IMyHCyMJvgtdPGLNosa3RkzkJUBdgKnFlDCMszo2Mdvh14Tc9Yhofc7zIpU4hh1H-Fy1L"
+  },
+  {
+    "url": "https://calendar.app.google/4JuyKX7s75GmJT5u9",
+    "status": 200,
+    "destination": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ1wlOOCweXFj34spuPYxF_b7PTKG9LU4DHJ_OJyPa0WGKmzTp6Cekr5XpR1kZFsr6lYka4UP7bE"
+  },
+  {
+    "url": "https://www.linkedin.com/company/mullen-analytics",
+    "status": 200,
+    "destination": "https://www.linkedin.com/company/mullen-analytics"
+  },
+  {
+    "url": "https://github.com/jfm56",
+    "status": 200,
+    "destination": "https://github.com/jfm56"
+  },
+  {
+    "url": "https://www.facebook.com/profile.php?id=61583215691139",
+    "status": 200,
+    "destination": "https://www.facebook.com/people/Mullen-Analytics-Data-Solutions-LLC/61583215691139/"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/ai-strategy-and-advisory",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/ai-strategy-and-advisory"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/data-and-analytics-strategy",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/data-and-analytics-strategy"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/data-engineering-and-modern-data-infrastructure",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/data-engineering-and-modern-data-infrastructure"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/business-intelligence-and-decision-intelligence",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/business-intelligence-and-decision-intelligence"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/machine-learning-and-predictive-modeling",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/machine-learning-and-predictive-modeling"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/nlp-and-workflow-automation",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/nlp-and-workflow-automation"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/healthcare-and-life-sciences-analytics",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/healthcare-and-life-sciences-analytics"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/product-and-mvp-development",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/product-and-mvp-development"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/training-and-capability-building",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/training-and-capability-building"
+  },
+  {
+    "url": "https://mullenanalytics.com/services/does-not-exist",
+    "status": 200,
+    "destination": "https://mullenanalytics.com/services/does-not-exist"
+  },
+  {
+    "url": "https://mullenanalytics.com/no-such-platform-audit-page",
+    "status": 404
+  }
+]

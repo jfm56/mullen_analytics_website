@@ -42,9 +42,10 @@ async function apiFetch(endpoint, options = {}) {
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(error.detail || error.message || 'Request failed');
+    throw new Error(error.detail || error.message || error.error || 'Request failed');
   }
   
+  if (response.status === 204) return undefined;
   return response.json();
 }
 

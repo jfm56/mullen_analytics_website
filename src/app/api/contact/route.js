@@ -14,11 +14,17 @@ export async function POST(req) {
     }
 
     const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+    if (!recaptchaSecret) {
+      return new Response(
+        JSON.stringify({ ok: false, success: false, error: 'The contact form is temporarily unavailable. Please email jmullen@mullenanalytics.com.' }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
     if (recaptchaSecret) {
       const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
+        body: new URLSearchParams({ secret: recaptchaSecret, response: recaptchaToken })
       });
       const recaptchaData = await recaptchaResponse.json();
       

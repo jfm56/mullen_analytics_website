@@ -18,7 +18,7 @@ export const metadata = {
     siteName: "Mullen Analytics & Data Solutions LLC",
     images: [
       {
-        url: "/images/connect-preview.jpg",
+        url: "/images/portfolio-dashboard.jpg",
         width: 1200,
         height: 630,
         alt: "Mullen Analytics & Data Solutions",
@@ -124,10 +124,10 @@ export default function ConnectPage() {
               </a>
 
               <a
-                href="#demo"
+                href="/business-dashboard-example"
                 className="rounded-lg border border-slate-600 px-5 py-3 font-semibold text-slate-200 transition hover:border-sky-400 hover:text-sky-400"
               >
-                Watch Virtual Demo
+                Explore Demo Dashboard
               </a>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function ConnectPage() {
       <section className="mx-auto max-w-6xl px-6 py-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <a
-            href="/documents/mullen-analytics-brochure.pdf"
+            href="/services"
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-2xl border border-slate-700 bg-slate-900 p-5 transition hover:border-sky-400"
@@ -200,7 +200,7 @@ export default function ConnectPage() {
           </a>
 
           <a
-            href="/documents/mullen-analytics-capability-statement.pdf"
+            href="/capabilities"
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-2xl border border-slate-700 bg-slate-900 p-5 transition hover:border-sky-400"
@@ -281,20 +281,19 @@ export default function ConnectPage() {
 
           <div className="mt-10 flex flex-wrap gap-3">
             <a
-              href="/documents/mullen-analytics-brochure.pdf"
+              href="/services"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg bg-sky-500 px-5 py-3 font-semibold text-slate-950 hover:bg-sky-400"
             >
-              View Printable Brochure
+              View Services
             </a>
 
             <a
-              href="/documents/mullen-analytics-brochure.pdf"
-              download
+              href="/industries"
               className="rounded-lg border border-slate-600 px-5 py-3 font-semibold text-slate-200 hover:border-sky-400 hover:text-sky-400"
             >
-              Download Brochure
+              Explore Industries
             </a>
           </div>
         </div>
@@ -319,7 +318,7 @@ export default function ConnectPage() {
 
             <div className="mt-7 flex flex-wrap gap-3">
               <a
-                href="/documents/mullen-analytics-capability-statement.pdf"
+                href="/capabilities"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-lg bg-sky-500 px-5 py-3 font-semibold text-slate-950 hover:bg-sky-400"
@@ -328,11 +327,10 @@ export default function ConnectPage() {
               </a>
 
               <a
-                href="/documents/mullen-analytics-capability-statement.pdf"
-                download
-                className="rounded-lg border border-slate-600 px-5 py-3 font-semibold text-slate-200 hover:border-sky-400 hover:text-sky-400"
+                href="/capabilities"
+                  className="rounded-lg border border-slate-600 px-5 py-3 font-semibold text-slate-200 hover:border-sky-400 hover:text-sky-400"
               >
-                Download PDF
+                Discuss Your Project
               </a>
             </div>
           </div>
@@ -414,24 +412,18 @@ export default function ConnectPage() {
             See our analytics solutions in action
           </h2>
           <p className="mt-4 text-lg text-slate-300">
-            Watch a brief overview of our dashboards, forecasting tools, and
-            automated analytics capabilities.
+            Explore a sample dashboard and discuss the tools that fit your organization.
           </p>
         </div>
 
-        <div className="mt-10 overflow-hidden rounded-3xl border border-slate-700 bg-black">
-          <video
-            className="aspect-video w-full"
-            controls
-            preload="metadata"
-            poster="/images/connect-preview.jpg"
-          >
-            <source
-              src="/videos/mullen-analytics-demo.mp4"
-              type="video/mp4"
-            />
-            Your browser does not support embedded video.
-          </video>
+        <div className="mt-10 rounded-3xl border border-slate-700 bg-slate-900 p-8">
+          <p className="text-slate-300">
+            Explore a sample business dashboard with synthetic data, or schedule a
+            private walkthrough of the analytics and QA platform.
+          </p>
+          <Link href="/business-dashboard-example" className="mt-5 inline-block font-semibold text-sky-400 hover:text-sky-300">
+            Open Demo Dashboard →
+          </Link>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -504,16 +496,7 @@ export default function ConnectPage() {
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a
-              href="https://www.linkedin.com/in/YOUR-LINKEDIN"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-slate-600 px-5 py-3 font-semibold text-slate-200 hover:border-sky-400 hover:text-sky-400"
-            >
-              LinkedIn
-            </a>
-
-            <a
-              href="https://www.linkedin.com/company/YOUR-COMPANY"
+              href="https://www.linkedin.com/company/mullen-analytics"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg border border-slate-600 px-5 py-3 font-semibold text-slate-200 hover:border-sky-400 hover:text-sky-400"

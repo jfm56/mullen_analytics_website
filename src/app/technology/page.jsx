@@ -99,7 +99,7 @@ export default function TechnologyPage() {
               </div>
             </div>
             <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Artificial%20Intelligence%20(Applied%20AI%20section).jpg" alt="Automation" className="w-full h-full object-cover" />
+              <img src="/ai%20automation.jpeg" alt="Automation" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function TechnologyPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="rounded-lg overflow-hidden shadow-lg">
-              <img src="/Delivery%20Platforms.png" alt="Delivery Platforms" className="w-full h-full object-cover" />
+              <img src="/Analytics%20Platforms,%20AI%20%26%20Technology%20Delivery.jpg" alt="Delivery Platforms" className="w-full h-full object-cover" />
             </div>
             <div>
               <h2 className="mb-4" style={{ color: '#071829' }}>Delivery Platforms</h2>
@@ -181,7 +181,7 @@ export default function TechnologyPage() {
       <section className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="mb-12 rounded-lg overflow-hidden shadow-xl">
-            <img src="/Emerging%20Technology.jpeg" alt="Emerging Technology" className="w-full h-auto object-cover" style={{ maxHeight: '400px' }} />
+            <img src="/Technology%20%26%20Transformation.png" alt="Emerging Technology" className="w-full h-auto object-cover" style={{ maxHeight: '400px' }} />
           </div>
           <div className="text-center mb-12">
             <h2 className="mb-4" style={{ color: '#071829' }}>Emerging Technology</h2>
@@ -245,7 +245,7 @@ export default function TechnologyPage() {
       <section className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="mb-12 rounded-lg overflow-hidden shadow-xl">
-            <img src="/Analytics%20Products%20%26%20Accelerators.webp" alt="Analytics Products & Accelerators" className="w-full h-auto object-cover" style={{ maxHeight: '300px' }} />
+            <img src="/products/predictive-analytics.png" alt="Analytics Products & Accelerators" className="w-full h-auto object-cover" style={{ maxHeight: '300px' }} />
           </div>
           <div className="text-center mb-12">
             <h2 className="mb-4" style={{ color: '#071829' }}>Analytics Products & Accelerators</h2>

@@ -1,12 +1,8 @@
  import { Inter, Geist_Mono } from "next/font/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ConditionalNav, ConditionalFooter } from "@/components/ConditionalNavFooter";
-import ChatWidget from "@/components/ChatWidget";
-import CookieConsent from "@/components/CookieConsent";
+import MarketingTools from "@/components/MarketingTools";
 import ThemeProvider from "@/components/ThemeProvider";
-import Analytics from "@/components/Analytics";
-import VisitorTracker from "@/components/VisitorTracker";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,16 +34,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className={`${inter.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-        <Analytics />
-        <VisitorTracker />
         <ThemeProvider>
           <ConditionalNav />
           <main className="flex-1">{children}</main>
           <ConditionalFooter />
-          <ChatWidget />
-          <CookieConsent />
+          <MarketingTools />
         </ThemeProvider>
-        <SpeedInsights />
       </body>
     </html>
   );

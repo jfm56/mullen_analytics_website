@@ -112,8 +112,15 @@ export default function Navbar() {
           {NAV.map((entry) => (
             entry.items ? (
               <div key={entry.label} className="relative"
-                onMouseEnter={() => setOpenMenu(entry.label)}
-                onMouseLeave={() => setOpenMenu((v) => (v === entry.label ? null : v))}>
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) setOpenMenu(null);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    setOpenMenu(null);
+                    event.currentTarget.querySelector('button')?.focus();
+                  }
+                }}>
                 <button
                   type="button"
                   className={`flex items-center gap-1 ${linkCls} ${openMenu === entry.label ? 'text-white' : ''}`}

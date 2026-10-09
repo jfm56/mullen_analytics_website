@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { Suspense, useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { isPrivateAppPath } from '@/lib/sitePaths.mjs';
 
 // Read from env so IDs aren't hardcoded. GA4 is optional (blank = disabled);
 // the Google Ads ID defaults to the existing live value so ad tracking is preserved.
@@ -21,9 +22,9 @@ function PageviewTracker() {
   const lastPath = useRef(null);
 
   useEffect(() => {
-    if (!GA_ID) return;
-    const qs = searchParams?.toString();
-    const page_path = qs ? `${pathname}?${qs}` : pathname;
+    if (!GA_ID || isPrivateAppPath(pathname)) return;
+    // Query strings can contain reset tokens or user-supplied identifiers.
+    const page_path = pathname;
     if (lastPath.current === page_path) return; // guard against duplicate fires
     lastPath.current = page_path;
 
@@ -35,7 +36,7 @@ function PageviewTracker() {
     }
     window.gtag('event', 'page_view', {
       page_path,
-      page_location: window.location.href,
+      page_location: `${window.location.origin}${pathname}`,
       page_title: document.title,
     });
   }, [pathname, searchParams]);
@@ -81,7 +82,7 @@ export default function Analytics() {
 
           gtag('js', new Date());
           ${GA_ID ? `gtag('config', '${GA_ID}', { send_page_view: false });` : ''}
-          ${ADS_ID ? `gtag('config', '${ADS_ID}');` : ''}
+          ${ADS_ID ? `gtag('config', '${ADS_ID}', { send_page_view: false });` : ''}
         `}
       </Script>
 

@@ -1,47 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-const LABELS = {
-  admin:          'Admin',
-  clients:        'Clients',
-  data:           'Data Uploads',
-  dashboard:      'Dashboards',
-  'data-explorer':'Data Explorer',
-  'column-mapping':'Column Mapping',
-  messages:       'Messages',
-  users:          'Users & Roles',
-  projects:       'Projects',
-  invoices:       'Invoices',
-  'audit-logs':   'Audit Logs',
-  settings:       'Settings',
-  uploads:        'Uploads',
-};
+import { ADMIN_NAV_ITEMS, getAdminTitle } from '@/lib/adminNavigation.mjs';
 
 export default function AdminBreadcrumbs() {
   const pathname = usePathname();
-  const segments = pathname.split('/').filter(Boolean);
-
-  const crumbs = segments.map((seg, i) => ({
-    label: LABELS[seg] || (seg.length > 20 ? seg.slice(0, 8) + '…' : seg),
-    href:  '/' + segments.slice(0, i + 1).join('/'),
-    isLast: i === segments.length - 1,
-  }));
-
-  if (crumbs.length <= 1) return null;
-
-  return (
-    <nav className="flex items-center gap-1 text-xs text-gray-500 mb-4">
-      {crumbs.map((c, i) => (
-        <span key={c.href} className="flex items-center gap-1">
-          {i > 0 && <span className="text-gray-300">/</span>}
-          {c.isLast ? (
-            <span className="text-gray-700 font-medium">{c.label}</span>
-          ) : (
-            <Link href={c.href} className="hover:text-blue-600 transition-colors">{c.label}</Link>
-          )}
-        </span>
-      ))}
-    </nav>
-  );
+  if (pathname === '/admin') return null;
+  // Link only to known routes: dynamic IDs and virtual path segments are not pages.
+  const parents = ADMIN_NAV_ITEMS.filter(({ href }) => href !== '/admin' && pathname.startsWith(`${href}/`))
+    .sort((a, b) => a.href.length - b.href.length);
+  return <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+    <Link href="/admin" className="hover:text-blue-600">Overview</Link>
+    {parents.map(({ href, label }) => <span key={href} className="flex items-center gap-2"><span aria-hidden="true">/</span><Link href={href} className="hover:text-blue-600">{label}</Link></span>)}
+    <span aria-hidden="true">/</span>
+    <span aria-current="page" className="font-medium text-gray-700">{getAdminTitle(pathname)}{parents.length > 0 ? ' details' : ''}</span>
+  </nav>;
 }

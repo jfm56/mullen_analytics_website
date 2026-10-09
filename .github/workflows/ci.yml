@@ -125,6 +125,9 @@ jobs:
       - name: Install deps
         run: npm ci --legacy-peer-deps
 
+      - name: Check internal links and assets
+        run: npm run audit:links
+
       - name: Build
         run: npm run build
 

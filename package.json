@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "audit:dead-code": "node scripts/audit/frontend-dead-code.mjs && python scripts/audit/backend-dead-code.py",
+    "audit:links": "node scripts/audit/site-links.mjs",
     "audit:duplicates": "python scripts/audit/duplicate-blocks.py"
   },
   "dependencies": {
