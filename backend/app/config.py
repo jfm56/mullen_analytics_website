@@ -139,6 +139,12 @@ class Settings(BaseSettings):
     # App
     environment: str = "production"  # local | production
     storage_backend: str = "local"   # local | s3
+    # Schema provisioning at startup (create_all / self-heal ALTERs / backfills /
+    # RLS provisioning) runs ONLY in local dev. In staging/production the API and
+    # worker must connect as the low-privilege runtime role and merely VALIDATE the
+    # schema an operator migrated (no owner/admin DB credentials at runtime). Set
+    # true ONLY for a deliberate one-off local-style provisioning run.
+    db_auto_provision: bool = False
     app_url: str = "http://localhost:3000"
     api_url: str = "http://localhost:8000"
     debug: bool = False
