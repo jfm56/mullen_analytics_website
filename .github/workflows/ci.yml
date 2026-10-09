@@ -84,6 +84,13 @@ jobs:
           PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics \
             -c 'CREATE ROLE app_user NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;'
           for f in backend/migrations/*.sql; do
+            if [[ "$(basename "$f")" == "017_rls_least_privilege.sql" ]]; then
+              # Legacy SQL does not define all ORM-backed tables. Mirror the
+              # test fixture's table creation after 001-016, before 017 grants
+              # privileges on those tables. Importing the app registers models
+              # without running startup hooks, seeds, or background jobs.
+              PYTHONPATH=backend python -c 'from app.main import app; from app.database import Base, engine; Base.metadata.create_all(bind=engine)'
+            fi
             echo "Running $f"
             PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d test_mullen_analytics -f "$f"
           done

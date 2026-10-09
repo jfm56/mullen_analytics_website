@@ -26,6 +26,12 @@ Status: AWS STAGING INFRASTRUCTURE EXISTS; API/WORKER STOPPED; CLIENT DATA MIGRA
   its fresh test database lacked the prerequisite `app_user` role for 017.
   The workflow fix provisions a non-login test role without changing 017;
   a new CI run is still required to validate the remaining steps.
+- On `bcff4e6`, the role prerequisite passed; 017 then failed because legacy
+  SQL migrations do not create every ORM-backed table (`app_settings` was the
+  first missing relation). CI now registers application models and creates
+  missing tables in its isolated test database after 016 and before 017. This
+  mirrors the existing test fixture. It does not establish that an AWS database
+  has every prerequisite table; verify that separately before running 017 there.
 - A Railway backend has a Railway PostgreSQL DATABASE_URL. Vercel's saved secret
   FASTAPI_URL has not been independently read or correlated to that service.
 
